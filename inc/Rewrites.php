@@ -54,6 +54,12 @@ final class Rewrites {
 	 * @return void
 	 */
 	public function add_rules() {
+		// Ensure rewrite API is available (e.g. during activation).
+		global $wp_rewrite;
+		if ( ! ( $wp_rewrite instanceof \WP_Rewrite ) && class_exists( '\\WP_Rewrite' ) ) {
+			$wp_rewrite = new \WP_Rewrite();
+		}
+
 		$opt = $this->options->get();
 
 		// llms.txt

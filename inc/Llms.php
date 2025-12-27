@@ -105,6 +105,21 @@ final class Llms {
 		$saved['llms_cache_ts']  = $ts;
 		$saved['llms_cache_rev'] = $rev;
 
+		$settings = $this->options->get();
+		$settings_subset = array(
+			'enabled_markdown'             => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
+			'enabled_llms_txt'             => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
+			'base_path'                    => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+			'post_types'                   => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
+			'llms_recent_limit'            => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
+			'site_title_override'          => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
+			'site_description_override'    => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
+			'sitemap_url'                  => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
+		);
+
+		$saved['llms_cache_hash'] = sha1( (string) $content );
+		$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
+
 		update_option( Options::OPTION_KEY, $saved, false );
 	}
 
@@ -138,7 +153,7 @@ final class Llms {
 		}
 
 		$rev_etag_part = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
-		$etag          = '\"' . sha1( $content . '|' . $ts . '|' . $rev_etag_part ) . '\"';
+		$etag          = '"' . sha1( $content . '|' . $ts . '|' . $rev_etag_part ) . '"';
 		$rev           = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
 		$hash          = isset( $opt['llms_cache_hash'] ) ? (string) $opt['llms_cache_hash'] : '';
 		$settings_hash = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
@@ -302,6 +317,14 @@ final class Llms {
 			if ( ! ( $p instanceof WP_Post ) ) {
 				continue;
 			}
+			// Skip password-protected posts.
+			if ( ! empty( $p->post_password ) ) {
+				continue;
+			}
+			$can = apply_filters( 'llmf_can_export_post', true, $p, 'llms' );
+			if ( ! $can ) {
+				continue;
+			}
 
 			$items[] = array(
 				'title'     => (string) get_the_title( $p ),
@@ -389,8 +412,15 @@ final class Llms {
 	 * @return void
 	 */
 	private function send_common_headers( $headers, $etag, $last_modified_ts, $build_ts = 0, $rev = 0, $hash = '', $settings_hash = '' ) {
-		nocache_headers();
 		status_header( 200 );
+
+		if ( is_array( $headers ) ) {
+			foreach ( $headers as $h ) {
+				if ( is_string( $h ) && $h !== '' ) {
+					header( $h );
+				}
+			}
+		}
 
 		$last_modified_ts = max( 1, (int) $last_modified_ts );
 		$last_modified    = gmdate( 'D, d M Y H:i:s', $last_modified_ts ) . ' GMT';
@@ -416,9 +446,7 @@ final class Llms {
 			header( 'X-LLMF-Settings-Hash: ' . $settings_hash );
 		}
 
-		header( 'Cache-Control: no-store, max-age=0, must-revalidate' );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
+		header( 'Cache-Control: public, max-age=0, must-revalidate' );
 
 		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) : '';
 		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? trim( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) : '';

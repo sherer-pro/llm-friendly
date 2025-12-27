@@ -76,6 +76,7 @@ final class Plugin {
 		add_action( 'wp_head', array( $this, 'output_alternate_markdown_link' ), 1 );
 
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+		add_action( 'admin_init', array( $this, 'maybe_flush_rewrites' ) );
 	}
 
 	/**
@@ -101,7 +102,36 @@ final class Plugin {
 		flush_rewrite_rules();
 	}
 
+	
 	/**
+	 * Flush rewrite rules when settings affecting endpoints change.
+	 *
+	 * This is triggered via a transient set during options sanitization.
+	 * We flush only in admin and only for users who can manage options.
+	 *
+	 * @return void
+	 */
+	public function maybe_flush_rewrites() {
+		if ( ! is_admin() ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		if ( ! function_exists( 'get_transient' ) || ! function_exists( 'delete_transient' ) ) {
+			return;
+		}
+		$flag = get_transient( 'llmf_flush_rewrite_rules' );
+		if ( ! $flag ) {
+			return;
+		}
+		delete_transient( 'llmf_flush_rewrite_rules' );
+		// Ensure rules are registered before flushing.
+		$this->rewrites->add_rules();
+		flush_rewrite_rules( false );
+	}
+
+/**
 	 * Init hooks.
 	 *
 	 * @return void
@@ -212,6 +242,14 @@ final class Plugin {
 
 		$post = get_page_by_path( $path, OBJECT, $post_type );
 		if ( $post instanceof WP_Post && $post->post_status === 'publish' ) {
+			// Do not export password-protected content.
+			if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
+				return null;
+			}
+			$can = apply_filters( 'llmf_can_export_post', true, $post, 'markdown' );
+			if ( ! $can ) {
+				return null;
+			}
 			return $post;
 		}
 
