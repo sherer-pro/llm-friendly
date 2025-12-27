@@ -1,0 +1,33 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "meta": {
+    "title": "LLM Friendly",
+    "description": "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.",
+    "author": "Pavel Sherer",
+    "categories": [
+      "plugins",
+      "editor"
+    ]
+  },
+  "preferredVersions": {
+    "php": "7.4",
+    "wp": "6.0"
+  },
+  "login": true,
+  "siteOptions": {
+    "blogname": "LLM Friendly demo"
+  },
+  "landingPage": "/wp-admin/post.php?post=1&action=edit",
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "llm-friendly"
+      },
+      "options": {
+        "activate": true
+      }
+    }
+  ]
+}

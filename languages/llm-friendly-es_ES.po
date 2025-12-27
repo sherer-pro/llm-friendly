@@ -1,0 +1,261 @@
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1: 2);\n"
+"Project-Id-Version: LLM Friendly\n"
+"POT-Creation-Date: 2025-12-26 19:07+0300\n"
+"PO-Revision-Date: 2025-12-26 19:22+0300\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.7\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: llm-friendly.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"Last-Translator: \n"
+"Language: es_ES\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
+
+#. Plugin Name of the plugin/theme
+#: inc/Admin.php:51 inc/Admin.php:52 inc/Admin.php:194
+msgid "LLM Friendly"
+msgstr "LLM Friendly"
+
+#: inc/Admin.php:73
+msgid "General"
+msgstr "General"
+
+#: inc/Admin.php:80
+msgid "Enable Markdown exports"
+msgstr "Activar exportaciones a Markdown"
+
+#: inc/Admin.php:88
+msgid "Base path for Markdown exports"
+msgstr "Ruta base para exportaciones Markdown"
+
+#: inc/Admin.php:96
+msgid "Post types to include"
+msgstr "Tipos de contenido a incluir"
+
+#: inc/Admin.php:104
+msgid "llms.txt"
+msgstr "llms.txt"
+
+#: inc/Admin.php:111
+msgid "Enable llms.txt"
+msgstr "Activar llms.txt"
+
+#: inc/Admin.php:119
+msgid "Send \"noindex\" header for llms.txt"
+msgstr "Enviar cabecera «noindex» para llms.txt"
+
+#: inc/Admin.php:127
+msgid "Regeneration mode"
+msgstr "Modo de regeneración"
+
+#: inc/Admin.php:135
+msgid "Items per post type"
+msgstr "Elementos por tipo de contenido"
+
+#: inc/Admin.php:143
+msgid "Sitemap URL"
+msgstr "URL del sitemap"
+
+#: inc/Admin.php:151
+msgid "Site meta overrides"
+msgstr "Sobrescritura de metadatos del sitio"
+
+#: inc/Admin.php:158
+msgid "Site title override"
+msgstr "Sobrescritura del título del sitio"
+
+#: inc/Admin.php:166
+msgid "Site description override"
+msgstr "Sobrescritura de la descripción del sitio"
+
+#: inc/Admin.php:198
+msgid "llms.txt was regenerated."
+msgstr "Se ha regenerado llms.txt."
+
+#: inc/Admin.php:206
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#: inc/Admin.php:210
+msgid "Maintenance"
+msgstr "Mantenimiento"
+
+#: inc/Admin.php:214
+msgid "Regenerate llms.txt now"
+msgstr "Regenerar llms.txt ahora"
+
+#. translators: 1: datetime
+#: inc/Admin.php:225
+#, php-format
+msgid "Last llms.txt build: %s"
+msgstr "Última generación de llms.txt: %s"
+
+#. translators: %d = milliseconds
+#: inc/Admin.php:231
+#, php-format
+msgid "%d ms"
+msgstr "%d ms"
+
+#: inc/Admin.php:239
+msgid "Open:"
+msgstr "Abrir:"
+
+#: inc/Admin.php:240
+msgid "llms.txt (pretty URL)"
+msgstr "llms.txt (URL bonita)"
+
+#: inc/Admin.php:242
+msgid "llms.txt (query var fallback)"
+msgstr "llms.txt (alternativa por query var)"
+
+#: inc/Admin.php:245
+msgid "Rebuilds cached llms.txt immediately."
+msgstr "Reconstruye inmediatamente el llms.txt en caché."
+
+#: inc/Admin.php:257
+msgid "Access denied."
+msgstr "Acceso denegado."
+
+#: inc/Admin.php:290
+msgid "Enable .md endpoints for selected post types"
+msgstr "Activar endpoints .md para los tipos seleccionados"
+
+#: inc/Admin.php:304
+msgid "Example: \"llm\" → /llm/{post_type}/{path}.md"
+msgstr "Ejemplo: «llm» → /llm/{post_type}/{path}.md"
+
+#: inc/Admin.php:336
+msgid "These types will appear in llms.txt and will have Markdown exports."
+msgstr "Estos tipos aparecerán en llms.txt y tendrán exportaciones Markdown."
+
+#: inc/Admin.php:351
+msgid "Serve /llms.txt"
+msgstr "Servir /llms.txt"
+
+#: inc/Admin.php:366
+msgid "Send X-Robots-Tag: noindex, nofollow for /llms.txt"
+msgstr "Enviar X-Robots-Tag: noindex, nofollow para /llms.txt"
+
+#: inc/Admin.php:380
+msgid "Auto (on publish/update)"
+msgstr "Automático (al publicar/actualizar)"
+
+#: inc/Admin.php:381
+msgid "Manual only"
+msgstr "Solo manual"
+
+#: inc/Admin.php:384
+msgid "In manual mode, use the button in the Maintenance section to rebuild llms.txt."
+msgstr ""
+"En modo manual, usa el botón de la sección «Mantenimiento» para reconstruirllms.txt."
+
+#: inc/Admin.php:397
+msgid "How many latest items to list for each post type."
+msgstr "Cuántos elementos más recientes listar para cada tipo de contenido."
+
+#: inc/Admin.php:410
+msgid "Absolute URL or site-relative path. Default: /sitemap.xml"
+msgstr "URL absoluta o ruta relativa al sitio. Predeterminado: /sitemap.xml"
+
+#: inc/Admin.php:423
+msgid "If empty, uses WordPress setting: Site Title."
+msgstr "Si está vacío, se usa la opción de WordPress: «Título del sitio»."
+
+#: inc/Admin.php:436
+msgid "If empty, uses WordPress setting: Tagline."
+msgstr "Si está vacío, se usa la opción de WordPress: «Descripción corta»."
+
+#: inc/Llms.php:104 inc/Plugin.php:289
+msgid "Not Found"
+msgstr "No encontrado"
+
+#: inc/Llms.php:145
+msgid "LLM-friendly index of this website."
+msgstr "Índice de este sitio apto para LLM."
+
+#: inc/Llms.php:169
+msgid "This file helps LLMs navigate the site and find authoritative content."
+msgstr ""
+"Este archivo ayuda a los LLM a navegar por el sitio y a encontrar "
+"contenidoautoritativo."
+
+#: inc/Llms.php:170
+msgid "Markdown exports are available under the configured base path:"
+msgstr "Las exportaciones Markdown están disponibles bajo la ruta base configurada:"
+
+#: inc/Llms.php:172
+#, php-format
+msgid "Pattern: %s"
+msgstr "Patrón: %s"
+
+#: inc/Llms.php:176
+#, php-format
+msgid "Back-compat for posts: %s"
+msgstr "Compatibilidad hacia atrás para entradas: %s"
+
+#: inc/Llms.php:181
+msgid "Main links"
+msgstr "Enlaces principales"
+
+#: inc/Llms.php:182
+msgid "Home"
+msgstr "Inicio"
+
+#: inc/Llms.php:182
+msgid "Website home page"
+msgstr "Página principal del sitio"
+
+#: inc/Llms.php:183
+msgid "Sitemap"
+msgstr "Sitemap"
+
+#: inc/Llms.php:183
+msgid "XML sitemap"
+msgstr "Sitemap XML"
+
+#: inc/Llms.php:184
+msgid "RSS"
+msgstr "RSS"
+
+#: inc/Llms.php:184
+msgid "Latest updates feed"
+msgstr "Feed de últimas actualizaciones"
+
+#. translators: %s = post type label (plural)
+#: inc/Llms.php:194
+#, php-format
+msgid "%s"
+msgstr "%s"
+
+#: inc/Llms.php:201
+msgid "(no published items found)"
+msgstr "(no se encontraron elementos publicados)"
+
+#. translators: 1: modified date, 2: canonical url
+#: inc/Llms.php:211
+#, php-format
+msgid "Updated %1$s. Canonical URL: %2$s"
+msgstr "Actualizado %1$s. URL canónica: %2$s"
+
+#. Description of the plugin/theme
+msgid ""
+"llms.txt + Markdown-представления записей для удобного чтения LLM (эндпоинты /llms."
+"txt и /{base}/{post_type}/{path}.md)."
+msgstr ""
+"llms.txt + versiones Markdown de las entradas para una lectura cómoda por "
+"LLM(endpoints /llms.txt y /{base}/{post_type}/{path}.md)."
+
+#. Author of the plugin/theme
+msgid "Pavel Sherer"
+msgstr "Pavel Sherer"
