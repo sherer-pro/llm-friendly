@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name: LLM Friendly
-	 * Description: Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.
- * Version: 0.1.0
- * Requires at least: 6.0
- * Requires PHP: 7.4
- * Author: Pavel Sherer
- * License: GPL-2.0-or-later
+ * Plugin URI:  https://github.com/sherer-pro/llm-friendly.git
+ * Description: Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.
+ * Version:     0.4.1
+ * Author:      Pavel Sherer
+ * Author URI:  https://sherer.pro
+ * License:     GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: llm-friendly
  * Domain Path: /languages
  */
