@@ -147,6 +147,14 @@ final class Admin {
 		);
 
 		add_settings_field(
+			'llms_show_excerpt',
+			__( 'Show excerpt', 'llm-friendly' ),
+			array( $this, 'field_llms_show_excerpt' ),
+			'llm-friendly',
+			'llmf_llms'
+		);
+
+		add_settings_field(
 			'sitemap_url',
 			__('Sitemap URL', 'llm-friendly'),
 			array($this, 'field_sitemap_url'),
@@ -390,6 +398,21 @@ public function field_md_noindex() {
 
 		echo '<input type="number" min="1" max="200" name="' . esc_attr(Options::OPTION_KEY) . '[llms_recent_limit]" value="' . esc_attr((string)$v) . '" />';
 		echo '<p class="description">' . esc_html__('How many latest items to list for each post type.', 'llm-friendly') . '</p>';
+	}
+
+	/**
+	 * Field: Show excerpt for each listed item in llms.txt.
+	 *
+	 * @return void
+	 */
+	public function field_llms_show_excerpt() {
+		$opt = $this->options->get();
+		$v   = ! empty( $opt['llms_show_excerpt'] ) ? 1 : 0;
+
+		echo '<label>';
+		echo '<input type="checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[llms_show_excerpt]" value="1" ' . checked( 1, $v, false ) . ' />';
+		echo ' ' . esc_html__( 'Add excerpt (if available) under each item in llms.txt', 'llm-friendly' );
+		echo '</label>';
 	}
 
 	/**

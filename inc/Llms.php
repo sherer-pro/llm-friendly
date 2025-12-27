@@ -64,7 +64,7 @@ final class Llms {
 			return;
 		}
 
-		$this->regenerate();
+		$this->regenerate( true );
 	}
 
 	/**
@@ -115,6 +115,8 @@ final class Llms {
 			'site_title_override'          => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
 			'site_description_override'    => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
 			'sitemap_url'                  => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
+			'llms_custom_markdown'         => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
+			'llms_show_excerpt'            => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
 		);
 
 		$saved['llms_cache_hash'] = sha1( (string) $content );
@@ -142,7 +144,7 @@ final class Llms {
 		$ts      = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
 
 		if ( trim( $content ) === '' ) {
-			$this->regenerate();
+			$this->regenerate( true );
 			$opt     = $this->options->get();
 			$content = (string) $opt['llms_cache'];
 			$ts      = (int) $opt['llms_cache_ts'];
@@ -186,59 +188,42 @@ final class Llms {
 			$desc = __( 'LLM-friendly index of this website.', 'llm-friendly' );
 		}
 
-		$base    = $this->options->sanitize_base_path( (string) $opt['base_path'] );
-		$home    = home_url( '/' );
-		$rss     = get_feed_link();
-		$sitemap = $this->options->sitemap_absolute_url();
+		$base         = $this->options->sanitize_base_path( isset( $opt['base_path'] ) ? (string) $opt['base_path'] : 'llm' );
+		$home         = home_url( '/' );
+		$rss          = get_feed_link();
+		$sitemap      = $this->options->sitemap_absolute_url();
+		$md_enabled   = ! empty( $opt['enabled_markdown'] );
+		$show_excerpt = ! empty( $opt['llms_show_excerpt'] );
 
-		$md_enabled = ! empty( $opt['enabled_markdown'] );
-
-		$limit = (int) $opt['llms_recent_limit'];
+		$limit = isset( $opt['llms_recent_limit'] ) ? (int) $opt['llms_recent_limit'] : 30;
 		if ( $limit < 1 ) {
 			$limit = 1;
 		}
 
-		$post_types = is_array( $opt['post_types'] ) ? $opt['post_types'] : array( 'post' );
+		$post_types = ( isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ) ? (array) $opt['post_types'] : array( 'post' );
 
-		$out = array();
+		$blocks = array();
 
-		// H1
-		$out[] = '# ' . $title;
-		$out[] = '';
+		$blocks[] = '# ' . ( $title !== '' ? $title : $this->one_line( home_url() ) );
+		$blocks[] = '> ' . $desc;
 
-		// blockquote
-		$out[] = '> ' . $desc;
-		$out[] = '';
-
-		// Optional custom markdown block (inserted between site meta and content).
+		// Optional custom markdown block (inserted between site meta and the content sections).
 		$custom = isset( $opt['llms_custom_markdown'] ) ? (string) $opt['llms_custom_markdown'] : '';
-		$custom = str_replace( array(
-			"
-",
-			"
-"
-		), "
-", $custom );
+		$custom = str_replace( array( "\r\n", "\r" ), "\n", $custom );
 		$custom = trim( $custom );
-
 		if ( $custom !== '' ) {
-			foreach (
-				explode( "
-", $custom ) as $line
-			) {
-				$out[] = rtrim( $line, "
-" );
-			}
-			$out[] = '';
+			$blocks[] = $custom;
 		}
 
-		// H2 sections: file lists
-		$out[] = '
-		
-		## ' . __( 'Main links', 'llm-friendly' );
-		$out[] = '- [' . $this->md_link_text( __( 'Home', 'llm-friendly' ) ) . '](' . $home . '): ' . __( 'Website home page', 'llm-friendly' );
-		$out[] = '- [' . $this->md_link_text( __( 'Sitemap', 'llm-friendly' ) ) . '](' . $sitemap . '): ' . __( 'XML sitemap', 'llm-friendly' );
-		$out[] = '- [' . $this->md_link_text( __( 'RSS', 'llm-friendly' ) ) . '](' . $rss . '): ' . __( 'Latest updates feed', 'llm-friendly' );
+		$blocks[] = '## ' . __( 'Main links', 'llm-friendly' );
+		$blocks[] = implode(
+			"\n",
+			array(
+				'- [' . $this->md_link_text( __( 'Home', 'llm-friendly' ) ) . '](' . $home . '): ' . __( 'Website home page', 'llm-friendly' ),
+				'- [' . $this->md_link_text( __( 'Sitemap', 'llm-friendly' ) ) . '](' . $sitemap . '): ' . __( 'XML sitemap', 'llm-friendly' ),
+				'- [' . $this->md_link_text( __( 'RSS', 'llm-friendly' ) ) . '](' . $rss . '): ' . __( 'Latest updates feed', 'llm-friendly' ),
+			)
+		);
 
 		foreach ( $post_types as $pt ) {
 			$pt = sanitize_key( (string) $pt );
@@ -246,48 +231,61 @@ final class Llms {
 				continue;
 			}
 
-			$label = $this->post_type_label( $pt );
-			$out[] = '';
-			$out[] = '## ' . sprintf(
-				/* translators: %s = post type label (plural) */
-					__( '%s', 'llm-friendly' ),
-					$label
-				);
+			$label    = $this->post_type_label( $pt );
+			$blocks[] = '## ' . $label;
 
 			$items = $this->get_recent_posts_by_type( $pt, $limit );
-
 			if ( empty( $items ) ) {
-				$out[] = '- ' . __( '(no published items found)', 'llm-friendly' );
+				$blocks[] = '- ' . __( '(no published items found)', 'llm-friendly' );
 				continue;
 			}
 
-			foreach ( $items as $p ) {
-				$notes = '';
+						$item_blocks = array();
+
+
+			foreach ( $items as $item ) {
+				$item_lines = array();
+				$title_txt = isset( $item['title'] ) ? (string) $item['title'] : '';
+				$path      = isset( $item['path'] ) ? (string) $item['path'] : '';
+				$canonical = isset( $item['canonical'] ) ? (string) $item['canonical'] : '';
+				$modified  = isset( $item['modified'] ) ? (string) $item['modified'] : '';
+				$excerpt   = isset( $item['excerpt'] ) ? (string) $item['excerpt'] : '';
 
 				if ( $md_enabled ) {
-					$md_url = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $p['path'] ) . '.md' );
-
-					$notes = sprintf(
-					/* translators: 1: modified date, 2: canonical url */
+					$md_url = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
+					$notes  = sprintf(
+						/* translators: 1: modified date, 2: canonical url */
 						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
-						$p['modified'],
-						$p['canonical']
+						$modified,
+						$canonical
 					);
-
-					$out[] = '- [' . $this->md_link_text( $p['title'] ) . '](' . $md_url . '): ' . $notes;
+					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . $notes;
 				} else {
-					$notes = sprintf(
-					/* translators: 1: modified date */
+					$notes  = sprintf(
+						/* translators: 1: modified date */
 						__( 'Updated %1$s.', 'llm-friendly' ),
-						$p['modified']
+						$modified
 					);
-
-					$out[] = '- [' . $this->md_link_text( $p['title'] ) . '](' . $p['canonical'] . '): ' . $notes;
+					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . $notes;
 				}
+
+				if ( $show_excerpt && $excerpt !== '' ) {
+					// Keep the excerpt inside the list item by indenting it.
+					$item_lines[] = '  ';
+					$item_lines[] = '  ' . $excerpt;
+					$item_lines[] = '  ';
+				}
+				$item_blocks[] = implode( "\n", $item_lines );
 			}
+
+			$blocks[] = implode( "\n\n", $item_blocks );
 		}
 
-		return implode( "\n", $out ) . "\n";
+		$blocks  = array_values( array_filter( array_map( 'trim', $blocks ), 'strlen' ) );
+		$content = implode( "\n\n", $blocks );
+		$content = str_replace( array( "\r\n", "\r" ), "\n", $content );
+
+		return rtrim( $content, "\n" ) . "\n";
 	}
 
 	/**
@@ -331,6 +329,7 @@ final class Llms {
 				'path'      => (string) $this->options->post_path( $p ),
 				'canonical' => (string) get_permalink( $p ),
 				'modified'  => (string) get_the_modified_date( 'Y-m-d', $p ),
+				'excerpt'   => (string) $this->post_excerpt_one_line( $p ),
 			);
 		}
 
@@ -366,6 +365,65 @@ final class Llms {
 		$s = preg_replace( '/\s+/u', ' ', $s );
 
 		return trim( (string) $s );
+	}
+
+	/**
+	 * Get post excerpt as a single line of plain text.
+	 *
+	 * @param WP_Post $post
+	 *
+	 * @return string
+	 */
+	private function post_excerpt_one_line( $post ) {
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return '';
+		}
+
+		$excerpt = '';
+
+		// 1) Prefer an explicit WordPress excerpt (post_excerpt). Avoid auto-generated excerpts.
+		$has_wp_excerpt = trim( (string) $post->post_excerpt ) !== '';
+		if ( $has_wp_excerpt ) {
+			$excerpt = get_the_excerpt( $post );
+			if ( ! is_string( $excerpt ) ) {
+				$excerpt = '';
+			}
+		}
+
+		// 2) If there's no WP excerpt, try Yoast SEO meta description.
+		if ( $excerpt === '' ) {
+			$yoast = get_post_meta( $post->ID, 'wpseo_metadesc', true );
+			if ( ! is_string( $yoast ) ) {
+				$yoast = '';
+			}
+			$yoast = trim( $yoast );
+
+			if ( $yoast === '' ) {
+				$yoast = get_post_meta( $post->ID, '_yoast_wpseo_metadesc', true );
+				if ( ! is_string( $yoast ) ) {
+					$yoast = '';
+				}
+				$yoast = trim( $yoast );
+			}
+
+			if ( $yoast !== '' ) {
+				$excerpt = $yoast;
+			}
+		}
+
+		// 3) Fallback: derive a short snippet from content.
+		if ( $excerpt === '' ) {
+			$raw = wp_strip_all_tags( (string) $post->post_content, true );
+			$raw = html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$raw = $this->one_line( $raw );
+			$excerpt = wp_trim_words( $raw, 30, '…' );
+		}
+
+		$excerpt = wp_strip_all_tags( (string) $excerpt, true );
+		$excerpt = html_entity_decode( $excerpt, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$excerpt = $this->one_line( $excerpt );
+
+		return $excerpt;
 	}
 
 	/**

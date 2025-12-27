@@ -103,7 +103,7 @@ $headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 		$out[] = '';
 		$out[] = $body;
 
-		return rtrim( $this->normalize_newlines( implode( "\n", $out ) ) ) . "\n";
+		return rtrim( $this->normalize_markdown_blocks( implode( "\n", $out ) ) ) . "\n";
 	}
 
 	/**
@@ -351,7 +351,123 @@ $headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 	 *
 	 * @return string
 	 */
-	private function normalize_newlines( $s ) {
+	
+	/**
+	 * Normalize Markdown so that block elements are separated by a blank line.
+	 *
+	 * This is intentionally conservative: it keeps fenced code blocks intact and
+	 * avoids touching inline formatting.
+	 *
+	 * @param string $md
+	 *
+	 * @return string
+	 */
+	private function normalize_markdown_blocks( $md ) {
+		$md = $this->normalize_newlines( (string) $md );
+		$lines = explode( "\n", $md );
+
+		$blocks = array();
+		$cur_lines = array();
+		$cur_type  = '';
+		$in_code   = false;
+
+		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type ) {
+			if ( ! empty( $cur_lines ) ) {
+				// Trim trailing whitespace on lines, but keep internal structure.
+				$tmp = array();
+				foreach ( $cur_lines as $ln ) {
+					$tmp[] = rtrim( (string) $ln );
+				}
+				// Remove leading/trailing empty lines inside the block.
+				while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
+					array_shift( $tmp );
+				}
+				while ( ! empty( $tmp ) && trim( (string) $tmp[ count( $tmp ) - 1 ] ) === '' ) {
+					array_pop( $tmp );
+				}
+				if ( ! empty( $tmp ) ) {
+					$blocks[] = $tmp;
+				}
+			}
+			$cur_lines = array();
+			$cur_type  = '';
+		};
+
+		foreach ( $lines as $ln ) {
+			$raw  = (string) $ln;
+			$trim = trim( $raw );
+
+			// Fenced code blocks: keep verbatim until closing fence.
+			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
+			if ( $is_fence ) {
+				if ( ! $in_code ) {
+					$flush();
+					$in_code  = true;
+					$cur_type = 'code';
+					$cur_lines[] = rtrim( $raw );
+				} else {
+					$cur_lines[] = rtrim( $raw );
+					$flush();
+					$in_code = false;
+				}
+				continue;
+			}
+
+			if ( $in_code ) {
+				$cur_lines[] = rtrim( $raw );
+				continue;
+			}
+
+			// Blank line separates blocks.
+			if ( $trim === '' ) {
+				$flush();
+				continue;
+			}
+
+			// Determine block type for grouping.
+			$type = 'para';
+			if ( preg_match( '/^\s{0,3}#{1,6}\s+/', $raw ) ) {
+				$type = 'heading';
+			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
+				$type = 'quote';
+			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
+				$type = 'list';
+			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
+				// Simple heuristic for Markdown tables (pipes).
+				$type = 'table';
+			}
+
+			// Headings are standalone blocks.
+			if ( $type === 'heading' ) {
+				$flush();
+				$blocks[] = array( rtrim( $raw ) );
+				continue;
+			}
+
+			if ( $cur_type !== '' && $cur_type !== $type ) {
+				$flush();
+			}
+			$cur_type = $type;
+			$cur_lines[] = rtrim( $raw );
+		}
+
+		$flush();
+
+		// Join blocks with a single blank line.
+		$out = array();
+		foreach ( $blocks as $i => $b_lines ) {
+			if ( $i > 0 ) {
+				$out[] = '';
+			}
+			foreach ( $b_lines as $b_ln ) {
+				$out[] = (string) $b_ln;
+			}
+		}
+
+		return implode( "\n", $out );
+	}
+
+private function normalize_newlines( $s ) {
 		return str_replace( array( "\r\n", "\r" ), "\n", (string) $s );
 	}
 
