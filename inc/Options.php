@@ -104,6 +104,12 @@ final class Options {
 
 		$out['sitemap_url'] = isset($input['sitemap_url']) ? $this->sanitize_sitemap_url((string)$input['sitemap_url']) : (string)$prev['sitemap_url'];
 
+		$out['llms_custom_markdown'] = isset( $input['llms_custom_markdown'] )
+			? $this->sanitize_llms_custom_markdown( (string) $input['llms_custom_markdown'] )
+			: (string) $prev['llms_custom_markdown'];
+
+		$out['llms_show_excerpt'] = ! empty( $input['llms_show_excerpt'] ) ? 1 : 0;
+
 		// Cache is managed internally.
 		if (!isset($out['llms_cache'])) $out['llms_cache'] = '';
 		if (!isset($out['llms_cache_ts'])) $out['llms_cache_ts'] = 0;
@@ -111,7 +117,8 @@ final class Options {
 		
 
 // Invalidate llms.txt cache when settings affecting its content change.
-$affect_keys = array(
+		// Invalidate llms.txt cache when settings affecting its content change.
+		$affect_keys = array(
 	'enabled_markdown',
 	'enabled_llms_txt',
 	'base_path',
@@ -120,6 +127,8 @@ $affect_keys = array(
 	'site_title_override',
 	'site_description_override',
 	'sitemap_url',
+	'llms_custom_markdown',
+	'llms_show_excerpt',
 );
 $changed = false;
 foreach ($affect_keys as $k) {
@@ -130,15 +139,17 @@ foreach ($affect_keys as $k) {
 		break;
 	}
 }
-if ($changed) {
-	$out['llms_cache'] = '';
-	$out['llms_cache_ts'] = 0;
-	$out['llms_cache_rev'] = 0;
-	$out['llms_cache_hash'] = '';
+		if ($changed) {
+			$out['llms_cache'] = '';
+			$out['llms_cache_ts'] = 0;
+			$out['llms_cache_rev'] = 0;
+			$out['llms_cache_hash'] = '';
+			$out['llms_cache_settings_hash'] = '';
 } else {
 	// Ensure cache meta keys exist.
 	if (!isset($out['llms_cache_rev'])) $out['llms_cache_rev'] = 0;
 	if (!isset($out['llms_cache_hash'])) $out['llms_cache_hash'] = '';
+	if (!isset($out['llms_cache_settings_hash'])) $out['llms_cache_settings_hash'] = '';
 }
 
 		
@@ -180,12 +191,28 @@ return $out;
 			'site_description_override' => '',
 			'sitemap_url'      => '/sitemap.xml',
 			'llms_custom_markdown' => '',
+			'llms_show_excerpt' => 0,
 			'llms_cache'       => '',
 			'llms_cache_ts'    => 0,
 			'llms_cache_rev'   => 0,
 			'llms_cache_hash'  => '',
 			'llms_cache_settings_hash' => '',
 		);
+	}
+
+	/**
+	 * Sanitize custom markdown inserted into llms.txt.
+	 *
+	 * We do NOT attempt to fully parse Markdown here; the goal is to keep it as-is
+	 * while normalizing newlines and trimming.
+	 *
+	 * @param string $value
+	 * @return string
+	 */
+	private function sanitize_llms_custom_markdown( $value ) {
+		$value = (string) $value;
+		$value = str_replace( array( "\r\n", "\r" ), "\n", $value );
+		return trim( $value );
 	}
 
 	/**
