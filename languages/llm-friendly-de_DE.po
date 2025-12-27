@@ -3,8 +3,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1: 2);\n"
 "Project-Id-Version: LLM Friendly\n"
-"POT-Creation-Date: 2025-12-26 19:07+0300\n"
-"PO-Revision-Date: 2025-12-26 19:22+0300\n"
+"POT-Creation-Date: 2025-12-27 15:35+0300\n"
+"PO-Revision-Date: 2025-12-27 15:53+0300\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,248 +14,219 @@ msgstr ""
 "X-Poedit-Flags-xgettext: --add-comments=translators:\n"
 "X-Poedit-WPHeader: llm-friendly.php\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
-"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
-"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
 "Last-Translator: \n"
-"Language: de_DE\n"
+"Language: ru_RU\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 
-#. Plugin Name of the plugin/theme
-#: inc/Admin.php:51 inc/Admin.php:52 inc/Admin.php:194
-msgid "LLM Friendly"
-msgstr "LLM Friendly"
-
-#: inc/Admin.php:73
+#: inc/Admin.php:76
 msgid "General"
 msgstr "Allgemein"
 
-#: inc/Admin.php:80
+#: inc/Admin.php:83
 msgid "Enable Markdown exports"
 msgstr "Markdown-Exporte aktivieren"
 
-#: inc/Admin.php:88
+#: inc/Admin.php:91
+msgid "Send \"noindex\" header for Markdown exports"
+msgstr "„noindex“-Header für Markdown-Exporte senden"
+
+#: inc/Admin.php:99
 msgid "Base path for Markdown exports"
 msgstr "Basispfad für Markdown-Exporte"
 
-#: inc/Admin.php:96
+#: inc/Admin.php:107
 msgid "Post types to include"
-msgstr "Inhaltstypen einbeziehen"
+msgstr "Einzuschließende Beitragstypen"
 
-#: inc/Admin.php:104
+#: inc/Admin.php:115
 msgid "llms.txt"
 msgstr "llms.txt"
 
-#: inc/Admin.php:111
+#: inc/Admin.php:122
 msgid "Enable llms.txt"
 msgstr "llms.txt aktivieren"
 
-#: inc/Admin.php:119
+#: inc/Admin.php:130
 msgid "Send \"noindex\" header for llms.txt"
-msgstr "Header „noindex“ für llms.txt senden"
+msgstr "„noindex“-Header für llms.txt senden"
 
-#: inc/Admin.php:127
+#: inc/Admin.php:138
 msgid "Regeneration mode"
-msgstr "Regenerationsmodus"
+msgstr "Regenerierungsmodus"
 
-#: inc/Admin.php:135
+#: inc/Admin.php:146
 msgid "Items per post type"
-msgstr "Einträge pro Inhaltstyp"
+msgstr "Elemente pro Beitragstyp"
 
-#: inc/Admin.php:143
+#: inc/Admin.php:154
+msgid "Show excerpt"
+msgstr "Auszug anzeigen"
+
+#: inc/Admin.php:162
 msgid "Sitemap URL"
 msgstr "Sitemap-URL"
 
-#: inc/Admin.php:151
+#: inc/Admin.php:170
+msgid "Custom markdown block"
+msgstr "Benutzerdefinierter Markdown-Block"
+
+#: inc/Admin.php:178
 msgid "Site meta overrides"
-msgstr "Überschreiben der Site-Metadaten"
+msgstr "Überschreibungen der Website-Metadaten"
 
-#: inc/Admin.php:158
+#: inc/Admin.php:185
 msgid "Site title override"
-msgstr "Überschreiben des Site-Titels"
+msgstr "Website-Titel überschreiben"
 
-#: inc/Admin.php:166
+#: inc/Admin.php:193
 msgid "Site description override"
-msgstr "Überschreiben der Site-Beschreibung"
+msgstr "Website-Beschreibung überschreiben"
 
-#: inc/Admin.php:198
+#: inc/Admin.php:249
+msgid "Markdown override"
+msgstr "Markdown-Überschreibung"
+
+#: inc/Admin.php:250
+msgid "Override content for Markdown export"
+msgstr "Inhalt für den Markdown-Export überschreiben"
+
+#: inc/Admin.php:251
+msgid "If filled, this text will be exported as the Markdown body instead of the post content. Leave empty to use the post content. You can paste Markdown here; if it contains Gutenberg block markup (<!-- wp: ... -->), it will be converted to Markdown."
+msgstr "Wenn ausgefüllt, wird dieser Text als Markdown-Body statt des Beitragsinhalts exportiert. Leer lassen, um den Beitragsinhalt zu verwenden. Du kannst hier Markdown einfügen; enthält es Gutenberg-Block-Markup (<!-- wp: ... -->), wird es zu Markdown konvertiert."
+
+#: inc/Admin.php:269
 msgid "llms.txt was regenerated."
 msgstr "llms.txt wurde neu erstellt."
 
-#: inc/Admin.php:206
+#: inc/Admin.php:277
 msgid "Save changes"
 msgstr "Änderungen speichern"
 
-#: inc/Admin.php:210
+#: inc/Admin.php:281
 msgid "Maintenance"
 msgstr "Wartung"
 
-#: inc/Admin.php:214
+#: inc/Admin.php:285
 msgid "Regenerate llms.txt now"
 msgstr "llms.txt jetzt neu erstellen"
 
-#. translators: 1: datetime
-#: inc/Admin.php:225
-#, php-format
-msgid "Last llms.txt build: %s"
-msgstr "Letzte llms.txt-Erstellung: %s"
-
-#. translators: %d = milliseconds
-#: inc/Admin.php:231
-#, php-format
-msgid "%d ms"
-msgstr "%d ms"
-
-#: inc/Admin.php:239
-msgid "Open:"
-msgstr "Öffnen:"
-
-#: inc/Admin.php:240
-msgid "llms.txt (pretty URL)"
-msgstr "llms.txt (sprechende URL)"
-
-#: inc/Admin.php:242
-msgid "llms.txt (query var fallback)"
-msgstr "llms.txt (Fallback über Query-Var)"
-
-#: inc/Admin.php:245
+#: inc/Admin.php:287
 msgid "Rebuilds cached llms.txt immediately."
 msgstr "Erstellt das zwischengespeicherte llms.txt sofort neu."
 
-#: inc/Admin.php:257
+#: inc/Admin.php:299
 msgid "Access denied."
 msgstr "Zugriff verweigert."
 
-#: inc/Admin.php:290
+#: inc/Admin.php:326
 msgid "Enable .md endpoints for selected post types"
-msgstr ".md-Endpunkte für ausgewählte Inhaltstypen aktivieren"
+msgstr ".md-Endpunkte für ausgewählte Beitragstypen aktivieren"
 
-#: inc/Admin.php:304
+#: inc/Admin.php:339
+msgid "Add X-Robots-Tag: noindex, nofollow header for .md endpoints"
+msgstr "X-Robots-Tag: noindex, nofollow für .md-Endpunkte hinzufügen"
+
+#: inc/Admin.php:354
 msgid "Example: \"llm\" → /llm/{post_type}/{path}.md"
 msgstr "Beispiel: „llm“ → /llm/{post_type}/{path}.md"
 
-#: inc/Admin.php:336
+#: inc/Admin.php:386
 msgid "These types will appear in llms.txt and will have Markdown exports."
 msgstr "Diese Typen erscheinen in llms.txt und erhalten Markdown-Exporte."
 
-#: inc/Admin.php:351
+#: inc/Admin.php:401
 msgid "Serve /llms.txt"
 msgstr "/llms.txt ausliefern"
 
-#: inc/Admin.php:366
+#: inc/Admin.php:416
 msgid "Send X-Robots-Tag: noindex, nofollow for /llms.txt"
 msgstr "X-Robots-Tag: noindex, nofollow für /llms.txt senden"
 
-#: inc/Admin.php:380
+#: inc/Admin.php:430
 msgid "Auto (on publish/update)"
 msgstr "Automatisch (bei Veröffentlichung/Aktualisierung)"
 
-#: inc/Admin.php:381
+#: inc/Admin.php:431
 msgid "Manual only"
 msgstr "Nur manuell"
 
-#: inc/Admin.php:384
-msgid ""
-"In manual mode, use the button in the Maintenance section to rebuild llms.txt."
-msgstr ""
-"Im manuellen Modus verwende die Schaltfläche im Abschnitt „Wartung“, umllms.txt "
-"neu zu erstellen."
+#: inc/Admin.php:434
+msgid "In manual mode, use the button in the Maintenance section to rebuild llms.txt."
+msgstr "Im manuellen Modus die Schaltfläche im Abschnitt „Wartung“ verwenden, um llms.txt neu zu erstellen."
 
-#: inc/Admin.php:397
+#: inc/Admin.php:447
 msgid "How many latest items to list for each post type."
-msgstr "Wie viele der neuesten Einträge pro Inhaltstyp auflisten."
+msgstr "Wie viele der neuesten Elemente pro Beitragstyp aufgelistet werden sollen."
 
-#: inc/Admin.php:410
+#: inc/Admin.php:461
+msgid "Add excerpt (if available) under each item in llms.txt"
+msgstr "Auszug (falls vorhanden) unter jedem Eintrag in llms.txt hinzufügen"
+
+#: inc/Admin.php:475
 msgid "Absolute URL or site-relative path. Default: /sitemap.xml"
-msgstr "Absolute URL oder site-relativer Pfad. Standard: /sitemap.xml"
+msgstr "Absolute URL oder relativ zur Website. Standard: /sitemap.xml"
 
-#: inc/Admin.php:423
+#: inc/Admin.php:490
+msgid "Optional markdown inserted into llms.txt between the site meta and the content sections. Leave empty to insert nothing."
+msgstr "Optionales Markdown, das in llms.txt zwischen den Website-Metadaten und den Inhaltsabschnitten eingefügt wird. Leer lassen, um nichts einzufügen."
+
+#: inc/Admin.php:504
 msgid "If empty, uses WordPress setting: Site Title."
-msgstr "Wenn leer, wird die WordPress-Einstellung „Seitentitel“ verwendet."
+msgstr "Wenn leer, wird die WordPress-Einstellung „Website-Titel“ verwendet."
 
-#: inc/Admin.php:436
+#: inc/Admin.php:517
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr "Wenn leer, wird die WordPress-Einstellung „Untertitel“ verwendet."
 
-#: inc/Llms.php:104 inc/Plugin.php:289
+#: inc/Admin.php:545
+msgid "Markdown override (LLM Friendly)"
+msgstr "Markdown-Überschreibung (LLM Friendly)"
+
+#: inc/Admin.php:573
+msgid "If filled, this text will replace the post content in the Markdown export."
+msgstr "Wenn ausgefüllt, ersetzt dieser Text den Beitragsinhalt im Markdown-Export."
+
+#: inc/Admin.php:575
+msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
+msgstr "Leer lassen, um den Beitragsinhalt zu exportieren. Du kannst reines Markdown oder Gutenberg-Block-Markup (<!-- wp: ... -->) einfügen."
+
+#: inc/Exporter.php:43 inc/Exporter.php:49 inc/Llms.php:139 inc/Plugin.php:272
 msgid "Not Found"
 msgstr "Nicht gefunden"
 
-#: inc/Llms.php:145
+#: inc/Llms.php:188
 msgid "LLM-friendly index of this website."
 msgstr "LLM-freundlicher Index dieser Website."
 
-#: inc/Llms.php:169
-msgid "This file helps LLMs navigate the site and find authoritative content."
-msgstr ""
-"Diese Datei hilft LLMs, die Website zu navigieren und maßgebliche Inhalte zufinden."
-
-#: inc/Llms.php:170
-msgid "Markdown exports are available under the configured base path:"
-msgstr "Markdown-Exporte sind unter dem konfigurierten Basispfad verfügbar:"
-
-#: inc/Llms.php:172
-#, php-format
-msgid "Pattern: %s"
-msgstr "Muster: %s"
-
-#: inc/Llms.php:176
-#, php-format
-msgid "Back-compat for posts: %s"
-msgstr "Abwärtskompatibilität für Beiträge: %s"
-
-#: inc/Llms.php:181
-msgid "Main links"
-msgstr "Hauptlinks"
-
-#: inc/Llms.php:182
-msgid "Home"
-msgstr "Startseite"
-
-#: inc/Llms.php:182
-msgid "Website home page"
-msgstr "Startseite der Website"
-
-#: inc/Llms.php:183
-msgid "Sitemap"
-msgstr "Sitemap"
-
-#: inc/Llms.php:183
-msgid "XML sitemap"
-msgstr "XML-Sitemap"
-
-#: inc/Llms.php:184
-msgid "RSS"
-msgstr "RSS"
-
-#: inc/Llms.php:184
+#: inc/Llms.php:224
 msgid "Latest updates feed"
-msgstr "Feed der neuesten Aktualisierungen"
+msgstr "Feed der neuesten Updates"
 
-#. translators: %s = post type label (plural)
-#: inc/Llms.php:194
-#, php-format
-msgid "%s"
-msgstr "%s"
-
-#: inc/Llms.php:201
+#: inc/Llms.php:239
 msgid "(no published items found)"
-msgstr "(keine veröffentlichten Einträge gefunden)"
+msgstr "(keine veröffentlichten Elemente gefunden)"
 
-#. translators: 1: modified date, 2: canonical url
-#: inc/Llms.php:211
+#. translators: 1: current PHP version, 2: required PHP version
+#: llm-friendly.php:52
 #, php-format
-msgid "Updated %1$s. Canonical URL: %2$s"
-msgstr "Aktualisiert %1$s. Kanonische URL: %2$s"
+msgid "LLM Friendly requires PHP %2$s or newer. You are running %1$s."
+msgstr "LLM Friendly benötigt PHP %2$s oder neuer. Du verwendest %1$s."
+
+#. translators: 1: current WP version, 2: required WP version
+#: llm-friendly.php:61
+#, php-format
+msgid "LLM Friendly requires WordPress %2$s or newer. You are running %1$s."
+msgstr "LLM Friendly benötigt WordPress %2$s oder neuer. Du verwendest %1$s."
+
+#: llm-friendly.php:84
+msgid "LLM Friendly cannot be activated because the environment does not meet the minimum requirements."
+msgstr "LLM Friendly kann nicht aktiviert werden, da die Umgebung die Mindestanforderungen nicht erfüllt."
 
 #. Description of the plugin/theme
-msgid ""
-"llms.txt + Markdown-представления записей для удобного чтения LLM (эндпоинты /llms."
-"txt и /{base}/{post_type}/{path}.md)."
-msgstr ""
-"llms.txt + Markdown-Darstellungen von Beiträgen für ein bequemes Lesen durchLLMs "
-"(Endpunkte /llms.txt und /{base}/{post_type}/{path}.md)."
+msgid "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access."
+msgstr "Fügt llms.txt und Markdown-Endpunkte zu WordPress hinzu, um LLM-freundlichen Zugriff auf Inhalte zu ermöglichen."
 
 #. Author of the plugin/theme
 msgid "Pavel Sherer"
