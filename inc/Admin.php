@@ -37,6 +37,9 @@ final class Admin {
 		if (is_admin()) {
 			add_action('admin_menu', array($this, 'admin_menu'));
 			add_action('admin_init', array($this, 'admin_init'));
+			add_action('enqueue_block_editor_assets', array($this, 'enqueue_block_editor_assets'));
+			add_action('add_meta_boxes', array($this, 'maybe_add_md_override_metabox'), 10, 2);
+			add_action('save_post', array($this, 'save_md_override_metabox'), 10, 2);
 			add_action('admin_post_llmf_regenerate_llms', array($this, 'handle_regenerate_llms'));
 		}
 	}
@@ -48,8 +51,8 @@ final class Admin {
 	 */
 	public function admin_menu() {
 		add_options_page(
-			__('LLM Friendly', 'llm-friendly'),
-			__('LLM Friendly', 'llm-friendly'),
+			__('LLM Friendly'),
+			__('LLM Friendly'),
 			'manage_options',
 			'llm-friendly',
 			array($this, 'render_page')
@@ -209,13 +212,57 @@ final class Admin {
 	 *
 	 * @return void
 	 */
-	public function render_page() {
+	
+	/**
+	 * Enqueue Gutenberg sidebar UI for Markdown override.
+	 *
+	 * @return void
+	 */
+	public function enqueue_block_editor_assets() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
+		$opt   = $this->options->get();
+		$types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
+		$types = array_values( array_filter( array_map( 'sanitize_key', $types ) ) );
+
+		$handle = 'llmf-md-override';
+		$src    = trailingslashit( LLMF_URL ) . 'assets/llmf-md-override.js';
+
+		wp_enqueue_script(
+			$handle,
+			$src,
+			array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data' ),
+			defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : false,
+			true
+		);
+
+		wp_set_script_translations( $handle, 'llm-friendly' );
+
+		wp_add_inline_script(
+			$handle,
+			'window.LLMF_MD_OVERRIDE = ' . wp_json_encode(
+				array(
+					'metaKey'    => Exporter::META_MD_OVERRIDE,
+					'postTypes'  => $types,
+					'panelTitle' => __( 'Markdown override', 'llm-friendly' ),
+					'label'      => __( 'Override content for Markdown export', 'llm-friendly' ),
+					'help'       => __( 'If filled, this text will be exported as the Markdown body instead of the post content. Leave empty to use the post content. You can paste Markdown here; if it contains Gutenberg block markup (<!-- wp: ... -->), it will be converted to Markdown.', 'llm-friendly' ),
+				),
+				JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+			) . ';',
+			'before'
+		);
+	}
+
+public function render_page() {
 		if (!current_user_can('manage_options')) {
 			return;
 		}
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__('LLM Friendly', 'llm-friendly') . '</h1>';
+		echo '<h1>' . esc_html__('LLM Friendly') . '</h1>';
 
 		if (isset($_GET['llmf_msg']) && $_GET['llmf_msg'] === 'regen_ok') {
 			echo '<div class="notice notice-success is-dismissible"><p>' .
@@ -469,4 +516,126 @@ public function field_llms_custom_markdown() {
 		echo '<input type="text" class="regular-text" name="' . esc_attr(Options::OPTION_KEY) . '[site_description_override]" value="' . esc_attr($v) . '" />';
 		echo '<p class="description">' . esc_html__('If empty, uses WordPress setting: Tagline.', 'llm-friendly') . '</p>';
 	}
+
+	/**
+	 * Classic Editor metabox: add UI for Markdown override (only when Gutenberg is not used).
+	 *
+	 * @param string  $post_type
+	 * @param WP_Post $post
+	 * @return void
+	 */
+	public function maybe_add_md_override_metabox( $post_type, $post ) {
+		if ( ! ( $post instanceof \WP_Post ) ) {
+			return;
+		}
+
+		$opt     = $this->options->get();
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
+		if ( ! in_array( (string) $post_type, $allowed, true ) ) {
+			return;
+		}
+
+		// Hide metabox in Gutenberg, because we already have a sidebar panel there.
+		if ( function_exists( 'use_block_editor_for_post' ) && use_block_editor_for_post( $post ) ) {
+			return;
+		}
+
+		add_meta_box(
+			'llmf-md-override',
+			__( 'Markdown override (LLM Friendly)', 'llm-friendly' ),
+			array( $this, 'render_md_override_metabox' ),
+			$post_type,
+			'normal',
+			'high'
+		);
+	}
+
+	/**
+	 * Render Classic Editor metabox.
+	 *
+	 * @param WP_Post $post
+	 * @return void
+	 */
+	public function render_md_override_metabox( $post ) {
+		if ( ! ( $post instanceof \WP_Post ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+			return;
+		}
+
+		$val = get_post_meta( $post->ID, Exporter::META_MD_OVERRIDE, true );
+		$val = is_string( $val ) ? $val : '';
+
+		wp_nonce_field( 'llmf_md_override_save', 'llmf_md_override_nonce' );
+
+		echo '<p class="description">' . esc_html__( 'If filled, this text will replace the post content in the Markdown export.', 'llm-friendly' ) . '</p>';
+		echo '<textarea style="width:100%;min-height:240px" name="llmf_md_content_override">' . esc_textarea( $val ) . '</textarea>';
+		echo '<p class="description">' . esc_html__( 'Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->).', 'llm-friendly' ) . '</p>';
+	}
+
+	/**
+	 * Save Classic Editor metabox value.
+	 *
+	 * @param int     $post_id
+	 * @param WP_Post $post
+	 * @return void
+	 */
+	public function save_md_override_metabox( $post_id, $post ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( function_exists( 'wp_is_post_revision' ) && wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		if ( function_exists( 'wp_is_post_autosave' ) && wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		if ( ! isset( $_POST['llmf_md_override_nonce'] ) ) {
+			return;
+		}
+
+		$nonce = sanitize_text_field( wp_unslash( $_POST['llmf_md_override_nonce'] ) );
+		if ( ! wp_verify_nonce( $nonce, 'llmf_md_override_save' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		if ( ! ( $post instanceof \WP_Post ) ) {
+			$post = get_post( $post_id );
+			if ( ! ( $post instanceof \WP_Post ) ) {
+				return;
+			}
+		}
+
+		$opt     = $this->options->get();
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
+		if ( ! in_array( (string) $post->post_type, $allowed, true ) ) {
+			return;
+		}
+
+		$value = isset( $_POST['llmf_md_content_override'] ) ? (string) wp_unslash( $_POST['llmf_md_content_override'] ) : '';
+		$value = trim( $value );
+
+		if ( $value === '' ) {
+			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
+			return;
+		}
+
+		update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, $value );
+	}
+
+
 }

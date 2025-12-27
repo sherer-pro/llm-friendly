@@ -105,21 +105,21 @@ final class Llms {
 		$saved['llms_cache_ts']  = $ts;
 		$saved['llms_cache_rev'] = $rev;
 
-		$settings = $this->options->get();
+		$settings        = $this->options->get();
 		$settings_subset = array(
-			'enabled_markdown'             => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
-			'enabled_llms_txt'             => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
-			'base_path'                    => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
-			'post_types'                   => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
-			'llms_recent_limit'            => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
-			'site_title_override'          => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
-			'site_description_override'    => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
-			'sitemap_url'                  => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
-			'llms_custom_markdown'         => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
-			'llms_show_excerpt'            => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
+			'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
+			'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
+			'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+			'post_types'                => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
+			'llms_recent_limit'         => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
+			'site_title_override'       => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
+			'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
+			'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
+			'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
+			'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
 		);
 
-		$saved['llms_cache_hash'] = sha1( (string) $content );
+		$saved['llms_cache_hash']          = sha1( (string) $content );
 		$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
 
 		update_option( Options::OPTION_KEY, $saved, false );
@@ -215,13 +215,13 @@ final class Llms {
 			$blocks[] = $custom;
 		}
 
-		$blocks[] = '## ' . __( 'Main links', 'llm-friendly' );
+		$blocks[] = '## ' . __( 'Main links' );
 		$blocks[] = implode(
 			"\n",
 			array(
-				'- [' . $this->md_link_text( __( 'Home', 'llm-friendly' ) ) . '](' . $home . '): ' . __( 'Website home page', 'llm-friendly' ),
-				'- [' . $this->md_link_text( __( 'Sitemap', 'llm-friendly' ) ) . '](' . $sitemap . '): ' . __( 'XML sitemap', 'llm-friendly' ),
-				'- [' . $this->md_link_text( __( 'RSS', 'llm-friendly' ) ) . '](' . $rss . '): ' . __( 'Latest updates feed', 'llm-friendly' ),
+				'- [' . $this->md_link_text( __( 'Home' ) ) . '](' . $home . '): ' . __( 'Website home page' ),
+				'- [' . $this->md_link_text( __( 'Sitemap' ) ) . '](' . $sitemap . '): ' . __( 'XML sitemap' ),
+				'- [' . $this->md_link_text( __( 'RSS' ) ) . '](' . $rss . '): ' . __( 'Latest updates feed' ),
 			)
 		);
 
@@ -240,29 +240,29 @@ final class Llms {
 				continue;
 			}
 
-						$item_blocks = array();
+			$item_blocks = array();
 
 
 			foreach ( $items as $item ) {
 				$item_lines = array();
-				$title_txt = isset( $item['title'] ) ? (string) $item['title'] : '';
-				$path      = isset( $item['path'] ) ? (string) $item['path'] : '';
-				$canonical = isset( $item['canonical'] ) ? (string) $item['canonical'] : '';
-				$modified  = isset( $item['modified'] ) ? (string) $item['modified'] : '';
-				$excerpt   = isset( $item['excerpt'] ) ? (string) $item['excerpt'] : '';
+				$title_txt  = isset( $item['title'] ) ? (string) $item['title'] : '';
+				$path       = isset( $item['path'] ) ? (string) $item['path'] : '';
+				$canonical  = isset( $item['canonical'] ) ? (string) $item['canonical'] : '';
+				$modified   = isset( $item['modified'] ) ? (string) $item['modified'] : '';
+				$excerpt    = isset( $item['excerpt'] ) ? (string) $item['excerpt'] : '';
 
 				if ( $md_enabled ) {
-					$md_url = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
-					$notes  = sprintf(
-						/* translators: 1: modified date, 2: canonical url */
+					$md_url       = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
+					$notes        = sprintf(
+					/* translators: 1: modified date, 2: canonical url */
 						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
 						$modified,
 						$canonical
 					);
 					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . $notes;
 				} else {
-					$notes  = sprintf(
-						/* translators: 1: modified date */
+					$notes        = sprintf(
+					/* translators: 1: modified date */
 						__( 'Updated %1$s.', 'llm-friendly' ),
 						$modified
 					);
@@ -413,9 +413,9 @@ final class Llms {
 
 		// 3) Fallback: derive a short snippet from content.
 		if ( $excerpt === '' ) {
-			$raw = wp_strip_all_tags( (string) $post->post_content, true );
-			$raw = html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-			$raw = $this->one_line( $raw );
+			$raw     = wp_strip_all_tags( (string) $post->post_content, true );
+			$raw     = html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$raw     = $this->one_line( $raw );
 			$excerpt = wp_trim_words( $raw, 30, '…' );
 		}
 

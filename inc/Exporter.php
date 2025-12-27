@@ -13,6 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Exporter {
 	/**
+	 * Post meta key used to override Markdown body.
+	 */
+	public const META_MD_OVERRIDE = '_llmf_md_content_override';
+
+	/**
 	 * @var Options
 	 */
 	private $options;
@@ -47,10 +52,15 @@ final class Exporter {
 
 		$modified = $this->post_modified_timestamp( $post );
 		$ver      = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : '0';
-		$key      = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified;
+
+		// Markdown override affects cache key (post meta updates don't change post_modified).
+		$override      = $this->get_markdown_override( $post );
+		$override_hash = $override !== '' ? md5( $override ) : '0';
+
+		$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash;
 		$md       = get_transient( $key );
 		if ( ! is_string( $md ) || $md === '' ) {
-			$md = $this->post_to_markdown( $post );
+			$md = $this->post_to_markdown( $post, $override );
 			$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
 			if ( $ttl < 0 ) {
 				$ttl = 0;
@@ -80,7 +90,18 @@ $headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 	 *
 	 * @return string
 	 */
-	private function post_to_markdown( WP_Post $post ) {
+	/**
+	 * Get Markdown override body from post meta.
+	 *
+	 * @param WP_Post $post Post.
+	 * @return string
+	 */
+	private function get_markdown_override( WP_Post $post ) {
+		$val = get_post_meta( $post->ID, self::META_MD_OVERRIDE, true );
+		return is_string( $val ) ? $val : '';
+	}
+
+	private function post_to_markdown( WP_Post $post, $override_md = '' ) {
 		$meta = array(
 			'title'         => get_the_title( $post ),
 			'url'           => get_permalink( $post ),
@@ -91,10 +112,22 @@ $headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 
 		$meta_json = wp_json_encode( $meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
 
-		$blocks = parse_blocks( (string) $post->post_content );
-		$body   = trim( $this->blocks_to_markdown( $blocks ) );
+		$override_md = is_string( $override_md ) ? $override_md : '';
+		$override_md = trim( $override_md );
 
-		$out   = array();
+		if ( $override_md !== '' ) {
+			// If override contains Gutenberg block markup, convert it; otherwise treat as Markdown body.
+			if ( strpos( $override_md, '<!-- wp:' ) !== false ) {
+				$blocks = parse_blocks( $override_md );
+				$body   = trim( $this->blocks_to_markdown( $blocks ) );
+			} else {
+				$body = $override_md;
+			}
+		} else {
+			$blocks = parse_blocks( (string) $post->post_content );
+			$body   = trim( $this->blocks_to_markdown( $blocks ) );
+		}
+$out   = array();
 		$out[] = '```json';
 		$out[] = $meta_json ? $meta_json : '{}';
 		$out[] = '```';
