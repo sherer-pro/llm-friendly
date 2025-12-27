@@ -32,9 +32,32 @@ final class Exporter {
 	 * @return void
 	 */
 	public function output_markdown( WP_Post $post ) {
-		$md = $this->post_to_markdown( $post );
+		// Do not export password-protected content.
+		if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
+			status_header( 404 );
+			echo esc_html__( 'Not Found', 'llm-friendly' );
+			exit;
+		}
+		$can = apply_filters( 'llmf_can_export_post', true, $post, 'markdown' );
+		if ( ! $can ) {
+			status_header( 404 );
+			echo esc_html__( 'Not Found', 'llm-friendly' );
+			exit;
+		}
 
-		$headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
+		$modified = $this->post_modified_timestamp( $post );
+		$ver      = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : '0';
+		$key      = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified;
+		$md       = get_transient( $key );
+		if ( ! is_string( $md ) || $md === '' ) {
+			$md = $this->post_to_markdown( $post );
+			$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
+			if ( $ttl < 0 ) {
+				$ttl = 0;
+			}
+			set_transient( $key, $md, $ttl );
+		}
+$headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 		$opt     = $this->options->get();
 		if ( ! empty( $opt['md_send_noindex'] ) ) {
 			$headers[] = 'X-Robots-Tag: noindex, nofollow';
@@ -909,17 +932,22 @@ final class Exporter {
 	 * @return void
 	 */
 	private function send_common_headers( $headers, $etag, $last_modified_ts ) {
-		nocache_headers();
 		status_header( 200 );
+
+		if ( is_array( $headers ) ) {
+			foreach ( $headers as $h ) {
+				if ( is_string( $h ) && $h !== '' ) {
+					header( $h );
+				}
+			}
+		}
 
 		$last_modified_ts = max( 1, (int) $last_modified_ts );
 		$last_modified    = gmdate( 'D, d M Y H:i:s', $last_modified_ts ) . ' GMT';
 
 		header( 'ETag: ' . $etag );
 		header( 'Last-Modified: ' . $last_modified );
-		header( 'Cache-Control: no-store, max-age=0, must-revalidate' );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
+		header( 'Cache-Control: public, max-age=0, must-revalidate' );
 
 		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) : '';
 		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? trim( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) : '';

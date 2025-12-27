@@ -141,7 +141,24 @@ if ($changed) {
 	if (!isset($out['llms_cache_hash'])) $out['llms_cache_hash'] = '';
 }
 
-		return $out;
+		
+		// Flush rewrite rules when endpoint-related settings change.
+		$rewrite_keys = array( 'enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types' );
+		$rewrite_changed = false;
+		foreach ( $rewrite_keys as $k ) {
+			$prev_v = isset( $prev[ $k ] ) ? $prev[ $k ] : null;
+			$now_v  = isset( $out[ $k ] ) ? $out[ $k ] : null;
+			if ( $prev_v != $now_v ) {
+				$rewrite_changed = true;
+				break;
+			}
+		}
+		if ( $rewrite_changed ) {
+			// Defer flushing to admin_init to avoid flushing multiple times during option save.
+			set_transient( 'llmf_flush_rewrite_rules', 1, 10 * MINUTE_IN_SECONDS );
+		}
+
+return $out;
 	}
 
 	/**
