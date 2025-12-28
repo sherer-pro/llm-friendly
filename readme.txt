@@ -25,11 +25,12 @@ This is useful for LLMs, indexing bots, and users who prefer plain text.
 
 = Key features =
 
-* llms.txt endpoint with cached generation
-* Markdown exports for selected post types
-* Configurable base path for exports (e.g. "llm")
-* Manual or automatic regeneration
-* Optional X-Robots-Tag: noindex, nofollow for /llms.txt
+* llms.txt endpoint with cached generation, optional excerpts, and a configurable custom Markdown block.
+* Markdown exports for selected post types with Gutenberg-to-Markdown conversion and per-post Markdown overrides.
+* Configurable base path for exports (e.g. "llm") and per-post-type enable/disable toggles.
+* Manual or automatic regeneration of the cached llms.txt with ETag/Last-Modified headers.
+* Optional X-Robots-Tag: noindex, nofollow for both /llms.txt and Markdown exports.
+* Optional site title/description overrides plus a sitemap URL field for the generated llms.txt.
 
 = Requirements =
 
@@ -64,8 +65,10 @@ Most often this is a rewrite or web-server routing issue. If you run Nginx in fr
 == Changelog ==
 
 = 0.4.1 =
-* Minimum requirements check (WordPress 6.0+, PHP 7.4+)
-* Admin notice when requirements are not met
+* Aligns plugin metadata to version 0.4.1.
+* Markdown exports: per-post-type enablement, optional `noindex` header, Gutenberg-to-Markdown conversion, and a per-post override field.
+* llms.txt: automatic or manual regeneration with caching headers, optional excerpts, optional custom Markdown block, sitemap URL field, and site meta overrides.
+* Adds minimum requirements check (WordPress 6.0+, PHP 7.4+) with admin notices and safe auto-deactivation on unsupported environments.
 
 == Upgrade Notice ==
 
