@@ -250,6 +250,32 @@ $tests['recent_limit_is_clamped'] = function () {
 	assert_same(200, $result_high['llms_recent_limit'], 'Лимит должен быть не больше 200');
 };
 
+$tests['custom_markdown_is_normalized'] = function () {
+	reset_state();
+	$options = new Options();
+	add_option(Options::OPTION_KEY, $options->defaults());
+
+	$input = $options->defaults();
+	$input['llms_custom_markdown'] = " \0# Заголовок\r\nСтрока\r\n\r\n";
+
+	$result = $options->sanitize($input);
+
+	assert_same("# Заголовок\nСтрока", $result['llms_custom_markdown'], 'Markdown должен очищаться от нулевых байтов и нормализовать переносы строк');
+};
+
+$tests['base_path_falls_back_to_default'] = function () {
+	reset_state();
+	$options = new Options();
+	add_option(Options::OPTION_KEY, $options->defaults());
+
+	$input = $options->defaults();
+	$input['base_path'] = '   ';
+
+	$result = $options->sanitize($input);
+
+	assert_same('llm', $result['base_path'], 'Пустой или некорректный base_path должен заменяться на llm');
+};
+
 // --------------------------------------------------------------
 // Выполнение тестов.
 // --------------------------------------------------------------

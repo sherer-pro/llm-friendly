@@ -13,41 +13,41 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Plugin {
 	/**
-	 * @var Plugin|null
+	 * @var Plugin|null Единственный экземпляр плагина (Singleton).
 	 */
-	private static $instance = null;
+	private static ?Plugin $instance = null;
 
 	/**
-	 * @var Options
+	 * @var Options Объект работы с настройками.
 	 */
-	private $options;
+	private Options $options;
 
 	/**
-	 * @var Rewrites
+	 * @var Rewrites Сервис регистрации rewrite-правил.
 	 */
-	private $rewrites;
+	private Rewrites $rewrites;
 
 	/**
-	 * @var Exporter
+	 * @var Exporter Конвертер контента в Markdown.
 	 */
-	private $exporter;
+	private Exporter $exporter;
 
 	/**
-	 * @var Llms
+	 * @var Llms Генератор llms.txt.
 	 */
-	private $llms;
+	private Llms $llms;
 
 	/**
-	 * @var Admin
+	 * @var Admin Админ-интерфейс плагина.
 	 */
-	private $admin;
+	private Admin $admin;
 
 	/**
 	 * Get singleton instance.
 	 *
 	 * @return Plugin
 	 */
-	public static function instance() {
+	public static function instance(): Plugin {
 		if ( self::$instance instanceof self ) {
 			return self::$instance;
 		}
@@ -63,7 +63,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	private function boot() {
+	private function boot(): void {
 		$this->options  = new Options();
 		$this->rewrites = new Rewrites( $this->options );
 		$this->exporter = new Exporter( $this->options );
@@ -84,7 +84,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public static function activate() {
+	public static function activate(): void {
 		$options = new Options();
 		$options->ensure_defaults();
 
@@ -98,7 +98,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public static function deactivate() {
+	public static function deactivate(): void {
 		flush_rewrite_rules();
 	}
 
@@ -109,7 +109,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function maybe_flush_rewrites() {
+	public function maybe_flush_rewrites(): void {
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -137,7 +137,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function register_editor_meta() {
+	public function register_editor_meta(): void {
 		$opt   = $this->options->get();
 		$types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
 		$types = array_values( array_filter( array_map( 'sanitize_key', $types ) ) );
@@ -181,7 +181,7 @@ final class Plugin {
 	 * @param mixed $value Value to sanitize.
 	 * @return string
 	 */
-	public function sanitize_md_override_meta( $value ) {
+	public function sanitize_md_override_meta( $value ): string {
 		$value = is_string( $value ) ? $value : '';
 		$value = wp_unslash( $value );
 
@@ -197,7 +197,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function init() {
+	public function init(): void {
 		$this->rewrites->add_rules();
 		$this->register_editor_meta();
 	}
@@ -207,7 +207,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function load_textdomain() {
+	public function load_textdomain(): void {
 		load_plugin_textdomain(
 			'llm-friendly',
 			false,
@@ -220,7 +220,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function template_redirect() {
+	public function template_redirect(): void {
 		if ( (int) get_query_var( Rewrites::QV_LLMS ) === 1 ) {
 			$this->llms->output();
 			exit;
@@ -253,7 +253,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	private function send_404() {
+	private function send_404(): void {
 		global $wp_query;
 
 		if ( $wp_query ) {
@@ -282,7 +282,7 @@ final class Plugin {
 	 *
 	 * @return WP_Post|null
 	 */
-	private function find_post_by_path( $post_type, $path ) {
+	private function find_post_by_path( string $post_type, string $path ): ?WP_Post {
 		$post_type = sanitize_key( (string) $post_type );
 		$path      = trim( (string) $path );
 
@@ -321,7 +321,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function output_alternate_markdown_link() {
+	public function output_alternate_markdown_link(): void {
 		if ( ! is_singular() ) {
 			return;
 		}

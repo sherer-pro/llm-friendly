@@ -16,12 +16,12 @@ final class Llms {
 	/**
 	 * @var Options
 	 */
-	private $options;
+	private Options $options;
 
 	/**
 	 * @param Options $options
 	 */
-	public function __construct( $options ) {
+	public function __construct( Options $options ) {
 		$this->options = $options;
 
 		add_action( 'save_post', array( $this, 'maybe_regenerate_on_save' ), 20, 3 );
@@ -36,7 +36,7 @@ final class Llms {
 	 *
 	 * @return void
 	 */
-	public function maybe_regenerate_on_save( $post_id, $post, $update ) {
+	public function maybe_regenerate_on_save( int $post_id, WP_Post $post, bool $update ): void {
 		$opt = $this->options->get();
 
 		if ( empty( $opt['enabled_llms_txt'] ) ) {
@@ -72,7 +72,7 @@ final class Llms {
 	 *
 	 * @return void
 	 */
-	public function regenerate( $force = false ) {
+	public function regenerate( bool $force = false ): void {
 		// Manual regeneration must work regardless of the selected regeneration mode.
 		// The mode controls only automatic regeneration on publish/update.
 		$lock_key = 'llmf_llms_regen_lock';
@@ -131,7 +131,7 @@ final class Llms {
 	 *
 	 * @return void
 	 */
-	public function output() {
+	public function output(): void {
 		$opt = $this->options->get();
 
 		if ( empty( $opt['enabled_llms_txt'] ) ) {
@@ -178,7 +178,7 @@ final class Llms {
 	 *
 	 * @return string
 	 */
-	private function build_llms_txt() {
+	private function build_llms_txt(): string {
 		$opt = $this->options->get();
 
 		$title = $this->one_line( $this->options->site_title() );
@@ -296,7 +296,7 @@ final class Llms {
 	 *
 	 * @return array<int,array<string,string>>
 	 */
-	private function get_recent_posts_by_type( $post_type, $limit ) {
+	private function get_recent_posts_by_type( $post_type, $limit ): array {
 		$q = new WP_Query( array(
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
@@ -374,7 +374,7 @@ final class Llms {
 	 *
 	 * @return string
 	 */
-	private function post_excerpt_one_line( $post ) {
+	private function post_excerpt_one_line( WP_Post $post ): string {
 		if ( ! ( $post instanceof WP_Post ) ) {
 			return '';
 		}
@@ -433,7 +433,7 @@ final class Llms {
 	 *
 	 * @return string
 	 */
-	private function md_link_text( $s ) {
+	private function md_link_text( $s ): string {
 		$s = wp_strip_all_tags( (string) $s, true );
 		$s = html_entity_decode( $s, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$s = str_replace( array( '[', ']' ), array( '\[', '\]' ), $s );
@@ -448,7 +448,7 @@ final class Llms {
 	 *
 	 * @return string
 	 */
-	private function rawurlencode_path( $path ) {
+	private function rawurlencode_path( $path ): string {
 		$path  = ltrim( (string) $path, '/' );
 		$parts = explode( '/', $path );
 		$out   = array();
@@ -469,7 +469,7 @@ final class Llms {
 	 *
 	 * @return void
 	 */
-	private function send_common_headers( $headers, $etag, $last_modified_ts, $build_ts = 0, $rev = 0, $hash = '', $settings_hash = '' ) {
+	private function send_common_headers( array $headers, string $etag, int $last_modified_ts, int $build_ts = 0, int $rev = 0, string $hash = '', string $settings_hash = '' ): void {
 		status_header( 200 );
 
 		$header_lines = array();
