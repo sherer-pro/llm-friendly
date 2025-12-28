@@ -64,7 +64,7 @@ final class Options {
 	 */
 	public function sanitize($input) {
 		$input = is_array($input) ? $input : array();
-		$prev = $this->get();
+		$prev  = $this->get();
 
 		$out = $prev;
 
@@ -95,8 +95,12 @@ final class Options {
 		$out['llms_regen_mode'] = $mode;
 
 		$limit = isset($input['llms_recent_limit']) ? (int)$input['llms_recent_limit'] : (int)$prev['llms_recent_limit'];
-		if ($limit < 1) $limit = 1;
-		if ($limit > 200) $limit = 200;
+		if ($limit < 1) {
+			$limit = 1;
+		}
+		if ($limit > 200) {
+			$limit = 200;
+		}
 		$out['llms_recent_limit'] = $limit;
 
 		$out['site_title_override'] = isset($input['site_title_override']) ? $this->sanitize_textline($input['site_title_override']) : (string)$prev['site_title_override'];
@@ -104,72 +108,82 @@ final class Options {
 
 		$out['sitemap_url'] = isset($input['sitemap_url']) ? $this->sanitize_sitemap_url((string)$input['sitemap_url']) : (string)$prev['sitemap_url'];
 
-		$out['llms_custom_markdown'] = isset( $input['llms_custom_markdown'] )
-			? $this->sanitize_llms_custom_markdown( (string) $input['llms_custom_markdown'] )
-			: (string) $prev['llms_custom_markdown'];
+		$out['llms_custom_markdown'] = isset($input['llms_custom_markdown'])
+			? $this->sanitize_llms_custom_markdown((string)$input['llms_custom_markdown'])
+			: (string)$prev['llms_custom_markdown'];
 
-		$out['llms_show_excerpt'] = ! empty( $input['llms_show_excerpt'] ) ? 1 : 0;
+		$out['llms_show_excerpt'] = !empty($input['llms_show_excerpt']) ? 1 : 0;
 
-		// Cache is managed internally.
-		if (!isset($out['llms_cache'])) $out['llms_cache'] = '';
-		if (!isset($out['llms_cache_ts'])) $out['llms_cache_ts'] = 0;
+		// Кеш управляется внутри класса, поддерживаем обязательные ключи.
+		if (!isset($out['llms_cache'])) {
+			$out['llms_cache'] = '';
+		}
+		if (!isset($out['llms_cache_ts'])) {
+			$out['llms_cache_ts'] = 0;
+		}
 
-		
-
-// Invalidate llms.txt cache when settings affecting its content change.
-		// Invalidate llms.txt cache when settings affecting its content change.
+		// Эти ключи влияют на содержимое llms.txt, поэтому при их изменении сбрасываем кеш.
 		$affect_keys = array(
-	'enabled_markdown',
-	'enabled_llms_txt',
-	'base_path',
-	'post_types',
-	'llms_recent_limit',
-	'site_title_override',
-	'site_description_override',
-	'sitemap_url',
-	'llms_custom_markdown',
-	'llms_show_excerpt',
-);
-$changed = false;
-foreach ($affect_keys as $k) {
-	$prev_v = isset($prev[$k]) ? $prev[$k] : null;
-	$now_v  = isset($out[$k]) ? $out[$k] : null;
-	if ($prev_v != $now_v) {
-		$changed = true;
-		break;
-	}
-}
+			'enabled_markdown',
+			'enabled_llms_txt',
+			'base_path',
+			'post_types',
+			'llms_recent_limit',
+			'site_title_override',
+			'site_description_override',
+			'sitemap_url',
+			'llms_custom_markdown',
+			'llms_show_excerpt',
+		);
+
+		$changed = false;
+		foreach ($affect_keys as $k) {
+			$prev_v = isset($prev[$k]) ? $prev[$k] : null;
+			$now_v  = isset($out[$k]) ? $out[$k] : null;
+			if ($prev_v != $now_v) {
+				$changed = true;
+				break;
+			}
+		}
+
 		if ($changed) {
+			// Сбрасываем кеш и связанные метаданные, чтобы пересборка прошла корректно.
 			$out['llms_cache'] = '';
 			$out['llms_cache_ts'] = 0;
 			$out['llms_cache_rev'] = 0;
 			$out['llms_cache_hash'] = '';
 			$out['llms_cache_settings_hash'] = '';
-} else {
-	// Ensure cache meta keys exist.
-	if (!isset($out['llms_cache_rev'])) $out['llms_cache_rev'] = 0;
-	if (!isset($out['llms_cache_hash'])) $out['llms_cache_hash'] = '';
-	if (!isset($out['llms_cache_settings_hash'])) $out['llms_cache_settings_hash'] = '';
-}
+		} else {
+			// Поддерживаем служебные поля кеша, если сохраненные данные их не содержат.
+			if (!isset($out['llms_cache_rev'])) {
+				$out['llms_cache_rev'] = 0;
+			}
+			if (!isset($out['llms_cache_hash'])) {
+				$out['llms_cache_hash'] = '';
+			}
+			if (!isset($out['llms_cache_settings_hash'])) {
+				$out['llms_cache_settings_hash'] = '';
+			}
+		}
 
-		
-		// Flush rewrite rules when endpoint-related settings change.
-		$rewrite_keys = array( 'enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types' );
+		// Эти параметры влияют на URL, поэтому ставим transient для последующего сброса правил.
+		$rewrite_keys     = array('enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types');
 		$rewrite_changed = false;
-		foreach ( $rewrite_keys as $k ) {
-			$prev_v = isset( $prev[ $k ] ) ? $prev[ $k ] : null;
-			$now_v  = isset( $out[ $k ] ) ? $out[ $k ] : null;
-			if ( $prev_v != $now_v ) {
+		foreach ($rewrite_keys as $k) {
+			$prev_v = isset($prev[$k]) ? $prev[$k] : null;
+			$now_v  = isset($out[$k]) ? $out[$k] : null;
+			if ($prev_v != $now_v) {
 				$rewrite_changed = true;
 				break;
 			}
 		}
-		if ( $rewrite_changed ) {
-			// Defer flushing to admin_init to avoid flushing multiple times during option save.
-			set_transient( 'llmf_flush_rewrite_rules', 1, 10 * MINUTE_IN_SECONDS );
+
+		if ($rewrite_changed) {
+			// Откладываем flush до admin_init, чтобы избежать повторных вызовов во время сохранения настроек.
+			set_transient('llmf_flush_rewrite_rules', 1, 10 * MINUTE_IN_SECONDS);
 		}
 
-return $out;
+		return $out;
 	}
 
 	/**
