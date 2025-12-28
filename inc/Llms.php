@@ -472,12 +472,27 @@ final class Llms {
 	private function send_common_headers( $headers, $etag, $last_modified_ts, $build_ts = 0, $rev = 0, $hash = '', $settings_hash = '' ) {
 		status_header( 200 );
 
+		$header_lines = array();
+
 		if ( is_array( $headers ) ) {
-			foreach ( $headers as $h ) {
-				if ( is_string( $h ) && $h !== '' ) {
-					header( $h );
+			foreach ( $headers as $k => $v ) {
+				if ( is_string( $k ) && $k !== '' ) {
+					// Собираем строки заголовков заранее, чтобы исключить повторную отправку далее.
+					$v = (string) $v;
+					if ( $v !== '' ) {
+						$header_lines[] = $k . ': ' . $v;
+					}
+					continue;
+				}
+
+				if ( is_string( $v ) && $v !== '' ) {
+					$header_lines[] = $v;
 				}
 			}
+		}
+
+		foreach ( $header_lines as $line ) {
+			header( $line );
 		}
 
 		$last_modified_ts = max( 1, (int) $last_modified_ts );
@@ -522,13 +537,6 @@ final class Llms {
 			}
 		}
 
-		foreach ( (array) $headers as $k => $v ) {
-			if ( is_string( $k ) ) {
-				header( $k . ': ' . $v );
-			} else {
-				header( $v );
-			}
-		}
 	}
 
 }
