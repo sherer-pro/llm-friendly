@@ -22,14 +22,17 @@ For selected post types, the plugin exposes .md endpoints under:
 {base}/{post_type}/{path}.md
 
 This is useful for LLMs, indexing bots, and users who prefer plain text.
+You can opt in to excerpts in llms.txt via `llms_show_excerpt`, and you can send `X-Robots-Tag: noindex, nofollow` for Markdown exports via `md_send_noindex` if you want Markdown-only consumers without search engine indexing.
+If the automatic Markdown conversion does not fit a post, use the “Markdown override” sidebar panel (Gutenberg) or the Classic Editor metabox to provide a custom Markdown or block-based replacement.
 
 = Key features =
 
 * llms.txt endpoint with cached generation, optional excerpts, and a configurable custom Markdown block.
-* Markdown exports for selected post types with Gutenberg-to-Markdown conversion and per-post Markdown overrides.
-* Configurable base path for exports (e.g. "llm") and per-post-type enable/disable toggles.
+* Markdown exports for selected post types with Gutenberg-to-Markdown conversion and per-post Markdown overrides (sidebar panel/metabox).
+* Configurable base path for exports (e.g. "llm") and per-post-type enable/disable toggles; changing the base path requires flushing rewrites.
 * Manual or automatic regeneration of the cached llms.txt with ETag/Last-Modified headers.
-* Optional X-Robots-Tag: noindex, nofollow for both /llms.txt and Markdown exports.
+* Optional X-Robots-Tag: noindex, nofollow for both /llms.txt and Markdown exports; the Markdown header is controlled by `md_send_noindex`.
+* Toggle excerpts in llms.txt via `llms_show_excerpt` to add one-line summaries under each item.
 * Optional site title/description overrides plus a sitemap URL field for the generated llms.txt.
 
 = Requirements =
@@ -57,6 +60,15 @@ The plugin serves llms.txt dynamically via WordPress. It is not a physical file 
 = Markdown exports return 404. Why? =
 
 Most often this is a rewrite or web-server routing issue. If you run Nginx in front of Apache, make sure .md requests are routed to WordPress (not handled as static files).
+When you change the base path, flush permalinks and confirm that `.md` and `/llms.txt` are not short-circuited by static file rules.
+
+= How do I keep Markdown out of search results? =
+
+Enable the “Send X-Robots-Tag: noindex, nofollow for Markdown” option (stored as `md_send_noindex`) to emit the header on all Markdown responses.
+
+= Can I ship a custom Markdown body? =
+
+Yes. Open the post in Gutenberg and use the “Markdown override” sidebar panel; Classic Editor users get a “Markdown override (LLM Friendly)” metabox. The override accepts plain Markdown or block markup.
 
 == Screenshots ==
 
