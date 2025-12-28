@@ -67,7 +67,8 @@ final class Exporter {
 			}
 			set_transient( $key, $md, $ttl );
 		}
-$headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
+
+		$headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
 		$opt     = $this->options->get();
 		if ( ! empty( $opt['md_send_noindex'] ) ) {
 			$headers[] = 'X-Robots-Tag: noindex, nofollow';
@@ -1083,12 +1084,28 @@ private function normalize_newlines( $s ) {
 	private function send_common_headers( $headers, $etag, $last_modified_ts ) {
 		status_header( 200 );
 
+		$header_lines = array();
+
 		if ( is_array( $headers ) ) {
-			foreach ( $headers as $h ) {
-				if ( is_string( $h ) && $h !== '' ) {
-					header( $h );
+			foreach ( $headers as $k => $v ) {
+				if ( is_string( $k ) && $k !== '' ) {
+					// Формируем готовую строку заголовка для пар «ключ => значение» один раз,
+					// чтобы избежать повторной отправки теми же данными ниже.
+					$v = (string) $v;
+					if ( $v !== '' ) {
+						$header_lines[] = $k . ': ' . $v;
+					}
+					continue;
+				}
+
+				if ( is_string( $v ) && $v !== '' ) {
+					$header_lines[] = $v;
 				}
 			}
+		}
+
+		foreach ( $header_lines as $line ) {
+			header( $line );
 		}
 
 		$last_modified_ts = max( 1, (int) $last_modified_ts );
@@ -1114,13 +1131,6 @@ private function normalize_newlines( $s ) {
 			}
 		}
 
-		foreach ( (array) $headers as $k => $v ) {
-			if ( is_string( $k ) ) {
-				header( $k . ': ' . $v );
-			} else {
-				header( $v );
-			}
-		}
 	}
 
 	/**
