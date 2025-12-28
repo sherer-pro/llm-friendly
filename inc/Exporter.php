@@ -20,12 +20,12 @@ final class Exporter {
 	/**
 	 * @var Options
 	 */
-	private $options;
+	private Options $options;
 
 	/**
 	 * @param Options $options
 	 */
-	public function __construct( $options ) {
+	public function __construct( Options $options ) {
 		$this->options = $options;
 	}
 
@@ -36,7 +36,7 @@ final class Exporter {
 	 *
 	 * @return void
 	 */
-	public function output_markdown( WP_Post $post ) {
+	public function output_markdown( WP_Post $post ): void {
 		// Do not export password-protected content.
 		if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
 			status_header( 404 );
@@ -87,22 +87,12 @@ final class Exporter {
 	/**
 	 * Build Markdown for a post.
 	 *
-	 * @param WP_Post $post
+	 * @param WP_Post $post Объект записи.
+	 * @param string  $override_md Произвольный Markdown, который должен заменить содержимое записи.
 	 *
 	 * @return string
 	 */
-	/**
-	 * Get Markdown override body from post meta.
-	 *
-	 * @param WP_Post $post Post.
-	 * @return string
-	 */
-	private function get_markdown_override( WP_Post $post ) {
-		$val = get_post_meta( $post->ID, self::META_MD_OVERRIDE, true );
-		return is_string( $val ) ? $val : '';
-	}
-
-	private function post_to_markdown( WP_Post $post, $override_md = '' ) {
+	private function post_to_markdown( WP_Post $post, string $override_md = '' ): string {
 		$meta = array(
 			'title'         => get_the_title( $post ),
 			'url'           => get_permalink( $post ),
@@ -138,6 +128,19 @@ $out   = array();
 		$out[] = $body;
 
 		return rtrim( $this->normalize_markdown_blocks( implode( "\n", $out ) ) ) . "\n";
+	}
+
+	/**
+	 * Получает кастомный Markdown из метаполя записи.
+	 *
+	 * @param WP_Post $post Запись, из которой читаем переопределение.
+	 *
+	 * @return string Чистое текстовое содержимое или пустая строка.
+	 */
+	private function get_markdown_override( WP_Post $post ): string {
+		$val = get_post_meta( $post->ID, self::META_MD_OVERRIDE, true );
+
+		return is_string( $val ) ? $val : '';
 	}
 
 	/**
@@ -379,24 +382,13 @@ $out   = array();
 	}
 
 	/**
-	 * Normalize newlines to \n.
+	 * Аккуратно разделяет блоки Markdown пустыми строками, не трогая fenced-блоки.
 	 *
-	 * @param string $s
+	 * @param string $md Исходный Markdown.
 	 *
-	 * @return string
+	 * @return string Отформатированный Markdown с единообразными разрывами между блоками.
 	 */
-	
-	/**
-	 * Normalize Markdown so that block elements are separated by a blank line.
-	 *
-	 * This is intentionally conservative: it keeps fenced code blocks intact and
-	 * avoids touching inline formatting.
-	 *
-	 * @param string $md
-	 *
-	 * @return string
-	 */
-	private function normalize_markdown_blocks( $md ) {
+	private function normalize_markdown_blocks( string $md ): string {
 		$md = $this->normalize_newlines( (string) $md );
 		$lines = explode( "\n", $md );
 
@@ -501,8 +493,15 @@ $out   = array();
 		return implode( "\n", $out );
 	}
 
-private function normalize_newlines( $s ) {
-		return str_replace( array( "\r\n", "\r" ), "\n", (string) $s );
+	/**
+	 * Приводит переводы строк к Unix-формату \n.
+	 *
+	 * @param string $s Любая строка с произвольными переводами строк.
+	 *
+	 * @return string Строка с единым разделителем \n.
+	 */
+	private function normalize_newlines( string $s ): string {
+		return str_replace( array( "\r\n", "\r" ), "\n", $s );
 	}
 
 	/**
