@@ -68,20 +68,7 @@ namespace {
 
 	use LLM_Friendly\Exporter;
 	use LLM_Friendly\Llms;
-
-	/**
-	 * Минимальный объект Options для удовлетворения конструкторов.
-	 */
-	class DummyOptions {
-		/**
-		 * Возвращает пустую конфигурацию.
-		 *
-		 * @return array<string,mixed>
-		 */
-		public function get() {
-			return array();
-		}
-	}
+	use LLM_Friendly\Options;
 
 	// Минимальный ABSPATH, чтобы защитный код плагина не завершал выполнение.
 	if ( ! defined( 'ABSPATH' ) ) {
@@ -89,6 +76,7 @@ namespace {
 	}
 
 	// Подключаем классы после объявления заглушек и определения ABSPATH.
+	require_once __DIR__ . '/../inc/Options.php';
 	require_once __DIR__ . '/../inc/Exporter.php';
 	require_once __DIR__ . '/../inc/Llms.php';
 
@@ -142,7 +130,7 @@ namespace {
 	$tests['exporter_headers_once'] = function () {
 		reset_header_state();
 
-		$exporter = new Exporter( new DummyOptions() );
+		$exporter = new Exporter( new Options() );
 		$method   = new ReflectionMethod( Exporter::class, 'send_common_headers' );
 		$method->setAccessible( true );
 
@@ -171,7 +159,7 @@ namespace {
 
 		$_SERVER['HTTP_IF_NONE_MATCH'] = '"etag-exporter-304"';
 
-		$exporter = new Exporter( new DummyOptions() );
+		$exporter = new Exporter( new Options() );
 		$method   = new ReflectionMethod( Exporter::class, 'send_common_headers' );
 		$method->setAccessible( true );
 
@@ -190,7 +178,7 @@ namespace {
 	$tests['llms_headers_once'] = function () {
 		reset_header_state();
 
-		$llms  = new Llms( new DummyOptions() );
+		$llms  = new Llms( new Options() );
 		$method = new ReflectionMethod( Llms::class, 'send_common_headers' );
 		$method->setAccessible( true );
 
@@ -226,7 +214,7 @@ namespace {
 		$modified = 1_700_000_000;
 		$_SERVER['HTTP_IF_MODIFIED_SINCE'] = gmdate( 'D, d M Y H:i:s', $modified ) . ' GMT';
 
-		$llms  = new Llms( new DummyOptions() );
+		$llms  = new Llms( new Options() );
 		$method = new ReflectionMethod( Llms::class, 'send_common_headers' );
 		$method->setAccessible( true );
 
