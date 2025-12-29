@@ -1,5 +1,5 @@
 <?php
-namespace LLM_Friendly;
+namespace LLMFriendly;
 
 use WP_Post;
 
