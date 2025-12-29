@@ -256,7 +256,7 @@ final class Exporter {
 
 			if ( $name === 'core/gallery' ) {
 				// Галерея представляется последовательностью изображений — экспортируем каждое в Markdown.
-				$gallery_md = $this->gallery_blocks_to_md( $inner, $innerHTML );
+				$gallery_md = $this->gallery_blocks_to_md( $inner, $innerHTML, $b );
 				if ( $gallery_md !== '' ) {
 					$out[] = $gallery_md;
 					$out[] = '';
@@ -922,10 +922,13 @@ final class Exporter {
 	 * @return array{url:string,alt:string,caption:string} Чистые данные изображения.
 	 */
 	private function extract_image_data_from_block( array $block ): array {
-		$attrs      = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
-		$innerHTML  = isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '';
-		$inner_html = trim( $innerHTML );
+		$attrs         = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+		$innerHTML     = isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '';
+		$innerContent  = isset( $block['innerContent'] ) && is_array( $block['innerContent'] ) ? $block['innerContent'] : array();
+		$inner_html    = trim( $innerHTML );
+		$rendered_html = '';
 
+		// Забираем данные из атрибутов, если WordPress их сохранил.
 		$url     = isset( $attrs['url'] ) ? (string) $attrs['url'] : '';
 		$alt     = isset( $attrs['alt'] ) ? (string) $attrs['alt'] : '';
 		$caption = '';
@@ -939,37 +942,44 @@ final class Exporter {
 			$caption = $this->html_inline_to_md( $m[1] );
 		}
 
-		// Если атрибуты не содержат src/alt, пытаемся вытащить из HTML, но с выключенными внешними сущностями.
-		if ( ( $url === '' || $alt === '' ) && $inner_html !== '' ) {
-			$doc = $this->dom_from_html_fragment( '<div>' . $inner_html . '</div>' );
-			if ( $doc instanceof \DOMDocument ) {
-				$imgs = $doc->getElementsByTagName( 'img' );
-				if ( $imgs->length > 0 ) {
-					$img = $imgs->item( 0 );
-					if ( $img instanceof \DOMElement ) {
-						if ( $url === '' ) {
-							$url = trim( (string) $img->getAttribute( 'src' ) );
-						}
-						if ( $alt === '' ) {
-							$alt = trim( (string) $img->getAttribute( 'alt' ) );
-						}
-					}
-				}
-
-				if ( $caption === '' ) {
-					$figcaptions = $doc->getElementsByTagName( 'figcaption' );
-					if ( $figcaptions->length > 0 ) {
-						$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
-					}
+		// Если innerHTML пуст, пробуем собрать HTML из innerContent.
+		if ( $inner_html === '' && ! empty( $innerContent ) ) {
+			$content_html = array();
+			foreach ( $innerContent as $chunk ) {
+				if ( is_string( $chunk ) && trim( $chunk ) !== '' ) {
+					$content_html[] = $chunk;
 				}
 			}
+			$inner_html = trim( implode( '', $content_html ) );
+		}
 
-			// Простейший regex-фолбэк на случай отсутствия DOM.
-			if ( $url === '' && preg_match( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\']~i', $inner_html, $mm ) ) {
-				$url = trim( (string) $mm[1] );
+		// На некоторых версиях Gutenberg полезно отрендерить блок целиком: это даст готовый HTML figure/img.
+		if ( function_exists( 'render_block' ) ) {
+			$rendered_html = (string) render_block( $block );
+		}
+
+		// Собираем кандидатов HTML, чтобы поочерёдно вытащить недостающие url/alt/caption.
+		$html_candidates = array_filter( array( $inner_html, $rendered_html ), function ( $val ) {
+			return is_string( $val ) && trim( $val ) !== '';
+		} );
+
+		foreach ( $html_candidates as $candidate_html ) {
+			$parsed = $this->extract_image_data_from_html( (string) $candidate_html, $caption );
+
+			// Берём недостающие поля только если они пустые, чтобы не перезаписывать валидные значения из атрибутов.
+			if ( $url === '' && $parsed['url'] !== '' ) {
+				$url = $parsed['url'];
 			}
-			if ( $alt === '' && preg_match( '~<img[^>]+alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $inner_html, $mm ) ) {
-				$alt = trim( (string) $mm[1] );
+			if ( $alt === '' && $parsed['alt'] !== '' ) {
+				$alt = $parsed['alt'];
+			}
+			if ( $caption === '' && $parsed['caption'] !== '' ) {
+				$caption = $parsed['caption'];
+			}
+
+			// Если собрали все поля, можно прекращать дальнейший парсинг.
+			if ( $url !== '' && $alt !== '' && $caption !== '' ) {
+				break;
 			}
 		}
 
@@ -981,14 +991,95 @@ final class Exporter {
 	}
 
 	/**
+	 * Аккуратно достаёт данные изображения из HTML-фрагмента figure/img.
+	 *
+	 * @param string $html             Сырый HTML с <img> или <figure>.
+	 * @param string $default_caption  Подпись, которую можно использовать, если в HTML нет своей.
+	 *
+	 * @return array{url:string,alt:string,caption:string} Готовые значения src/alt/caption.
+	 */
+	private function extract_image_data_from_html( string $html, string $default_caption = '' ): array {
+		$clean_html = trim( $html );
+		$data       = array(
+			'url'     => '',
+			'alt'     => '',
+			'caption' => $default_caption,
+		);
+
+		if ( $clean_html === '' ) {
+			return $data;
+		}
+
+		$doc = $this->dom_from_html_fragment( '<div>' . $clean_html . '</div>' );
+
+		if ( $doc instanceof \DOMDocument ) {
+			$root = $doc->getElementsByTagName( 'div' )->item( 0 );
+
+			if ( $root ) {
+				// Сначала пробуем вытащить figure: она может содержать и alt, и подпись.
+				$figures = $root->getElementsByTagName( 'figure' );
+				if ( $figures->length > 0 ) {
+					foreach ( $figures as $figure ) {
+						if ( ! ( $figure instanceof \DOMElement ) ) {
+							continue;
+						}
+
+						$img_nodes = $figure->getElementsByTagName( 'img' );
+						if ( $img_nodes->length === 0 ) {
+							continue;
+						}
+
+						$img = $img_nodes->item( 0 );
+						if ( ! ( $img instanceof \DOMElement ) ) {
+							continue;
+						}
+
+						$data['url'] = trim( (string) $img->getAttribute( 'src' ) );
+						$data['alt'] = trim( (string) $img->getAttribute( 'alt' ) );
+
+						$figcaptions = $figure->getElementsByTagName( 'figcaption' );
+						if ( $figcaptions->length > 0 ) {
+							$data['caption'] = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
+						}
+
+						// Нашли полноценный набор данных — можно возвращать.
+						return $data;
+					}
+				}
+
+				// Если figure нет, ищем первый img на уровне корня.
+				$imgs = $root->getElementsByTagName( 'img' );
+				if ( $imgs->length > 0 ) {
+					$img = $imgs->item( 0 );
+					if ( $img instanceof \DOMElement ) {
+						$data['url'] = trim( (string) $img->getAttribute( 'src' ) );
+						$data['alt'] = trim( (string) $img->getAttribute( 'alt' ) );
+					}
+				}
+			}
+		}
+
+		// Простейший regex-фолбэк на случай отсутствия DOM или отсутствия тегов figure/img в DOM-модели.
+		if ( $data['url'] === '' && preg_match( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\']~i', $clean_html, $mm ) ) {
+			$data['url'] = trim( (string) $mm[1] );
+		}
+		if ( $data['alt'] === '' && preg_match( '~<img[^>]+alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $clean_html, $mm ) ) {
+			$data['alt'] = trim( (string) $mm[1] );
+		}
+
+		return $data;
+	}
+
+	/**
 	 * Собирает Markdown для блока core/gallery: последовательно выводим все изображения.
 	 *
 	 * @param array<int,mixed> $innerBlocks Вложенные блоки галереи (обычно core/image).
 	 * @param string           $innerHTML   Сырый HTML галереи для резервного парсинга.
+	 * @param array            $block       Исходный блок галереи (используется для рендера/innerContent).
 	 *
 	 * @return string Markdown для всех изображений галереи.
 	 */
-	private function gallery_blocks_to_md( $innerBlocks, $innerHTML ): string {
+	private function gallery_blocks_to_md( $innerBlocks, $innerHTML, array $block = array() ): string {
 		$images = array();
 
 		foreach ( (array) $innerBlocks as $child ) {
@@ -1004,69 +1095,40 @@ final class Exporter {
 			}
 		}
 
-		// Фолбэк: если innerBlocks пуст, пытаемся разобрать сырой HTML галереи.
-		if ( empty( $images ) && is_string( $innerHTML ) && trim( $innerHTML ) !== '' ) {
-			$raw_html = '<div>' . $innerHTML . '</div>';
+		if ( empty( $images ) ) {
+			// Список HTML-кандидатов: сначала innerHTML, затем innerContent, потом отрендеренный блок.
+			$html_candidates = array();
 
-			$doc = $this->dom_from_html_fragment( $raw_html );
-			if ( $doc instanceof \DOMDocument ) {
-				$figures = $doc->getElementsByTagName( 'figure' );
-				if ( $figures->length > 0 ) {
-					foreach ( $figures as $figure ) {
-						if ( ! ( $figure instanceof \DOMElement ) ) {
-							continue;
-						}
+			if ( is_string( $innerHTML ) && trim( $innerHTML ) !== '' ) {
+				$html_candidates[] = $innerHTML;
+			}
 
-						$img       = null;
-						$caption   = '';
-						$img_nodes = $figure->getElementsByTagName( 'img' );
-
-						if ( $img_nodes->length > 0 ) {
-							$img = $img_nodes->item( 0 );
-						}
-
-						$figcaptions = $figure->getElementsByTagName( 'figcaption' );
-						if ( $figcaptions->length > 0 ) {
-							$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
-						}
-
-						if ( $img instanceof \DOMElement ) {
-							$images[] = array(
-								'url'     => trim( (string) $img->getAttribute( 'src' ) ),
-								'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
-								'caption' => $caption,
-							);
-						}
+			// Если Gutenberg положил реальный HTML в innerContent — используем его.
+			if ( empty( $html_candidates ) && isset( $block['innerContent'] ) && is_array( $block['innerContent'] ) ) {
+				$content_html = array();
+				foreach ( $block['innerContent'] as $chunk ) {
+					if ( is_string( $chunk ) && trim( $chunk ) !== '' ) {
+						$content_html[] = $chunk;
 					}
-				} else {
-					// Если фигуры отсутствуют, перебираем img напрямую.
-					$imgs = $doc->getElementsByTagName( 'img' );
-					foreach ( $imgs as $img ) {
-						if ( ! ( $img instanceof \DOMElement ) ) {
-							continue;
-						}
-						$images[] = array(
-							'url'     => trim( (string) $img->getAttribute( 'src' ) ),
-							'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
-							'caption' => '',
-						);
-					}
+				}
+				$merged = trim( implode( '', $content_html ) );
+				if ( $merged !== '' ) {
+					$html_candidates[] = $merged;
 				}
 			}
 
-			// Самый простой фолбэк без DOM: вытаскиваем <img> теги из HTML.
-			if ( empty( $images ) && preg_match_all( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\'][^>]*~i', $innerHTML, $m ) ) {
-				$srcs = $m[1];
-				foreach ( $srcs as $src ) {
-					$alt_match = '';
-					if ( preg_match( '~<img[^>]+src=[\"\\\']' . preg_quote( $src, '~' ) . '[\"\\\'][^>]*alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $innerHTML, $mm ) ) {
-						$alt_match = (string) $mm[1];
-					}
-					$images[] = array(
-						'url'     => trim( (string) $src ),
-						'alt'     => trim( $alt_match ),
-						'caption' => '',
-					);
+			// Рендер блока может вернуть готовый HTML-галерею, что полезно при нестандартных конфигурациях.
+			if ( function_exists( 'render_block' ) && is_array( $block ) && ! empty( $block ) ) {
+				$rendered = (string) render_block( $block );
+				if ( trim( $rendered ) !== '' ) {
+					$html_candidates[] = $rendered;
+				}
+			}
+
+			foreach ( $html_candidates as $candidate_html ) {
+				$images = $this->extract_images_from_gallery_html( (string) $candidate_html );
+				if ( ! empty( $images ) ) {
+					break;
 				}
 			}
 		}
@@ -1090,6 +1152,70 @@ final class Exporter {
 		}
 
 		return implode( "\n\n", array_filter( $chunks ) );
+	}
+
+	/**
+	 * Разбирает HTML-галерею и возвращает массив изображений.
+	 *
+	 * @param string $html Сырый HTML галереи (может содержать figure или просто img).
+	 *
+	 * @return array<int,array{url:string,alt:string,caption:string}> Список изображений.
+	 */
+	private function extract_images_from_gallery_html( string $html ): array {
+		$clean_html = trim( $html );
+		if ( $clean_html === '' ) {
+			return array();
+		}
+
+		$images = array();
+		$doc    = $this->dom_from_html_fragment( '<div>' . $clean_html . '</div>' );
+
+		if ( $doc instanceof \DOMDocument ) {
+			$root = $doc->getElementsByTagName( 'div' )->item( 0 );
+			if ( $root ) {
+				$figures = $root->getElementsByTagName( 'figure' );
+				if ( $figures->length > 0 ) {
+					foreach ( $figures as $figure ) {
+						if ( ! ( $figure instanceof \DOMElement ) ) {
+							continue;
+						}
+						$images[] = $this->extract_image_data_from_html( $doc->saveHTML( $figure ) );
+					}
+				} else {
+					$imgs = $root->getElementsByTagName( 'img' );
+					foreach ( $imgs as $img ) {
+						if ( ! ( $img instanceof \DOMElement ) ) {
+							continue;
+						}
+						$images[] = array(
+							'url'     => trim( (string) $img->getAttribute( 'src' ) ),
+							'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
+							'caption' => '',
+						);
+					}
+				}
+			}
+		}
+
+		// Самый простой фолбэк без DOM: вытаскиваем <img> теги из HTML.
+		if ( empty( $images ) && preg_match_all( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\'][^>]*~i', $clean_html, $m ) ) {
+			$srcs = $m[1];
+			foreach ( $srcs as $src ) {
+				$alt_match = '';
+				if ( preg_match( '~<img[^>]+src=[\"\\\']' . preg_quote( $src, '~' ) . '[\"\\\'][^>]*alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $clean_html, $mm ) ) {
+					$alt_match = (string) $mm[1];
+				}
+				$images[] = array(
+					'url'     => trim( (string) $src ),
+					'alt'     => trim( $alt_match ),
+					'caption' => '',
+				);
+			}
+		}
+
+		return array_values( array_filter( $images, function ( $img ) {
+			return is_array( $img ) && isset( $img['url'] ) && trim( (string) $img['url'] ) !== '';
+		} ) );
 	}
 
 	/**
