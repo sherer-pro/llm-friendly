@@ -39,12 +39,18 @@ final class Exporter {
 	public function output_markdown( WP_Post $post ): void {
 		// Do not export password-protected content.
 		if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
+			if ( function_exists( 'nocache_headers' ) ) {
+				nocache_headers();
+			}
 			status_header( 404 );
 			echo esc_html__( 'Not Found', 'llm-friendly' );
 			exit;
 		}
 		$can = apply_filters( 'llmf_can_export_post', true, $post, 'markdown' );
 		if ( ! $can ) {
+			if ( function_exists( 'nocache_headers' ) ) {
+				nocache_headers();
+			}
 			status_header( 404 );
 			echo esc_html__( 'Not Found', 'llm-friendly' );
 			exit;
@@ -52,6 +58,9 @@ final class Exporter {
 
 		// Уважаем настройку исключений: скрываем конкретные записи из Markdown-экспорта.
 		if ( $this->options->is_post_excluded( $post ) ) {
+			if ( function_exists( 'nocache_headers' ) ) {
+				nocache_headers();
+			}
 			status_header( 404 );
 			echo esc_html__( 'Not Found', 'llm-friendly' );
 			exit;
@@ -75,7 +84,10 @@ final class Exporter {
 			set_transient( $key, $md, $ttl );
 		}
 
-		$headers = array( 'Content-Type: text/markdown; charset=UTF-8' );
+		$headers = array(
+			'Content-Type: text/markdown; charset=UTF-8',
+			'X-Content-Type-Options: nosniff',
+		);
 		$opt     = $this->options->get();
 		if ( ! empty( $opt['md_send_noindex'] ) ) {
 			$headers[] = 'X-Robots-Tag: noindex, nofollow';
@@ -512,6 +524,44 @@ final class Exporter {
 	}
 
 	/**
+	 * Безопасно парсит HTML-фрагмент в DOM с отключенными внешними сущностями.
+	 *
+	 * Используем упрощённый парсер libxml без DOCTYPE/ENTITY, чтобы минимизировать
+	 * риск XXE/SSRF при обработке пользовательских блоков и оверрайдов Markdown.
+	 *
+	 * @param string $html  HTML-фрагмент без необходимости оборачивать в <html>.
+	 * @param int    $flags Дополнительные флаги libxml (будут объединены с безопасными).
+	 *
+	 * @return \DOMDocument|null Готовый документ или null при неудаче/отключённом DOM.
+	 */
+	private function dom_from_html_fragment( string $html, int $flags = 0 ): ?\DOMDocument {
+		if ( ! class_exists( 'DOMDocument' ) ) {
+			return null;
+		}
+
+		// Убираем потенциальные объявления DOCTYPE/ENTITY, чтобы их не обрабатывал libxml.
+		$safe_html = preg_replace( '/<!DOCTYPE.*?>/is', '', (string) $html );
+		$safe_html = preg_replace( '/<!ENTITY.*?>/is', '', (string) $safe_html );
+
+		libxml_use_internal_errors( true );
+		$doc = new \DOMDocument( '1.0', 'UTF-8' );
+
+		$safe_flags = LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD;
+		if ( defined( 'LIBXML_NONET' ) ) {
+			$safe_flags |= LIBXML_NONET;
+		}
+
+		$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $safe_html, $safe_flags | $flags );
+		libxml_clear_errors();
+
+		if ( ! $loaded ) {
+			return null;
+		}
+
+		return $doc;
+	}
+
+	/**
 	 * Convert list blocks (core/list -> core/list-item) to Markdown.
 	 *
 	 * @param array<int,mixed> $innerBlocks
@@ -591,7 +641,9 @@ final class Exporter {
 			return '';
 		}
 
-		if ( ! class_exists( 'DOMDocument' ) ) {
+		$doc = $this->dom_from_html_fragment( '<div>' . $html . '</div>' );
+
+		if ( ! ( $doc instanceof \DOMDocument ) ) {
 			if ( preg_match_all( '~<blockquote\b[^>]*>(.*?)</blockquote>~is', $html, $m ) ) {
 				$chunks = array();
 				foreach ( $m[1] as $chunk ) {
@@ -604,17 +656,6 @@ final class Exporter {
 				}
 			}
 
-			return trim( $this->html_inline_to_md( $html ) );
-		}
-
-		libxml_use_internal_errors( true );
-		$doc = new \DOMDocument( '1.0', 'UTF-8' );
-
-		$wrapped = '<div>' . $html . '</div>';
-		$loaded  = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-		libxml_clear_errors();
-
-		if ( ! $loaded ) {
 			return trim( $this->html_inline_to_md( $html ) );
 		}
 
@@ -898,33 +939,27 @@ final class Exporter {
 			$caption = $this->html_inline_to_md( $m[1] );
 		}
 
-		// Если атрибуты не содержат src/alt, пытаемся вытащить из HTML.
+		// Если атрибуты не содержат src/alt, пытаемся вытащить из HTML, но с выключенными внешними сущностями.
 		if ( ( $url === '' || $alt === '' ) && $inner_html !== '' ) {
-			if ( class_exists( 'DOMDocument' ) ) {
-				libxml_use_internal_errors( true );
-				$doc    = new \DOMDocument( '1.0', 'UTF-8' );
-				$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . '<div>' . $inner_html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-				libxml_clear_errors();
-
-				if ( $loaded ) {
-					$imgs = $doc->getElementsByTagName( 'img' );
-					if ( $imgs->length > 0 ) {
-						$img = $imgs->item( 0 );
-						if ( $img instanceof \DOMElement ) {
-							if ( $url === '' ) {
-								$url = trim( (string) $img->getAttribute( 'src' ) );
-							}
-							if ( $alt === '' ) {
-								$alt = trim( (string) $img->getAttribute( 'alt' ) );
-							}
+			$doc = $this->dom_from_html_fragment( '<div>' . $inner_html . '</div>' );
+			if ( $doc instanceof \DOMDocument ) {
+				$imgs = $doc->getElementsByTagName( 'img' );
+				if ( $imgs->length > 0 ) {
+					$img = $imgs->item( 0 );
+					if ( $img instanceof \DOMElement ) {
+						if ( $url === '' ) {
+							$url = trim( (string) $img->getAttribute( 'src' ) );
+						}
+						if ( $alt === '' ) {
+							$alt = trim( (string) $img->getAttribute( 'alt' ) );
 						}
 					}
+				}
 
-					if ( $caption === '' ) {
-						$figcaptions = $doc->getElementsByTagName( 'figcaption' );
-						if ( $figcaptions->length > 0 ) {
-							$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
-						}
+				if ( $caption === '' ) {
+					$figcaptions = $doc->getElementsByTagName( 'figcaption' );
+					if ( $figcaptions->length > 0 ) {
+						$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
 					}
 				}
 			}
@@ -973,54 +1008,48 @@ final class Exporter {
 		if ( empty( $images ) && is_string( $innerHTML ) && trim( $innerHTML ) !== '' ) {
 			$raw_html = '<div>' . $innerHTML . '</div>';
 
-			if ( class_exists( 'DOMDocument' ) ) {
-				libxml_use_internal_errors( true );
-				$doc    = new \DOMDocument( '1.0', 'UTF-8' );
-				$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $raw_html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-				libxml_clear_errors();
-
-				if ( $loaded ) {
-					$figures = $doc->getElementsByTagName( 'figure' );
-					if ( $figures->length > 0 ) {
-						foreach ( $figures as $figure ) {
-							if ( ! ( $figure instanceof \DOMElement ) ) {
-								continue;
-							}
-
-							$img       = null;
-							$caption   = '';
-							$img_nodes = $figure->getElementsByTagName( 'img' );
-
-							if ( $img_nodes->length > 0 ) {
-								$img = $img_nodes->item( 0 );
-							}
-
-							$figcaptions = $figure->getElementsByTagName( 'figcaption' );
-							if ( $figcaptions->length > 0 ) {
-								$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
-							}
-
-							if ( $img instanceof \DOMElement ) {
-								$images[] = array(
-									'url'     => trim( (string) $img->getAttribute( 'src' ) ),
-									'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
-									'caption' => $caption,
-								);
-							}
+			$doc = $this->dom_from_html_fragment( $raw_html );
+			if ( $doc instanceof \DOMDocument ) {
+				$figures = $doc->getElementsByTagName( 'figure' );
+				if ( $figures->length > 0 ) {
+					foreach ( $figures as $figure ) {
+						if ( ! ( $figure instanceof \DOMElement ) ) {
+							continue;
 						}
-					} else {
-						// Если фигуры отсутствуют, перебираем img напрямую.
-						$imgs = $doc->getElementsByTagName( 'img' );
-						foreach ( $imgs as $img ) {
-							if ( ! ( $img instanceof \DOMElement ) ) {
-								continue;
-							}
+
+						$img       = null;
+						$caption   = '';
+						$img_nodes = $figure->getElementsByTagName( 'img' );
+
+						if ( $img_nodes->length > 0 ) {
+							$img = $img_nodes->item( 0 );
+						}
+
+						$figcaptions = $figure->getElementsByTagName( 'figcaption' );
+						if ( $figcaptions->length > 0 ) {
+							$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
+						}
+
+						if ( $img instanceof \DOMElement ) {
 							$images[] = array(
 								'url'     => trim( (string) $img->getAttribute( 'src' ) ),
 								'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
-								'caption' => '',
+								'caption' => $caption,
 							);
 						}
+					}
+				} else {
+					// Если фигуры отсутствуют, перебираем img напрямую.
+					$imgs = $doc->getElementsByTagName( 'img' );
+					foreach ( $imgs as $img ) {
+						if ( ! ( $img instanceof \DOMElement ) ) {
+							continue;
+						}
+						$images[] = array(
+							'url'     => trim( (string) $img->getAttribute( 'src' ) ),
+							'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
+							'caption' => '',
+						);
 					}
 				}
 			}
@@ -1149,16 +1178,8 @@ final class Exporter {
 
 		$table_html = $m[0];
 
-		if ( ! class_exists( 'DOMDocument' ) ) {
-			return $this->fallback_plain_table( $table_html );
-		}
-
-		libxml_use_internal_errors( true );
-		$doc    = new \DOMDocument( '1.0', 'UTF-8' );
-		$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $table_html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-		libxml_clear_errors();
-
-		if ( ! $loaded ) {
+		$doc = $this->dom_from_html_fragment( $table_html );
+		if ( ! ( $doc instanceof \DOMDocument ) ) {
 			return $this->fallback_plain_table( $table_html );
 		}
 

@@ -17,6 +17,11 @@ final class Options {
 	public const OPTION_KEY = 'llmf_options';
 
 	/**
+	 * Максимальная длина пользовательского Markdown-блока для llms.txt (в символах).
+	 */
+	private const CUSTOM_MD_MAX_LENGTH = 20000;
+
+	/**
 	 * Ensure defaults exist in DB.
 	 *
 	 * @return void
@@ -242,7 +247,21 @@ final class Options {
 	 * @return string
 	 */
 	private function sanitize_llms_custom_markdown( $value ) {
-		return $this->sanitize_markdown_block( (string) $value );
+		$clean = $this->sanitize_markdown_block( (string) $value );
+
+		// Ограничиваем длину блока, чтобы предотвратить чрезмерный объём кеша и нагрузку на генерацию.
+		$max = (int) self::CUSTOM_MD_MAX_LENGTH;
+		if ( $max > 0 ) {
+			if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+				if ( mb_strlen( $clean, 'UTF-8' ) > $max ) {
+					$clean = mb_substr( $clean, 0, $max, 'UTF-8' );
+				}
+			} elseif ( strlen( $clean ) > $max ) {
+				$clean = substr( $clean, 0, $max );
+			}
+		}
+
+		return $clean;
 	}
 
 	/**
