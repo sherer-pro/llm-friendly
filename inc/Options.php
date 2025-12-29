@@ -114,6 +114,8 @@ final class Options {
 
 		$out['llms_show_excerpt'] = ! empty( $input['llms_show_excerpt'] ) ? 1 : 0;
 
+		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : array() );
+
 		// Кеш управляется внутри класса, поддерживаем обязательные ключи.
 		if ( ! isset( $out['llms_cache'] ) ) {
 			$out['llms_cache'] = '';
@@ -134,6 +136,7 @@ final class Options {
 			'sitemap_url',
 			'llms_custom_markdown',
 			'llms_show_excerpt',
+			'excluded_posts',
 		);
 
 		$changed = false;
@@ -206,6 +209,7 @@ final class Options {
 			'sitemap_url'      => '/sitemap.xml',
 			'llms_custom_markdown' => '',
 			'llms_show_excerpt' => 0,
+			'excluded_posts'   => array(),
 			'llms_cache'       => '',
 			'llms_cache_ts'    => 0,
 			'llms_cache_rev'   => 0,
@@ -337,6 +341,96 @@ final class Options {
 		$md = trim( $md );
 
 		return $md;
+	}
+
+	/**
+	 * Приводит список исключенных записей к безопасному виду.
+	 *
+	 * Структура хранится в формате:
+	 * [
+	 *   'post' => [ 12, 15 ],
+	 *   'page' => [ 22 ]
+	 * ]
+	 *
+	 * @param mixed $raw Входные данные из формы настроек.
+	 *
+	 * @return array<string,array<int,int>> Отфильтрованные ID по типам записей.
+	 */
+	public function sanitize_excluded_posts( $raw ): array {
+		$result = array();
+
+		if ( ! is_array( $raw ) ) {
+			return $result;
+		}
+
+		foreach ( $raw as $type => $ids ) {
+			$type = sanitize_key( (string) $type );
+			if ( $type === '' || ! is_array( $ids ) ) {
+				continue;
+			}
+
+			$clean_ids = array();
+			foreach ( $ids as $id ) {
+				$id = (int) $id;
+				if ( $id > 0 ) {
+					$clean_ids[] = $id;
+				}
+			}
+
+			$clean_ids = array_values( array_unique( $clean_ids ) );
+			if ( ! empty( $clean_ids ) ) {
+				$result[ $type ] = $clean_ids;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Возвращает список ID, исключенных из экспорта для конкретного типа.
+	 *
+	 * @param string $post_type Тип записи.
+	 *
+	 * @return array<int,int> Массив уникальных ID записей.
+	 */
+	public function excluded_post_ids( string $post_type ): array {
+		$post_type = sanitize_key( (string) $post_type );
+		if ( $post_type === '' ) {
+			return array();
+		}
+
+		$opt = $this->get();
+		$map = isset( $opt['excluded_posts'] ) && is_array( $opt['excluded_posts'] ) ? $opt['excluded_posts'] : array();
+		if ( ! isset( $map[ $post_type ] ) || ! is_array( $map[ $post_type ] ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $map[ $post_type ] as $id ) {
+			$id = (int) $id;
+			if ( $id > 0 ) {
+				$out[] = $id;
+			}
+		}
+
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * Проверяет, исключена ли запись из llms.txt и Markdown-экспорта.
+	 *
+	 * @param WP_Post $post Объект записи.
+	 *
+	 * @return bool True, если запись помечена как исключенная.
+	 */
+	public function is_post_excluded( WP_Post $post ): bool {
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return false;
+		}
+
+		$list = $this->excluded_post_ids( $post->post_type );
+
+		return in_array( (int) $post->ID, $list, true );
 	}
 
 	/**

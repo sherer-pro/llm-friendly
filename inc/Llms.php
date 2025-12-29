@@ -117,6 +117,7 @@ final class Llms {
 			'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
 			'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
 			'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
+			'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
 		);
 
 		$saved['llms_cache_hash']          = sha1( (string) $content );
@@ -297,6 +298,8 @@ final class Llms {
 	 * @return array<int,array<string,string>>
 	 */
 	private function get_recent_posts_by_type( $post_type, $limit ): array {
+		$excluded_ids = $this->options->excluded_post_ids( (string) $post_type );
+
 		$q = new WP_Query( array(
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
@@ -307,6 +310,7 @@ final class Llms {
 			'ignore_sticky_posts'    => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			'post__not_in'           => $excluded_ids,
 		) );
 
 		$items = array();
@@ -321,6 +325,9 @@ final class Llms {
 			}
 			$can = apply_filters( 'llmf_can_export_post', true, $p, 'llms' );
 			if ( ! $can ) {
+				continue;
+			}
+			if ( $this->options->is_post_excluded( $p ) ) {
 				continue;
 			}
 
