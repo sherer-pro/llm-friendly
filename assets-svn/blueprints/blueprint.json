@@ -17,8 +17,14 @@
   "siteOptions": {
     "blogname": "LLM Friendly demo"
   },
-  "landingPage": "/wp-admin/post.php?post=1&action=edit",
+  "landingPage": "/wp-admin/options-general.php?page=llm-friendly",
   "steps": [
+    {
+      "step": "setSiteOptions",
+      "options": {
+        "blogname": "LLM Friendly demo"
+      }
+    },
     {
       "step": "installPlugin",
       "pluginData": {
