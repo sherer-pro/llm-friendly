@@ -64,4 +64,4 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 
 ## License
 
-GPL-2.0-or-later
+GPL-3.0-or-later
