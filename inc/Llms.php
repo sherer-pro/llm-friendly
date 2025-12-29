@@ -300,10 +300,23 @@ final class Llms {
 	private function get_recent_posts_by_type( $post_type, $limit ): array {
 		$excluded_ids = $this->options->excluded_post_ids( (string) $post_type );
 
+		// Желаемое количество элементов с учётом исходного лимита.
+		$max_items = max( 0, (int) $limit );
+		if ( $max_items === 0 ) {
+			return array();
+		}
+
+		// Учитываем исключённые записи заранее, чтобы не использовать пост__not_in (дорогой параметр) и всё равно собрать нужное количество публикаций.
+		$requested_posts = $max_items;
+		if ( ! empty( $excluded_ids ) ) {
+			$requested_posts += count( $excluded_ids );
+		}
+		$requested_posts = max( 1, $requested_posts );
+
 		$query_args = array(
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
-			'posts_per_page'         => (int) $limit,
+			'posts_per_page'         => $requested_posts,
 			'orderby'                => 'modified',
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
@@ -312,17 +325,16 @@ final class Llms {
 			'update_post_term_cache' => false,
 		);
 
-		// Передаём исключённые идентификаторы только при наличии, чтобы не использовать пост__not_in без необходимости.
-		if ( ! empty( $excluded_ids ) ) {
-			$query_args['post__not_in'] = $excluded_ids;
-		}
-
 		$q = new WP_Query( $query_args );
 
 		$items = array();
 
 		foreach ( (array) $q->posts as $p ) {
 			if ( ! ( $p instanceof WP_Post ) ) {
+				continue;
+			}
+			// Пропускаем исключённые записи уже на уровне PHP, избегая дорогостоящего post__not_in в WP_Query.
+			if ( in_array( (int) $p->ID, (array) $excluded_ids, true ) ) {
 				continue;
 			}
 			// Skip password-protected posts.
@@ -344,6 +356,10 @@ final class Llms {
 				'modified'  => (string) get_the_modified_date( 'Y-m-d', $p ),
 				'excerpt'   => (string) $this->post_excerpt_one_line( $p ),
 			);
+
+			if ( count( $items ) >= $max_items ) {
+				break;
+			}
 		}
 
 		return $items;
