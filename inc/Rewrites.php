@@ -1,6 +1,6 @@
 <?php
 
-namespace LLM_Friendly;
+namespace LLMFriendly;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
