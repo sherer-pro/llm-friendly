@@ -1,4 +1,5 @@
 <?php
+
 namespace LLM_Friendly;
 
 if (!defined('ABSPATH')) {
@@ -53,8 +54,8 @@ final class Admin {
 	 */
 	public function admin_menu() {
 		add_options_page(
-			__('LLM Friendly'),
-			__('LLM Friendly'),
+			'LLM Friendly',
+			'LLM Friendly',
 			'manage_options',
 			'llm-friendly',
 			array($this, 'render_page')
@@ -322,7 +323,7 @@ final class Admin {
 		}
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__('LLM Friendly') . '</h1>';
+		echo '<h1>LLM Friendly</h1>';
 
 		if (isset($_GET['llmf_msg']) && $_GET['llmf_msg'] === 'regen_ok') {
 			echo '<div class="notice notice-success is-dismissible"><p>' .
@@ -417,6 +418,7 @@ final class Admin {
 			}
 
 			$title = get_the_title( $p );
+			/* translators: %d: Post ID. */
 			$title = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $p->ID );
 
 			$items[] = array(
@@ -518,7 +520,7 @@ public function field_md_noindex() {
 			$checked = in_array($pt, $selected, true) ? 'checked="checked"' : '';
 
 			echo '<label style="display:block;margin:4px 0;">';
-			echo '<input type="checkbox" class="llmf-post-type-toggle" data-post-type="' . esc_attr( $pt ) . '" name="' . esc_attr(Options::OPTION_KEY) . '[post_types][]" value="' . esc_attr($pt) . '" ' . $checked . ' />';
+			echo '<input type="checkbox" class="llmf-post-type-toggle" data-post-type="' . esc_attr( $pt ) . '" name="' . esc_attr(Options::OPTION_KEY) . '[post_types][]" value="' . esc_attr($pt) . '" ' . wp_kses( $checked, [] ) . ' />';
 			echo ' ' . esc_html($label) . ' <code>' . esc_html($pt) . '</code>';
 			echo '</label>';
 		}
@@ -707,6 +709,7 @@ public function field_llms_custom_markdown() {
 						continue;
 					}
 					$title = get_the_title( $p );
+					/* translators: %d: Post ID. */
 					$title = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $p->ID );
 					$items[] = array(
 						'id'    => (int) $p->ID,

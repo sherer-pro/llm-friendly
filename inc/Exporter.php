@@ -99,7 +99,7 @@ final class Exporter {
 			$this->post_modified_timestamp( $post )
 		);
 
-		echo $md;
+		echo wp_kses( $md, [] );
 		exit;
 	}
 
