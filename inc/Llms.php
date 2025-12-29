@@ -170,7 +170,9 @@ final class Llms {
 			$hash,
 			$settings_hash
 		);
-		echo wp_kses( $content, [] );
+		$safe = wp_kses_post( $content );
+		$safe = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		echo $safe;
 		exit;
 	}
 
@@ -254,17 +256,17 @@ final class Llms {
 
 				if ( $md_enabled ) {
 					$md_url       = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
-					$notes        = sprintf(
-					/* translators: 1: modified date, 2: canonical url */
-						'Updated %1$s. Canonical URL: %2$s', 'llm-friendly',
+						$notes = sprintf(
+						/* translators: 1: modified date, 2: canonical url */
+						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
 						$modified,
 						$canonical
 					);
 					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . $notes;
 				} else {
-					$notes        = sprintf(
+					$notes = sprintf(
 					/* translators: 1: modified date */
-						 'Updated %1$s.', 'llm-friendly',
+						__( 'Updated %1$s.', 'llm-friendly' ),
 						$modified
 					);
 					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . $notes;
@@ -317,7 +319,7 @@ final class Llms {
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
 			'posts_per_page'         => $requested_posts,
-			'orderby'                => 'modified',
+			'orderby'                => 'date',
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
