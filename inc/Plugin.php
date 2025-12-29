@@ -347,6 +347,11 @@ final class Plugin {
 			return;
 		}
 
+		// Исключенные записи не должны публиковать ссылку на Markdown.
+		if ( $this->options->is_post_excluded( $post ) ) {
+			return;
+		}
+
 		$base = $this->options->sanitize_base_path( (string) $opt['base_path'] );
 		$path = $this->options->post_path( $post );
 
