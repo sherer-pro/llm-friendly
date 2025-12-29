@@ -73,17 +73,5 @@ Yes. Open the post in Gutenberg and use the “Markdown override” sidebar pane
 
 == Screenshots ==
 
-1. Settings page (General, llms.txt, Maintenance)
-
-== Changelog ==
-
-= 0.4.1 =
-* Aligns plugin metadata to version 0.4.1.
-* Markdown exports: per-post-type enablement, optional `noindex` header, Gutenberg-to-Markdown conversion, and a per-post override field.
-* llms.txt: automatic or manual regeneration with caching headers, optional excerpts, optional custom Markdown block, sitemap URL field, and site meta overrides.
-* Adds minimum requirements check (WordPress 6.0+, PHP 7.4+) with admin notices and safe auto-deactivation on unsupported environments.
-
-== Upgrade Notice ==
-
-= 0.4.1 =
-Adds minimum requirements checks and clearer behavior on unsupported environments.
+1. Settings page (General)
+2. Settings page (llms.txt, Site Meta overrides, Maintenance)
