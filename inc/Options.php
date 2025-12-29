@@ -116,6 +116,20 @@ final class Options {
 
 		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : array() );
 
+		// Сбрасываем исключения по тем типам, которые не выбраны для экспорта,
+		// чтобы не хранить устаревшие ID и не показывать их в интерфейсе.
+		if ( ! empty( $out['excluded_posts'] ) ) {
+			$allowed_map = array_fill_keys( $out['post_types'], true );
+
+			$out['excluded_posts'] = array_filter(
+				$out['excluded_posts'],
+				function ( $ids, $type ) use ( $allowed_map ) {
+					return isset( $allowed_map[ $type ] );
+				},
+				ARRAY_FILTER_USE_BOTH
+			);
+		}
+
 		// Кеш управляется внутри класса, поддерживаем обязательные ключи.
 		if ( ! isset( $out['llms_cache'] ) ) {
 			$out['llms_cache'] = '';
