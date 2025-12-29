@@ -125,7 +125,7 @@ final class Exporter {
 			$blocks = parse_blocks( (string) $post->post_content );
 			$body   = trim( $this->blocks_to_markdown( $blocks ) );
 		}
-$out   = array();
+		$out   = array();
 		$out[] = '```json';
 		$out[] = $meta_json ? $meta_json : '{}';
 		$out[] = '```';
@@ -233,20 +233,20 @@ $out   = array();
 			}
 
 			if ( $name === 'core/image' ) {
-				$url     = isset( $attrs['url'] ) ? (string) $attrs['url'] : '';
-				$alt     = isset( $attrs['alt'] ) ? (string) $attrs['alt'] : '';
-				$caption = '';
-
-				if ( preg_match( '~<figcaption[^>]*>(.*?)</figcaption>~is', $innerHTML, $m ) ) {
-					$caption = $this->html_inline_to_md( $m[1] );
+				// Единая обработка одиночных изображений, чтобы переиспользовать логику парсинга подписи и alt.
+				$image = $this->extract_image_data_from_block( $b );
+				if ( $image['url'] !== '' ) {
+					$out[] = $this->build_image_markdown( $image['url'], $image['alt'], $image['caption'] );
+					$out[] = '';
 				}
+				continue;
+			}
 
-				if ( $url !== '' ) {
-					$label = $alt !== '' ? $alt : ( $caption !== '' ? $caption : 'image' );
-					$out[] = '![' . $this->escape_md( $label ) . '](' . $url . ')';
-					if ( $caption !== '' && $alt !== $caption ) {
-						$out[] = $caption;
-					}
+			if ( $name === 'core/gallery' ) {
+				// Галерея представляется последовательностью изображений — экспортируем каждое в Markdown.
+				$gallery_md = $this->gallery_blocks_to_md( $inner, $innerHTML );
+				if ( $gallery_md !== '' ) {
+					$out[] = $gallery_md;
 					$out[] = '';
 				}
 				continue;
@@ -842,6 +842,225 @@ $out   = array();
 		}
 
 		return '';
+	}
+
+	/**
+	 * Строит Markdown для изображения с учётом alt и подписи.
+	 *
+	 * @param string $url     Ссылка на изображение.
+	 * @param string $alt     Атрибут alt.
+	 * @param string $caption Подпись под изображением.
+	 *
+	 * @return string Готовый фрагмент Markdown с изображением.
+	 */
+	private function build_image_markdown( string $url, string $alt, string $caption ): string {
+		$url     = trim( $url );
+		$alt     = trim( $alt );
+		$caption = trim( $caption );
+
+		if ( $url === '' ) {
+			return '';
+		}
+
+		$label = $alt !== '' ? $alt : ( $caption !== '' ? $caption : 'image' );
+		$md    = '![' . $this->escape_md( $label ) . '](' . $url . ')';
+
+		if ( $caption !== '' && $caption !== $alt ) {
+			// Отдельной строкой оставляем подпись, чтобы она не терялась при парсинге.
+			$md .= "\n" . $caption;
+		}
+
+		return $md;
+	}
+
+	/**
+	 * Достаёт данные изображения из блока Gutenberg core/image или похожего HTML.
+	 *
+	 * @param array<string,mixed> $block Массив блока с ключами attrs/innerHTML.
+	 *
+	 * @return array{url:string,alt:string,caption:string} Чистые данные изображения.
+	 */
+	private function extract_image_data_from_block( array $block ): array {
+		$attrs      = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+		$innerHTML  = isset( $block['innerHTML'] ) ? (string) $block['innerHTML'] : '';
+		$inner_html = trim( $innerHTML );
+
+		$url     = isset( $attrs['url'] ) ? (string) $attrs['url'] : '';
+		$alt     = isset( $attrs['alt'] ) ? (string) $attrs['alt'] : '';
+		$caption = '';
+
+		// Подпись может лежать в attrs['caption'] (если блок сохранён без figure) или в figcaption.
+		if ( isset( $attrs['caption'] ) && is_string( $attrs['caption'] ) ) {
+			$caption = $this->html_inline_to_md( $attrs['caption'] );
+		}
+
+		if ( $caption === '' && preg_match( '~<figcaption[^>]*>(.*?)</figcaption>~is', $inner_html, $m ) ) {
+			$caption = $this->html_inline_to_md( $m[1] );
+		}
+
+		// Если атрибуты не содержат src/alt, пытаемся вытащить из HTML.
+		if ( ( $url === '' || $alt === '' ) && $inner_html !== '' ) {
+			if ( class_exists( 'DOMDocument' ) ) {
+				libxml_use_internal_errors( true );
+				$doc    = new \DOMDocument( '1.0', 'UTF-8' );
+				$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . '<div>' . $inner_html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+				libxml_clear_errors();
+
+				if ( $loaded ) {
+					$imgs = $doc->getElementsByTagName( 'img' );
+					if ( $imgs->length > 0 ) {
+						$img = $imgs->item( 0 );
+						if ( $img instanceof \DOMElement ) {
+							if ( $url === '' ) {
+								$url = trim( (string) $img->getAttribute( 'src' ) );
+							}
+							if ( $alt === '' ) {
+								$alt = trim( (string) $img->getAttribute( 'alt' ) );
+							}
+						}
+					}
+
+					if ( $caption === '' ) {
+						$figcaptions = $doc->getElementsByTagName( 'figcaption' );
+						if ( $figcaptions->length > 0 ) {
+							$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
+						}
+					}
+				}
+			}
+
+			// Простейший regex-фолбэк на случай отсутствия DOM.
+			if ( $url === '' && preg_match( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\']~i', $inner_html, $mm ) ) {
+				$url = trim( (string) $mm[1] );
+			}
+			if ( $alt === '' && preg_match( '~<img[^>]+alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $inner_html, $mm ) ) {
+				$alt = trim( (string) $mm[1] );
+			}
+		}
+
+		return array(
+			'url'     => $url,
+			'alt'     => $alt,
+			'caption' => $caption,
+		);
+	}
+
+	/**
+	 * Собирает Markdown для блока core/gallery: последовательно выводим все изображения.
+	 *
+	 * @param array<int,mixed> $innerBlocks Вложенные блоки галереи (обычно core/image).
+	 * @param string           $innerHTML   Сырый HTML галереи для резервного парсинга.
+	 *
+	 * @return string Markdown для всех изображений галереи.
+	 */
+	private function gallery_blocks_to_md( $innerBlocks, $innerHTML ): string {
+		$images = array();
+
+		foreach ( (array) $innerBlocks as $child ) {
+			if ( ! is_array( $child ) ) {
+				continue;
+			}
+
+			if ( isset( $child['blockName'] ) && $child['blockName'] === 'core/image' ) {
+				$img = $this->extract_image_data_from_block( $child );
+				if ( $img['url'] !== '' ) {
+					$images[] = $img;
+				}
+			}
+		}
+
+		// Фолбэк: если innerBlocks пуст, пытаемся разобрать сырой HTML галереи.
+		if ( empty( $images ) && is_string( $innerHTML ) && trim( $innerHTML ) !== '' ) {
+			$raw_html = '<div>' . $innerHTML . '</div>';
+
+			if ( class_exists( 'DOMDocument' ) ) {
+				libxml_use_internal_errors( true );
+				$doc    = new \DOMDocument( '1.0', 'UTF-8' );
+				$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $raw_html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+				libxml_clear_errors();
+
+				if ( $loaded ) {
+					$figures = $doc->getElementsByTagName( 'figure' );
+					if ( $figures->length > 0 ) {
+						foreach ( $figures as $figure ) {
+							if ( ! ( $figure instanceof \DOMElement ) ) {
+								continue;
+							}
+
+							$img       = null;
+							$caption   = '';
+							$img_nodes = $figure->getElementsByTagName( 'img' );
+
+							if ( $img_nodes->length > 0 ) {
+								$img = $img_nodes->item( 0 );
+							}
+
+							$figcaptions = $figure->getElementsByTagName( 'figcaption' );
+							if ( $figcaptions->length > 0 ) {
+								$caption = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
+							}
+
+							if ( $img instanceof \DOMElement ) {
+								$images[] = array(
+									'url'     => trim( (string) $img->getAttribute( 'src' ) ),
+									'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
+									'caption' => $caption,
+								);
+							}
+						}
+					} else {
+						// Если фигуры отсутствуют, перебираем img напрямую.
+						$imgs = $doc->getElementsByTagName( 'img' );
+						foreach ( $imgs as $img ) {
+							if ( ! ( $img instanceof \DOMElement ) ) {
+								continue;
+							}
+							$images[] = array(
+								'url'     => trim( (string) $img->getAttribute( 'src' ) ),
+								'alt'     => trim( (string) $img->getAttribute( 'alt' ) ),
+								'caption' => '',
+							);
+						}
+					}
+				}
+			}
+
+			// Самый простой фолбэк без DOM: вытаскиваем <img> теги из HTML.
+			if ( empty( $images ) && preg_match_all( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\'][^>]*~i', $innerHTML, $m ) ) {
+				$srcs = $m[1];
+				foreach ( $srcs as $src ) {
+					$alt_match = '';
+					if ( preg_match( '~<img[^>]+src=[\"\\\']' . preg_quote( $src, '~' ) . '[\"\\\'][^>]*alt=[\"\\\']([^\"\\\']*)[\"\\\']~i', $innerHTML, $mm ) ) {
+						$alt_match = (string) $mm[1];
+					}
+					$images[] = array(
+						'url'     => trim( (string) $src ),
+						'alt'     => trim( $alt_match ),
+						'caption' => '',
+					);
+				}
+			}
+		}
+
+		$images = array_values( array_filter( $images, function ( $img ) {
+			return is_array( $img ) && isset( $img['url'] ) && trim( (string) $img['url'] ) !== '';
+		} ) );
+
+		if ( empty( $images ) ) {
+			return '';
+		}
+
+		// Каждое изображение отделяем пустой строкой, чтобы Markdown остался валидным.
+		$chunks = array();
+		foreach ( $images as $img ) {
+			$chunks[] = $this->build_image_markdown(
+				(string) $img['url'],
+				isset( $img['alt'] ) ? (string) $img['alt'] : '',
+				isset( $img['caption'] ) ? (string) $img['caption'] : ''
+			);
+		}
+
+		return implode( "\n\n", array_filter( $chunks ) );
 	}
 
 	/**
