@@ -641,8 +641,10 @@ public function field_llms_custom_markdown() {
 		.llmf-excluded-posts__empty{margin:0;}
 		</style>';
 
-		echo '<p class="description">' . esc_html__( 'Find items by title in real time, add them to the exclusion list, and remove them with one click. Excluded items are omitted from llms.txt and Markdown exports.', 'llm-friendly' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'Search starts after typing at least two characters and runs asynchronously without reloading the page.', 'llm-friendly' ) . '</p>';
+		echo '<p class="description">' . wp_kses(
+			__( 'Find items by title in real time, add them to the exclusion list, and remove them with one click. <br> Excluded items are omitted from llms.txt and Markdown exports.', 'llm-friendly' ),
+			['br' => []])
+			. '</p><br>';
 
 		// Контейнер с данными для JS: подсказки и nonce уже выдаются через wp_localize_script().
 		echo '<div class="llmf-excluded-posts__wrap" id="llmf-excluded-posts">';
