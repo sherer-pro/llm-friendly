@@ -50,6 +50,13 @@ final class Exporter {
 			exit;
 		}
 
+		// Уважаем настройку исключений: скрываем конкретные записи из Markdown-экспорта.
+		if ( $this->options->is_post_excluded( $post ) ) {
+			status_header( 404 );
+			echo esc_html__( 'Not Found', 'llm-friendly' );
+			exit;
+		}
+
 		$modified = $this->post_modified_timestamp( $post );
 		$ver      = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : '0';
 
