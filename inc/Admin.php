@@ -39,7 +39,6 @@ final class Admin {
 			add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 			add_action('admin_menu', array($this, 'admin_menu'));
 			add_action('admin_init', array($this, 'admin_init'));
-			add_action('enqueue_block_editor_assets', array($this, 'enqueue_block_editor_assets'));
 			add_action('add_meta_boxes', array($this, 'maybe_add_md_override_metabox'), 10, 2);
 			add_action('save_post', array($this, 'save_md_override_metabox'), 10, 2);
 			add_action('admin_post_llmf_regenerate_llms', array($this, 'handle_regenerate_llms'));
@@ -223,49 +222,6 @@ final class Admin {
 	 *
 	 * @return void
 	 */
-
-	/**
-	 * Enqueue Gutenberg sidebar UI for Markdown override.
-	 *
-	 * @return void
-	 */
-	public function enqueue_block_editor_assets() {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return;
-		}
-
-		$opt   = $this->options->get();
-		$types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		$types = array_values( array_filter( array_map( 'sanitize_key', $types ) ) );
-
-		$handle = 'llmf-md-override';
-		$src    = trailingslashit( LLMF_URL ) . 'assets/llmf-md-override.js';
-
-		wp_enqueue_script(
-			$handle,
-			$src,
-			array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data' ),
-			defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : false,
-			true
-		);
-
-		wp_set_script_translations( $handle, 'llm-friendly' );
-
-		wp_add_inline_script(
-			$handle,
-			'window.LLMF_MD_OVERRIDE = ' . wp_json_encode(
-				array(
-					'metaKey'    => Exporter::META_MD_OVERRIDE,
-					'postTypes'  => $types,
-					'panelTitle' => __( 'Markdown override', 'llm-friendly' ),
-					'label'      => __( 'Override content for Markdown export', 'llm-friendly' ),
-					'help'       => __( 'If filled, this text will be exported as the Markdown body instead of the post content. Leave empty to use the post content. You can paste Markdown here; if it contains Gutenberg block markup (<!-- wp: ... -->), it will be converted to Markdown.', 'llm-friendly' ),
-				),
-				JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-			) . ';',
-			'before'
-		);
-	}
 
 	/**
 	 * Подключает JS ассеты для страницы настроек плагина.
@@ -800,10 +756,14 @@ public function field_llms_custom_markdown() {
 	}
 
 	/**
-	 * Classic Editor metabox: add UI for Markdown override (only when Gutenberg is not used).
+	 * Регистрирует метабокс «Markdown override» для любого редактора (Classic и Gutenberg).
 	 *
-	 * @param string  $post_type
-	 * @param WP_Post $post
+	 * Gutenberg тоже умеет отображать классические метабоксы: они выводятся под редактором
+	 * (в блоке «Дополнительные настройки»). Поэтому оставляем единую точку регистрации и
+	 * не выводим отдельную боковую панель через PluginDocumentSettingPanel.
+	 *
+	 * @param string  $post_type Текущий тип записи.
+	 * @param WP_Post $post      Объект записи.
 	 * @return void
 	 */
 	public function maybe_add_md_override_metabox( $post_type, $post ) {
@@ -814,11 +774,6 @@ public function field_llms_custom_markdown() {
 		$opt     = $this->options->get();
 		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
 		if ( ! in_array( (string) $post_type, $allowed, true ) ) {
-			return;
-		}
-
-		// Hide metabox in Gutenberg, because we already have a sidebar panel there.
-		if ( function_exists( 'use_block_editor_for_post' ) && use_block_editor_for_post( $post ) ) {
 			return;
 		}
 
@@ -833,9 +788,9 @@ public function field_llms_custom_markdown() {
 	}
 
 	/**
-	 * Render Classic Editor metabox.
+	 * Рендерит метабокс для ввода Markdown override (Classic + Gutenberg).
 	 *
-	 * @param WP_Post $post
+	 * @param WP_Post $post Текущая запись.
 	 * @return void
 	 */
 	public function render_md_override_metabox( $post ) {
