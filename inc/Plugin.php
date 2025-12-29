@@ -310,6 +310,11 @@ final class Plugin {
 				return null;
 			}
 
+			// Если запись отмечена как исключенная, не отдаем Markdown-версию.
+			if ( $this->options->is_post_excluded( $post ) ) {
+				return null;
+			}
+
 			return $post;
 		}
 

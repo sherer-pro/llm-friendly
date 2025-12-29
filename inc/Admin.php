@@ -173,6 +173,14 @@ final class Admin {
 			'llmf_llms'
 		);
 
+		add_settings_field(
+			'excluded_posts',
+			__( 'Excluded items', 'llm-friendly' ),
+			array( $this, 'field_excluded_posts' ),
+			'llm-friendly',
+			'llmf_llms'
+		);
+
 		add_settings_section(
 			'llmf_overrides',
 			__('Site meta overrides', 'llm-friendly'),
@@ -260,6 +268,11 @@ public function render_page() {
 		if (!current_user_can('manage_options')) {
 			return;
 		}
+
+		// Отдельная форма для GET-поиска по названиям записей. Поля используют атрибут form, чтобы не попадать в основной POST.
+		echo '<form method="get" id="llmf-exclude-search-form">';
+		echo '<input type="hidden" name="page" value="llm-friendly" />';
+		echo '</form>';
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__('LLM Friendly') . '</h1>';
@@ -489,6 +502,130 @@ public function field_llms_custom_markdown() {
 	echo '<textarea class="large-text code" rows="8" name="' . esc_attr(Options::OPTION_KEY) . '[llms_custom_markdown]">' . esc_textarea($v) . '</textarea>';
 	echo '<p class="description">' . esc_html__('Optional markdown inserted into llms.txt between the site meta and the content sections. Leave empty to insert nothing.', 'llm-friendly') . '</p>';
 }
+
+	/**
+	 * Поле: Исключение записей из llms.txt и Markdown-экспорта.
+	 *
+	 * Показывает выбранные типы записей, позволяет искать материалы по названию
+	 * (GET-запрос через отдельную форму) и добавлять/удалять элементы списка исключений.
+	 *
+	 * @return void
+	 */
+	public function field_excluded_posts() {
+		$opt        = $this->options->get();
+		$selected   = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
+		// Читаем поисковые запросы из GET, чтобы показывать найденные записи без вмешательства в POST-сохранение настроек.
+		$search_map = isset( $_GET['llmf_search'] ) && is_array( $_GET['llmf_search'] ) ? $_GET['llmf_search'] : array();
+
+		$pts = get_post_types( array( 'public' => true ), 'objects' );
+		if ( ! is_array( $pts ) ) {
+			$pts = array();
+		}
+
+		$pts = array_filter(
+			$pts,
+			function ( $obj ) use ( $selected ) {
+				if ( ! is_object( $obj ) || ! isset( $obj->name ) ) {
+					return false;
+				}
+				return in_array( (string) $obj->name, $selected, true );
+			}
+		);
+
+		if ( empty( $pts ) ) {
+			echo '<p class="description">' . esc_html__( 'Select at least one post type above to manage exclusions.', 'llm-friendly' ) . '</p>';
+			return;
+		}
+
+		echo '<p class="description">' . esc_html__( 'Find items by title, add them to the exclusion list, and uncheck items to remove them. Excluded items are omitted from llms.txt and Markdown exports.', 'llm-friendly' ) . '</p>';
+
+		foreach ( $pts as $pt => $obj ) {
+			$pt    = sanitize_key( (string) $pt );
+			$label = isset( $obj->labels->name ) ? (string) $obj->labels->name : $pt;
+
+			if ( $pt === '' ) {
+				continue;
+			}
+
+			$search_term = '';
+			if ( isset( $search_map[ $pt ] ) ) {
+				$search_term = sanitize_text_field( wp_unslash( (string) $search_map[ $pt ] ) );
+			}
+
+			$excluded_ids = $this->options->excluded_post_ids( $pt );
+
+			echo '<div style="padding:12px 0;border-bottom:1px solid #ddd;">';
+			echo '<h4 style="margin:0 0 6px;">' . esc_html( $label ) . ' <code>' . esc_html( $pt ) . '</code></h4>';
+
+			echo '<div style="margin-bottom:8px;">';
+			echo '<label for="llmf-search-' . esc_attr( $pt ) . '" style="display:block;margin-bottom:4px;">' . esc_html__( 'Search by title', 'llm-friendly' ) . '</label>';
+			echo '<input type="text" id="llmf-search-' . esc_attr( $pt ) . '" name="llmf_search[' . esc_attr( $pt ) . ']" form="llmf-exclude-search-form" value="' . esc_attr( $search_term ) . '" class="regular-text" />';
+			echo ' <button type="submit" form="llmf-exclude-search-form" class="button">' . esc_html__( 'Search', 'llm-friendly' ) . '</button>';
+			echo '</div>';
+
+			echo '<p style="margin:8px 0 4px;font-weight:600;">' . esc_html__( 'Currently excluded', 'llm-friendly' ) . '</p>';
+			if ( empty( $excluded_ids ) ) {
+				echo '<p class="description" style="margin-top:0;">' . esc_html__( 'No items are excluded yet.', 'llm-friendly' ) . '</p>';
+			} else {
+				echo '<div style="max-height:220px;overflow:auto;border:1px solid #e5e5e5;padding:8px;">';
+				foreach ( $excluded_ids as $post_id ) {
+					$post_obj = get_post( $post_id );
+					$title    = $post_obj instanceof \WP_Post ? get_the_title( $post_obj ) : '';
+					$title    = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $post_id );
+
+					echo '<label style="display:block;margin-bottom:4px;">';
+					echo '<input type="checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $pt ) . '][]" value="' . esc_attr( (string) $post_id ) . '" checked="checked" />';
+					echo ' ' . esc_html( $title ) . ' ';
+					echo '<span class="description">(' . esc_html( sprintf( '#%d', $post_id ) ) . ')</span>';
+					echo '</label>';
+				}
+				echo '</div>';
+				echo '<p class="description" style="margin-top:4px;">' . esc_html__( 'Uncheck an item and save to remove it from the exclusion list.', 'llm-friendly' ) . '</p>';
+			}
+
+			if ( $search_term !== '' ) {
+				$args  = array(
+					'post_type'              => $pt,
+					'post_status'            => 'publish',
+					's'                      => $search_term,
+					'posts_per_page'         => 15,
+					'orderby'                => 'date',
+					'order'                  => 'DESC',
+					'no_found_rows'          => true,
+					'ignore_sticky_posts'    => true,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+					'post__not_in'           => $excluded_ids,
+				);
+				$found = get_posts( $args );
+
+				echo '<p style="margin:12px 0 4px;font-weight:600;">' . esc_html__( 'Search results', 'llm-friendly' ) . '</p>';
+
+				if ( empty( $found ) ) {
+					echo '<p class="description" style="margin-top:0;">' . esc_html__( 'Nothing found for this query.', 'llm-friendly' ) . '</p>';
+				} else {
+					echo '<div style="max-height:220px;overflow:auto;border:1px solid #e5e5e5;padding:8px;">';
+					foreach ( $found as $p ) {
+						if ( ! ( $p instanceof \WP_Post ) ) {
+							continue;
+						}
+						$title = get_the_title( $p );
+						$title = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $p->ID );
+
+						echo '<label style="display:block;margin-bottom:4px;">';
+						echo '<input type="checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $pt ) . '][]" value="' . esc_attr( (string) $p->ID ) . '" />';
+						echo ' ' . esc_html( $title ) . ' ';
+						echo '<span class="description">(' . esc_html( sprintf( '#%d', $p->ID ) ) . ')</span>';
+						echo '</label>';
+					}
+					echo '</div>';
+					echo '<p class="description" style="margin-top:4px;">' . esc_html__( 'Check items to add them to the exclusion list.', 'llm-friendly' ) . '</p>';
+				}
+			}
+
+			echo '</div>';
+		}
+	}
 
 
 	/**
