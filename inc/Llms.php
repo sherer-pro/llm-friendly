@@ -300,7 +300,7 @@ final class Llms {
 	private function get_recent_posts_by_type( $post_type, $limit ): array {
 		$excluded_ids = $this->options->excluded_post_ids( (string) $post_type );
 
-		$q = new WP_Query( array(
+		$query_args = array(
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
 			'posts_per_page'         => (int) $limit,
@@ -310,8 +310,14 @@ final class Llms {
 			'ignore_sticky_posts'    => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
-			'post__not_in'           => $excluded_ids,
-		) );
+		);
+
+		// Передаём исключённые идентификаторы только при наличии, чтобы не использовать пост__not_in без необходимости.
+		if ( ! empty( $excluded_ids ) ) {
+			$query_args['post__not_in'] = $excluded_ids;
+		}
+
+		$q = new WP_Query( $query_args );
 
 		$items = array();
 
