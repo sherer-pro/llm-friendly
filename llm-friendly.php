@@ -127,6 +127,20 @@ if ( ! llmf_requirements_met() ) {
 	return;
 }
 
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'llmf_add_settings_link' );
+
+function llmf_add_settings_link( $links ) {
+	$url = admin_url( 'options-general.php?page=llm-friendly' );
+
+	$settings_link = '<a href="' . esc_url( $url ) . '">'
+	                 . esc_html__( 'Settings', 'llm-friendly' )
+	                 . '</a>';
+
+	array_unshift( $links, $settings_link );
+
+	return $links;
+}
+
 /**
  * Important: do NOT call Plugin->init() directly here.
  * Boot plugin after all plugins are loaded.
