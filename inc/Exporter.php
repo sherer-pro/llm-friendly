@@ -1,6 +1,6 @@
 <?php
 
-namespace LLM_Friendly;
+namespace LLMFriendly;
 
 use WP_Post;
 
@@ -1487,8 +1487,8 @@ final class Exporter {
 		header( 'Last-Modified: ' . $last_modified );
 		header( 'Cache-Control: public, max-age=0, must-revalidate' );
 
-		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) : '';
-		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? trim( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) : '';
+		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
+		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
 
 		if ( $if_none_match !== '' && $if_none_match === $etag ) {
 			status_header( 304 );
@@ -1557,6 +1557,7 @@ final class Exporter {
 	 * @return string
 	 */
 	private function post_plain_text( WP_Post $post ) {
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- используем стандартный фильтр ядра WordPress.
 		$html = apply_filters( 'the_content', (string) $post->post_content );
 		$html = $this->normalize_newlines( $html );
 		$text = wp_strip_all_tags( $html );
