@@ -908,10 +908,12 @@ public function field_llms_custom_markdown() {
 			return;
 		}
 
-		$value = isset( $_POST['llmf_md_content_override'] ) ? (string) wp_unslash( $_POST['llmf_md_content_override'] ) : '';
-		$value = trim( $value );
-		// Разрешаем только безопасный подмножество Markdown/HTML, чтобы исключить опасные теги и атрибуты.
-		$value = wp_kses_post( $value );
+		// Извлекаем пользовательский ввод, сохраняя Markdown, и очищаем его вручную, чтобы избежать небезопасных тегов.
+		$raw_value = filter_input( INPUT_POST, 'llmf_md_content_override', FILTER_UNSAFE_RAW );
+		$value     = is_string( $raw_value ) ? (string) wp_unslash( $raw_value ) : '';
+		$value     = trim( $value );
+		// Разрешаем только безопасный подмножество Markdown/HTML, чтобы исключить опасные теги и атрибуты после санитизации пользовательского ввода.
+		$value     = wp_kses_post( $value );
 
 		if ( $value === '' ) {
 			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
