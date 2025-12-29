@@ -75,7 +75,6 @@ final class Plugin {
 
 		add_action( 'wp_head', array( $this, 'output_alternate_markdown_link' ), 1 );
 
-		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'admin_init', array( $this, 'maybe_flush_rewrites' ) );
 	}
 
@@ -200,19 +199,6 @@ final class Plugin {
 	public function init(): void {
 		$this->rewrites->add_rules();
 		$this->register_editor_meta();
-	}
-
-	/**
-	 * Load plugin translations.
-	 *
-	 * @return void
-	 */
-	public function load_textdomain(): void {
-		load_plugin_textdomain(
-			'llm-friendly',
-			false,
-			dirname( plugin_basename( LLMF_FILE ) ) . '/languages'
-		);
 	}
 
 	/**

@@ -170,7 +170,7 @@ final class Llms {
 			$hash,
 			$settings_hash
 		);
-		echo $content;
+		echo wp_kses( $content, [] );
 		exit;
 	}
 
@@ -216,13 +216,13 @@ final class Llms {
 			$blocks[] = $custom;
 		}
 
-		$blocks[] = '## ' . __( 'Main links' );
+		$blocks[] = '## ' . 'Main links';
 		$blocks[] = implode(
 			"\n",
 			array(
-				'- [' . $this->md_link_text( __( 'Home' ) ) . '](' . $home . '): ' . __( 'Website home page' ),
-				'- [' . $this->md_link_text( __( 'Sitemap' ) ) . '](' . $sitemap . '): ' . __( 'XML sitemap' ),
-				'- [' . $this->md_link_text( __( 'RSS' ) ) . '](' . $rss . '): ' . __( 'Latest updates feed' ),
+				'- [' . $this->md_link_text( 'Home' ) . '](' . $home . '): ' . 'Website home page',
+				'- [' . $this->md_link_text( 'Sitemap' ) . '](' . $sitemap . '): ' . 'XML sitemap',
+				'- [' . $this->md_link_text( 'RSS' ) . '](' . $rss . '): ' . 'Latest updates feed',
 			)
 		);
 
@@ -256,7 +256,7 @@ final class Llms {
 					$md_url       = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
 					$notes        = sprintf(
 					/* translators: 1: modified date, 2: canonical url */
-						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
+						'Updated %1$s. Canonical URL: %2$s', 'llm-friendly',
 						$modified,
 						$canonical
 					);
@@ -264,7 +264,7 @@ final class Llms {
 				} else {
 					$notes        = sprintf(
 					/* translators: 1: modified date */
-						__( 'Updated %1$s.', 'llm-friendly' ),
+						 'Updated %1$s.', 'llm-friendly',
 						$modified
 					);
 					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . $notes;
