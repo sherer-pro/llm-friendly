@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LLM Friendly
  * Description: Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.
- * Version: 0.4.1
+ * Version: 0.1.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Pavel Sherer
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
  * Текущая версия плагина, используется для кешей и ссылок на ассеты.
  * Меняем здесь и в заголовке одновременно, чтобы WordPress корректно считал обновления.
  */
-define('LLMF_VERSION', '0.4.1');
+define('LLMF_VERSION', '0.1.0');
 define('LLMF_FILE', __FILE__);
 define('LLMF_DIR', plugin_dir_path(__FILE__));
 define('LLMF_URL', plugin_dir_url(__FILE__));
