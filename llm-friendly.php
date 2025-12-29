@@ -87,11 +87,11 @@ function llmf_activate() {
 		}
 		wp_die( esc_html__( 'LLM Friendly cannot be activated because the environment does not meet the minimum requirements.', 'llm-friendly' ) );
 	}
-	\LLM_Friendly\Plugin::activate();
+	\LLMFriendly\Plugin::activate();
 }
 
 function llmf_deactivate() {
-	\LLM_Friendly\Plugin::deactivate();
+	\LLMFriendly\Plugin::deactivate();
 }
 
 require_once LLMF_DIR . 'inc/Options.php';
@@ -130,4 +130,4 @@ if ( ! llmf_requirements_met() ) {
  * Important: do NOT call Plugin->init() directly here.
  * Boot plugin after all plugins are loaded.
  */
-add_action( 'plugins_loaded', array( '\LLM_Friendly\Plugin', 'instance' ) );
+add_action( 'plugins_loaded', array( '\LLMFriendly\Plugin', 'instance' ) );

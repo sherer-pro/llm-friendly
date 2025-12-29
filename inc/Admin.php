@@ -1,6 +1,6 @@
 <?php
 
-namespace LLM_Friendly;
+namespace LLMFriendly;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -325,7 +325,10 @@ final class Admin {
 		echo '<div class="wrap">';
 		echo '<h1>LLM Friendly</h1>';
 
-		if (isset($_GET['llmf_msg']) && $_GET['llmf_msg'] === 'regen_ok') {
+		$notice       = isset( $_GET['llmf_msg'] ) ? sanitize_key( wp_unslash( (string) $_GET['llmf_msg'] ) ) : '';
+		$notice_nonce = isset( $_GET['llmf_msg_nonce'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['llmf_msg_nonce'] ) ) : '';
+
+		if ( $notice === 'regen_ok' && wp_verify_nonce( $notice_nonce, 'llmf_admin_notice' ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' .
 			     esc_html__('llms.txt was regenerated.', 'llm-friendly') .
 			     '</p></div>';
@@ -396,6 +399,7 @@ final class Admin {
 			'ignore_sticky_posts'    => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- нужно исключить выбранные записи, чтобы администратор не добавил их повторно.
 			'post__not_in'           => $excluded_ids,
 		);
 
@@ -449,7 +453,15 @@ final class Admin {
 			$back = admin_url('options-general.php?page=llm-friendly');
 		}
 
-		wp_safe_redirect(add_query_arg('llmf_msg', 'regen_ok', $back));
+		$notice_url = add_query_arg(
+			array(
+				'llmf_msg'       => 'regen_ok',
+				'llmf_msg_nonce' => wp_create_nonce( 'llmf_admin_notice' ),
+			),
+			$back
+		);
+
+		wp_safe_redirect( $notice_url );
 		exit;
 	}
 
@@ -898,6 +910,8 @@ public function field_llms_custom_markdown() {
 
 		$value = isset( $_POST['llmf_md_content_override'] ) ? (string) wp_unslash( $_POST['llmf_md_content_override'] ) : '';
 		$value = trim( $value );
+		// Разрешаем только безопасный подмножество Markdown/HTML, чтобы исключить опасные теги и атрибуты.
+		$value = wp_kses_post( $value );
 
 		if ( $value === '' ) {
 			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );

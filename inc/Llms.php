@@ -1,6 +1,6 @@
 <?php
 
-namespace LLM_Friendly;
+namespace LLMFriendly;
 
 use WP_Post;
 use WP_Query;
@@ -528,8 +528,8 @@ final class Llms {
 
 		header( 'Cache-Control: public, max-age=0, must-revalidate' );
 
-		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) : '';
-		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? trim( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) : '';
+		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
+		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
 
 		if ( $if_none_match !== '' && $if_none_match === $etag ) {
 			status_header( 304 );
