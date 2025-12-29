@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: LLM Friendly\n"
-"POT-Creation-Date: 2025-12-27 15:35+0300\n"
-"PO-Revision-Date: 2025-12-29 15:02+0300\n"
+"POT-Creation-Date: 2025-12-29 16:54+0300\n"
+"PO-Revision-Date: 2025-12-29 16:54+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es_ES\n"
@@ -11,240 +11,348 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 2.0.7\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: llm-friendly.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
 
-#: inc/Admin.php:76
+#: inc/Admin.php:79
 msgid "General"
 msgstr "General"
 
-#: inc/Admin.php:83
+#: inc/Admin.php:86
 msgid "Enable Markdown exports"
-msgstr "Habilitar exportaciones Markdown"
+msgstr "Activar exportaciones Markdown"
 
-#: inc/Admin.php:91
+#: inc/Admin.php:94
 msgid "Send \"noindex\" header for Markdown exports"
-msgstr "Enviar el encabezado \"noindex\" para las exportaciones Markdown"
+msgstr "Enviar encabezado «noindex» para los exports Markdown"
 
-#: inc/Admin.php:99
+#: inc/Admin.php:102
 msgid "Base path for Markdown exports"
-msgstr "Ruta base para las exportaciones Markdown"
+msgstr "Ruta base para los exports Markdown"
 
-#: inc/Admin.php:107
+#: inc/Admin.php:110
 msgid "Post types to include"
 msgstr "Tipos de contenido a incluir"
 
-#: inc/Admin.php:115
+#: inc/Admin.php:118
+msgid "Excluded items"
+msgstr "Elementos excluidos"
+
+#: inc/Admin.php:126
 msgid "llms.txt"
 msgstr "llms.txt"
 
-#: inc/Admin.php:122
+#: inc/Admin.php:133
 msgid "Enable llms.txt"
-msgstr "Habilitar llms.txt"
+msgstr "Activar llms.txt"
 
-#: inc/Admin.php:130
+#: inc/Admin.php:141
 msgid "Send \"noindex\" header for llms.txt"
-msgstr "Enviar el encabezado \"noindex\" para llms.txt"
+msgstr "Enviar encabezado «noindex» para llms.txt"
 
-#: inc/Admin.php:138
+#: inc/Admin.php:149
 msgid "Regeneration mode"
 msgstr "Modo de regeneración"
 
-#: inc/Admin.php:146
+#: inc/Admin.php:157
 msgid "Items per post type"
 msgstr "Elementos por tipo de contenido"
 
-#: inc/Admin.php:154
+#: inc/Admin.php:165
 msgid "Show excerpt"
 msgstr "Mostrar extracto"
 
-#: inc/Admin.php:162
+#: inc/Admin.php:173
 msgid "Sitemap URL"
 msgstr "URL del sitemap"
 
-#: inc/Admin.php:170
+#: inc/Admin.php:181
 msgid "Custom markdown block"
 msgstr "Bloque Markdown personalizado"
 
-#: inc/Admin.php:178
+#: inc/Admin.php:189
 msgid "Site meta overrides"
-msgstr "Sobrescrituras de metadatos del sitio"
+msgstr "Anulaciones de metadatos del sitio"
 
-#: inc/Admin.php:185
+#: inc/Admin.php:196
 msgid "Site title override"
-msgstr "Sobrescritura del título del sitio"
+msgstr "Anular título del sitio"
 
-#: inc/Admin.php:193
+#: inc/Admin.php:204
 msgid "Site description override"
-msgstr "Sobrescritura de la descripción del sitio"
+msgstr "Anular descripción del sitio"
 
-#: inc/Admin.php:249
+#: inc/Admin.php:260
 msgid "Markdown override"
-msgstr "Sobrescritura de Markdown"
+msgstr "Anulación de Markdown"
 
-#: inc/Admin.php:250
+#: inc/Admin.php:261
 msgid "Override content for Markdown export"
-msgstr "Reemplazar el contenido para la exportación Markdown"
+msgstr "Anular contenido para el export Markdown"
 
-#: inc/Admin.php:251
+#: inc/Admin.php:262
 msgid ""
-"If filled, this text will be exported as the Markdown body instead of the post "
-"content. Leave empty to use the post content. You can paste Markdown here; if it "
-"contains Gutenberg block markup (<!-- wp: ... -->), it will be converted to "
-"Markdown."
+"If filled, this text will be exported as the Markdown body instead of the "
+"post content. Leave empty to use the post content. You can paste Markdown "
+"here; if it contains Gutenberg block markup (<!-- wp: ... -->), it will be "
+"converted to Markdown."
 msgstr ""
-"Si se completa, este texto se exportará como el cuerpo Markdown en lugar del "
-"contenido de la entrada. Déjalo vacío para usar el contenido de la entrada. Puedes "
-"pegar Markdown aquí; si contiene marcado de bloques de Gutenberg (<!-- wp: ... --"
-">), se convertirá a Markdown."
+"Si se completa, este texto se exportará como cuerpo Markdown en lugar "
+"delcontenido de la entrada. Déjalo vacío para usar el contenido de la "
+"entrada.Puedes pegar Markdown aquí; si contiene marcado de bloques de "
+"Gutenberg(<!-- wp: ... -->), se convertirá a Markdown."
 
-#: inc/Admin.php:269
+#: inc/Admin.php:302 inc/Admin.php:739
+msgid "Start typing from 2 characters…"
+msgstr "Empieza a escribir a partir de 2 caracteres…"
+
+#: inc/Admin.php:303
+msgid "Searching…"
+msgstr "Buscando…"
+
+#: inc/Admin.php:304 inc/Admin.php:378
+msgid "Enter at least 2 characters to search."
+msgstr "Introduce al menos 2 caracteres para buscar."
+
+#: inc/Admin.php:305
+msgid "Nothing found for this query."
+msgstr "No se encontró nada para esta consulta."
+
+#: inc/Admin.php:306
+msgid "Add to exclusions"
+msgstr "Añadir a exclusiones"
+
+#: inc/Admin.php:307 inc/Admin.php:762
+msgid "Remove from exclusions"
+msgstr "Quitar de exclusiones"
+
+#: inc/Admin.php:308 inc/Admin.php:748
+msgid "No items are excluded yet."
+msgstr "Aún no hay elementos excluidos."
+
+#: inc/Admin.php:309
+msgid "Search failed, please try again."
+msgstr "La búsqueda falló, inténtalo de nuevo."
+
+#: inc/Admin.php:333
 msgid "llms.txt was regenerated."
-msgstr "Se regeneró llms.txt."
+msgstr "llms.txt se regeneró."
 
-#: inc/Admin.php:277
+#: inc/Admin.php:341
 msgid "Save changes"
 msgstr "Guardar cambios"
 
-#: inc/Admin.php:281
+#: inc/Admin.php:345
 msgid "Maintenance"
 msgstr "Mantenimiento"
 
-#: inc/Admin.php:285
+#: inc/Admin.php:349
 msgid "Regenerate llms.txt now"
 msgstr "Regenerar llms.txt ahora"
 
-#: inc/Admin.php:287
+#: inc/Admin.php:351
 msgid "Rebuilds cached llms.txt immediately."
-msgstr "Reconstruye inmediatamente el llms.txt en caché."
+msgstr "Reconstruye el llms.txt en caché de inmediato."
 
-#: inc/Admin.php:299
+#: inc/Admin.php:367 inc/Admin.php:444
 msgid "Access denied."
 msgstr "Acceso denegado."
 
-#: inc/Admin.php:326
+#: inc/Admin.php:385
+msgid "Post type is not allowed."
+msgstr "El tipo de contenido no está permitido."
+
+#. translators: %d: Post ID.
+#: inc/Admin.php:426 inc/Admin.php:724
+#, php-format
+msgid "Item #%d"
+msgstr "Elemento n.º %d"
+
+#: inc/Admin.php:479
 msgid "Enable .md endpoints for selected post types"
-msgstr "Habilitar endpoints .md para los tipos seleccionados"
+msgstr "Activar endpoints .md para los tipos seleccionados"
 
-#: inc/Admin.php:339
+#: inc/Admin.php:492
 msgid "Add X-Robots-Tag: noindex, nofollow header for .md endpoints"
-msgstr "Añadir el encabezado X-Robots-Tag: noindex, nofollow para los endpoints .md"
+msgstr "Añadir encabezado X-Robots-Tag: noindex, nofollow para endpoints .md"
 
-#: inc/Admin.php:354
+#: inc/Admin.php:507
 msgid "Example: \"llm\" → /llm/{post_type}/{path}.md"
-msgstr "Ejemplo: \"llm\" → /llm/{post_type}/{path}.md"
+msgstr "Ejemplo: «llm» → /llm/{post_type}/{path}.md"
 
-#: inc/Admin.php:386
+#: inc/Admin.php:539
 msgid "These types will appear in llms.txt and will have Markdown exports."
-msgstr "Estos tipos aparecerán en llms.txt y tendrán exportaciones Markdown."
+msgstr "Estos tipos aparecerán en llms.txt y tendrán exports Markdown."
 
-#: inc/Admin.php:401
+#: inc/Admin.php:554
 msgid "Serve /llms.txt"
 msgstr "Servir /llms.txt"
 
-#: inc/Admin.php:416
+#: inc/Admin.php:569
 msgid "Send X-Robots-Tag: noindex, nofollow for /llms.txt"
 msgstr "Enviar X-Robots-Tag: noindex, nofollow para /llms.txt"
 
-#: inc/Admin.php:430
+#: inc/Admin.php:583
 msgid "Auto (on publish/update)"
 msgstr "Automático (al publicar/actualizar)"
 
-#: inc/Admin.php:431
+#: inc/Admin.php:584
 msgid "Manual only"
 msgstr "Solo manual"
 
-#: inc/Admin.php:434
-msgid "In manual mode, use the button in the Maintenance section to rebuild llms.txt."
+#: inc/Admin.php:587
+msgid ""
+"In manual mode, use the button in the Maintenance section to rebuild llms."
+"txt."
 msgstr ""
-"En modo manual, usa el botón de la sección Mantenimiento para reconstruir llms.txt."
+"En modo manual, usa el botón de la sección Mantenimiento para "
+"reconstruirllms.txt."
 
-#: inc/Admin.php:447
+#: inc/Admin.php:600
 msgid "How many latest items to list for each post type."
-msgstr "Cuántos elementos más recientes listar para cada tipo de contenido."
+msgstr "Cuántos elementos más recientes listar para cada tipo."
 
-#: inc/Admin.php:461
+#: inc/Admin.php:614
 msgid "Add excerpt (if available) under each item in llms.txt"
-msgstr "Añadir extracto (si está disponible) debajo de cada elemento en llms.txt"
+msgstr ""
+"Añadir extracto (si está disponible) debajo de cada elemento en llms.txt"
 
-#: inc/Admin.php:475
+#: inc/Admin.php:628
 msgid "Absolute URL or site-relative path. Default: /sitemap.xml"
 msgstr "URL absoluta o ruta relativa al sitio. Predeterminado: /sitemap.xml"
 
-#: inc/Admin.php:490
+#: inc/Admin.php:643
 msgid ""
-"Optional markdown inserted into llms.txt between the site meta and the content "
-"sections. Leave empty to insert nothing."
+"Optional markdown inserted into llms.txt between the site meta and the "
+"content sections. Leave empty to insert nothing."
 msgstr ""
-"Markdown opcional insertado en llms.txt entre los metadatos del sitio y las "
-"secciones de contenido. Déjalo vacío para no insertar nada."
+"Markdown opcional que se inserta en llms.txt entre los metadatos del sitio "
+"yla sección de contenido. Déjalo vacío para no insertar nada."
 
-#: inc/Admin.php:504
+#: inc/Admin.php:667
+msgid "Select at least one post type above to manage exclusions."
+msgstr "Selecciona al menos un tipo arriba para gestionar exclusiones."
+
+#: inc/Admin.php:688
+msgid ""
+"Find items by title in real time, add them to the exclusion list, and remove "
+"them with one click. <br> Excluded items are omitted from llms.txt and "
+"Markdown exports."
+msgstr ""
+"Busca elementos por título en tiempo real, añádelos a la lista de exclusióny "
+"elimínalos con un clic. <br> Los elementos excluidos se omiten de llms.txt y "
+"delos exports Markdown."
+
+#: inc/Admin.php:738
+msgid "Search by title"
+msgstr "Buscar por título"
+
+#: inc/Admin.php:741
+msgid ""
+"Type at least two characters to search. Results appear in the dropdown "
+"instantly."
+msgstr ""
+"Escribe al menos dos caracteres para buscar. Los resultados aparecen "
+"alinstante en el desplegable."
+
+#: inc/Admin.php:744
+msgid "Currently excluded"
+msgstr "Actualmente excluidos"
+
+#: inc/Admin.php:785
 msgid "If empty, uses WordPress setting: Site Title."
-msgstr "Si está vacío, usa el ajuste de WordPress: Título del sitio."
+msgstr "Si está vacío, se usa el ajuste de WordPress: «Título del sitio»."
 
-#: inc/Admin.php:517
+#: inc/Admin.php:798
 msgid "If empty, uses WordPress setting: Tagline."
-msgstr "Si está vacío, usa el ajuste de WordPress: Descripción corta."
+msgstr "Si está vacío, se usa el ajuste de WordPress: «Descripción corta»."
 
-#: inc/Admin.php:545
+#: inc/Admin.php:826
 msgid "Markdown override (LLM Friendly)"
-msgstr "Sobrescritura de Markdown (LLM Friendly)"
+msgstr "Anulación de Markdown (LLM Friendly)"
 
-#: inc/Admin.php:573
-msgid "If filled, this text will replace the post content in the Markdown export."
-msgstr ""
-"Si se completa, este texto reemplazará el contenido de la entrada en la exportación "
-"Markdown."
-
-#: inc/Admin.php:575
+#: inc/Admin.php:854
 msgid ""
-"Leave empty to export the post content. You can paste plain Markdown or Gutenberg "
-"block markup (<!-- wp: ... -->)."
+"If filled, this text will replace the post content in the Markdown export."
 msgstr ""
-"Déjalo vacío para exportar el contenido de la entrada. Puedes pegar Markdown sin "
-"formato o marcado de bloques de Gutenberg (<!-- wp: ... -->)."
+"Si se completa, este texto reemplazará el contenido de la entrada en "
+"elexport Markdown."
 
-#: inc/Exporter.php:43 inc/Exporter.php:49 inc/Llms.php:139 inc/Plugin.php:272
+#: inc/Admin.php:856
+msgid ""
+"Leave empty to export the post content. You can paste plain Markdown or "
+"Gutenberg block markup (<!-- wp: ... -->)."
+msgstr ""
+"Déjalo vacío para exportar el contenido de la entrada. Puedes pegar "
+"Markdownsimple o marcado de bloques de Gutenberg (<!-- wp: ... -->)."
+
+#: inc/Exporter.php:46 inc/Exporter.php:55 inc/Exporter.php:65 inc/Llms.php:140
+#: inc/Plugin.php:258
 msgid "Not Found"
 msgstr "No encontrado"
 
-#: inc/Llms.php:188
+#: inc/Llms.php:189
 msgid "LLM-friendly index of this website."
 msgstr "Índice compatible con LLM de este sitio web."
 
-#: inc/Llms.php:224
-msgid "Latest updates feed"
-msgstr "Feed de las últimas actualizaciones"
-
-#: inc/Llms.php:239
+#: inc/Llms.php:240
 msgid "(no published items found)"
 msgstr "(no se encontraron elementos publicados)"
 
 #. translators: 1: current PHP version, 2: required PHP version
-#: llm-friendly.php:52
+#: llm-friendly.php:57
 #, php-format
 msgid "LLM Friendly requires PHP %2$s or newer. You are running %1$s."
 msgstr "LLM Friendly requiere PHP %2$s o superior. Estás usando %1$s."
 
 #. translators: 1: current WP version, 2: required WP version
-#: llm-friendly.php:61
+#: llm-friendly.php:66
 #, php-format
 msgid "LLM Friendly requires WordPress %2$s or newer. You are running %1$s."
 msgstr "LLM Friendly requiere WordPress %2$s o superior. Estás usando %1$s."
 
-#: llm-friendly.php:84
+#: llm-friendly.php:89
 msgid ""
-"LLM Friendly cannot be activated because the environment does not meet the minimum "
-"requirements."
+"LLM Friendly cannot be activated because the environment does not meet the "
+"minimum requirements."
 msgstr ""
-"LLM Friendly no puede activarse porque el entorno no cumple los requisitos mínimos."
+"LLM Friendly no se puede activar porque el entorno no cumple los "
+"requisitosmínimos."
+
+#. Plugin Name of the plugin/theme
+msgid "LLM Friendly"
+msgstr "LLM Friendly"
+
+#. Plugin URI of the plugin/theme
+msgid "https://github.com/sherer-pro/llm-friendly"
+msgstr "https://github.com/sherer-pro/llm-friendly"
 
 #. Description of the plugin/theme
 msgid ""
-"Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access."
+"Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content "
+"access."
 msgstr ""
-"Añade llms.txt y endpoints Markdown a WordPress para un acceso al contenido "
-"compatible con LLM."
+"Añade llms.txt y endpoints Markdown a WordPress para un acceso al "
+"contenidocompatible con LLM."
 
 #. Author of the plugin/theme
 msgid "Pavel Sherer"
 msgstr "Pavel Sherer"
+
+#. Author URI of the plugin/theme
+msgid "https://sherer.pro"
+msgstr "https://sherer.pro"
+
+#~ msgid ""
+#~ "Search starts after typing at least two characters and runs "
+#~ "asynchronously without reloading the page."
+#~ msgstr ""
+#~ "La búsqueda comienza tras escribir al menos dos caracteres y se ejecuta "
+#~ "deforma asíncrona sin recargar la página."
