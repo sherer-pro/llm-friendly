@@ -45,35 +45,52 @@ function llmf_requirements_met() {
  * @return void
  */
 function llmf_requirements_notice() {
+	// Show this notice only on plugin list screens to avoid site-wide admin notices.
+	if ( ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+	$screen = get_current_screen();
+	if ( ! $screen || ( 'plugins' !== $screen->id && 'plugins-network' !== $screen->id ) ) {
+		return;
+	}
+
 	$php_ok     = version_compare( PHP_VERSION, '7.4', '>=' );
 	$wp_version = get_bloginfo( 'version' );
 	$wp_ok      = is_string( $wp_version ) ? version_compare( $wp_version, '6.0', '>=' ) : false;
 
-	$msg = array();
+	$errors = array();
 
 	if ( ! $php_ok ) {
-		$msg[] = sprintf(
-		/* translators: 1: current PHP version, 2: required PHP version */
-			esc_html__( 'LLM Friendly requires PHP %2$s or newer. You are running %1$s.', 'llm-friendly' ),
+		$errors[] = sprintf(
+		/* translators: 1: Current PHP version, 2: Required PHP version */
+			esc_html__( 'PHP version %1$s detected. Required: %2$s+', 'llm-friendly' ),
 			esc_html( PHP_VERSION ),
-			esc_html( '7.4' )
+			'7.4'
 		);
 	}
 
 	if ( ! $wp_ok ) {
-		$msg[] = sprintf(
-		/* translators: 1: current WP version, 2: required WP version */
-			esc_html__( 'LLM Friendly requires WordPress %2$s or newer. You are running %1$s.', 'llm-friendly' ),
-			esc_html( is_string( $wp_version ) ? $wp_version : 'unknown' ),
-			esc_html( '6.0' )
+		$errors[] = sprintf(
+		/* translators: 1: Current WP version, 2: Required WP version */
+			esc_html__( 'WordPress version %1$s detected. Required: %2$s+', 'llm-friendly' ),
+			esc_html( is_string( $wp_version ) ? $wp_version : '' ),
+			'6.0'
 		);
 	}
 
-	if ( empty( $msg ) ) {
+	if ( empty( $errors ) ) {
 		return;
 	}
 
-	echo '<div class="notice notice-error"><p>' . implode( '<br>', wp_kses( $msg, [] ) ) . '</p></div>';
+	$heading = esc_html__( 'LLM Friendly is disabled due to unmet requirements:', 'llm-friendly' );
+
+	echo '<div class="notice notice-error"><p><strong>' . $heading . '</strong></p><ul>';
+
+	foreach ( $errors as $msg ) {
+		echo '<li>' . $msg . '</li>';
+	}
+
+	echo '</ul></div>';
 }
 
 /**
