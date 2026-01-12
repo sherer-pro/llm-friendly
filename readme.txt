@@ -1,5 +1,5 @@
 === LLM Friendly ===
-Contributors: your-wordpress-org-username
+Contributors: skreep
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 6.9
