@@ -156,13 +156,16 @@ final class Llms {
 		}
 
 		$rev_etag_part = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
-		$etag          = '"' . sha1( $content . '|' . $ts . '|' . $rev_etag_part ) . '"';
+
+		// Normalize Markdown for output and compute ETag from the actual response body.
+		$md            = $this->llmf_normalize_markdown_blocks( $content );
+		$etag          = '"' . sha1( $md . '|' . $ts . '|' . $rev_etag_part ) . '"';
 		$rev           = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
 		$hash          = isset( $opt['llms_cache_hash'] ) ? (string) $opt['llms_cache_hash'] : '';
 		$settings_hash = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
 
 		$this->send_common_headers(
-			array( 'Content-Type: text/plain; charset=UTF-8' ),
+			array( 'Content-Type: text/markdown; charset=UTF-8' ),
 			$etag,
 			$ts > 0 ? $ts : time(),
 			$ts,
@@ -170,9 +173,7 @@ final class Llms {
 			$hash,
 			$settings_hash
 		);
-		$safe = wp_kses_post( $content );
-		$safe = html_entity_decode( $safe, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		echo $safe;
+		echo wp_strip_all_tags( $md, false );
 		exit;
 	}
 
@@ -212,7 +213,6 @@ final class Llms {
 
 		// Optional custom markdown block (inserted between site meta and the content sections).
 		$custom = isset( $opt['llms_custom_markdown'] ) ? (string) $opt['llms_custom_markdown'] : '';
-		$custom = str_replace( array( "\r\n", "\r" ), "\n", $custom );
 		$custom = trim( $custom );
 		if ( $custom !== '' ) {
 			$blocks[] = $custom;
@@ -256,15 +256,15 @@ final class Llms {
 
 				if ( $md_enabled ) {
 					$md_url       = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
-						$notes = sprintf(
-						/* translators: 1: modified date, 2: canonical url */
+					$notes        = sprintf(
+					/* translators: 1: modified date, 2: canonical url */
 						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
 						$modified,
 						$canonical
 					);
 					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . $notes;
 				} else {
-					$notes = sprintf(
+					$notes        = sprintf(
 					/* translators: 1: modified date */
 						__( 'Updated %1$s.', 'llm-friendly' ),
 						$modified
@@ -286,7 +286,6 @@ final class Llms {
 
 		$blocks  = array_values( array_filter( array_map( 'trim', $blocks ), 'strlen' ) );
 		$content = implode( "\n\n", $blocks );
-		$content = str_replace( array( "\r\n", "\r" ), "\n", $content );
 
 		return rtrim( $content, "\n" ) . "\n";
 	}
@@ -555,9 +554,17 @@ final class Llms {
 		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
 		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
 
-		if ( $if_none_match !== '' && $if_none_match === $etag ) {
-			status_header( 304 );
-			exit;
+		if ( $if_none_match !== '' ) {
+			if ( $if_none_match === $etag ) {
+				status_header( 304 );
+				exit;
+			}
+		} elseif ( $if_modified_since !== '' ) {
+			$ims = strtotime( $if_modified_since );
+			if ( $ims !== false && $ims >= $last_modified_ts ) {
+				status_header( 304 );
+				exit;
+			}
 		}
 
 		if ( $if_modified_since !== '' ) {
@@ -568,6 +575,28 @@ final class Llms {
 			}
 		}
 
+	}
+
+	private function llmf_normalize_markdown_blocks( string $md ): string {
+		// Normalize newlines.
+		$md = str_replace( [ "\r\n", "\r" ], "\n", $md );
+
+		// Ensure a blank line AFTER headings.
+		$md = preg_replace( '/^(#{1,6}[^\n]*)\n(?!\n)/m', "$1\n\n", $md );
+
+		// Ensure a blank line BEFORE headings (except at the very start).
+		$md = preg_replace( '/\n(#{1,6}\s+)/', "\n\n$1", $md );
+
+		// Ensure a blank line AFTER a blockquote line when the next line is not another quote.
+		$md = preg_replace( '/^(>[^\n]*)\n(?!\n|>)/m', "$1\n\n", $md );
+
+		// Ensure a blank line BEFORE lists.
+		$md = preg_replace( '/\n(-\s+)/', "\n\n$1", $md );
+
+		// Collapse 3+ newlines into exactly 2.
+		$md = preg_replace( "/\n{3,}/", "\n\n", $md );
+
+		return trim( $md ) . "\n";
 	}
 
 }
