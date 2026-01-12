@@ -87,7 +87,7 @@ function llmf_requirements_notice() {
 	echo '<div class="notice notice-error"><p><strong>' . $heading . '</strong></p><ul>';
 
 	foreach ( $errors as $msg ) {
-		echo '<li>' . $msg . '</li>';
+		echo '<li>' . esc_html( $msg ) . '</li>';
 	}
 
 	echo '</ul></div>';
