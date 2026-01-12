@@ -625,8 +625,7 @@ public function field_llms_custom_markdown() {
 		}
 
 		// Небольшие стили для удобства чтения нового интерфейса поиска/исключений.
-		echo '<style>
-		.llmf-excluded-posts__wrap{border:1px solid #dcdcde;border-radius:6px;padding:12px;max-width:900px;}
+		$css = '.llmf-excluded-posts__wrap{border:1px solid #dcdcde;border-radius:6px;padding:12px;max-width:900px;}
 		.llmf-excluded-posts__type{border:1px solid #e0e0e0;border-radius:4px;padding:12px;margin-bottom:12px;background:#fff;position:relative;}
 		.llmf-excluded-posts__type--hidden{display:none;}
 		.llmf-excluded-posts__search{position:relative;max-width:520px;}
@@ -638,8 +637,16 @@ public function field_llms_custom_markdown() {
 		.llmf-excluded-posts__selected-item{display:flex;align-items:center;justify-content:space-between;padding:6px 4px;border-bottom:1px solid #ececec;gap:8px;}
 		.llmf-excluded-posts__selected-item:last-child{border-bottom:0;}
 		.llmf-excluded-posts__selected-item .button-link{color:#b32d2e;}
-		.llmf-excluded-posts__empty{margin:0;}
-		</style>';
+		.llmf-excluded-posts__empty{margin:0;}';
+
+		wp_register_style(
+			'llmf-admin',
+			false,
+			[],
+			LLMF_VERSION
+		);
+		wp_enqueue_style( 'llmf-admin' );
+		wp_add_inline_style( 'llmf-admin', $css );
 
 		echo '<p class="description">' . wp_kses(
 			__( 'Find items by title in real time, add them to the exclusion list, and remove them with one click. <br> Excluded items are omitted from llms.txt and Markdown exports.', 'llm-friendly' ),
@@ -866,7 +873,9 @@ public function field_llms_custom_markdown() {
 		}
 
 		// Извлекаем пользовательский ввод, сохраняя Markdown, и очищаем его вручную, чтобы избежать небезопасных тегов.
-		$raw_value = filter_input( INPUT_POST, 'llmf_md_content_override', FILTER_UNSAFE_RAW );
+		$raw_value = isset( $_POST['llmf_md_content_override'] )
+			? wp_unslash( $_POST['llmf_md_content_override'] )
+			: '';
 		$value     = is_string( $raw_value ) ? (string) wp_unslash( $raw_value ) : '';
 		$value     = trim( $value );
 		// Разрешаем только безопасный подмножество Markdown/HTML, чтобы исключить опасные теги и атрибуты после санитизации пользовательского ввода.
