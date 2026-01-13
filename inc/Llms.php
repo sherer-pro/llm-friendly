@@ -173,7 +173,8 @@ final class Llms {
 			$hash,
 			$settings_hash
 		);
-		echo wp_strip_all_tags( $md, false );
+		// text/markdown response: do not HTML-escape (it breaks ">"); strip all HTML tags instead.
+		echo wp_strip_all_tags( $md, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		exit;
 	}
 
