@@ -17,8 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Текущая версия плагина, используется для кешей и ссылок на ассеты.
- * Меняем здесь и в заголовке одновременно, чтобы WordPress корректно считал обновления.
+ * Current plugin version, used for caches and asset URLs.
+ * Update this value and the plugin header together so WordPress detects updates correctly.
  */
 define( 'LLMF_VERSION', '0.1.0' );
 define( 'LLMF_FILE', __FILE__ );

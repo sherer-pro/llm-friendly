@@ -19,12 +19,12 @@ final class Rewrites {
 	public const QV_PATH = 'llmf_path';
 
 	/**
-	 * @var Options Сервис настроек.
+	 * @var Options Options service.
 	 */
 	private Options $options;
 
 	/**
-	 * @param Options $options Объект для чтения настроек плагина.
+	 * @param Options $options Options reader.
 	 */
 	public function __construct( Options $options ) {
 		$this->options = $options;
@@ -33,11 +33,11 @@ final class Rewrites {
 	}
 
 	/**
-	 * Добавляет пользовательские query vars, чтобы их понимал WP_Query.
+	 * Add custom query vars so WP_Query recognizes them.
 	 *
-	 * @param array<int,string> $vars Исходный набор параметров.
+	 * @param array<int,string> $vars Original query vars.
 	 *
-	 * @return array<int,string> Обновленный список query vars.
+	 * @return array<int,string> Updated query vars list.
 	 */
 	public function add_query_vars( array $vars ): array {
 		$vars[] = self::QV_LLMS;
@@ -49,7 +49,7 @@ final class Rewrites {
 	}
 
 	/**
-	 * Регистрирует правила переписывания URL для экспорта Markdown и llms.txt.
+	 * Register rewrite rules for Markdown exports and llms.txt.
 	 *
 	 * @return void
 	 */
