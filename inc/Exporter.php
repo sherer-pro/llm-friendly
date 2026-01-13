@@ -56,7 +56,7 @@ final class Exporter {
 			exit;
 		}
 
-		// Уважаем настройку исключений: скрываем конкретные записи из Markdown-экспорта.
+		// Respect exclusions: hide specific posts from Markdown exports.
 		if ( $this->options->is_post_excluded( $post ) ) {
 			if ( function_exists( 'nocache_headers' ) ) {
 				nocache_headers();
@@ -106,8 +106,8 @@ final class Exporter {
 	/**
 	 * Build Markdown for a post.
 	 *
-	 * @param WP_Post $post Объект записи.
-	 * @param string  $override_md Произвольный Markdown, который должен заменить содержимое записи.
+	 * @param WP_Post $post Post object.
+	 * @param string  $override_md Custom Markdown that should replace post content.
 	 *
 	 * @return string
 	 */
@@ -150,11 +150,11 @@ final class Exporter {
 	}
 
 	/**
-	 * Получает кастомный Markdown из метаполя записи.
+	 * Get the custom Markdown from the post meta.
 	 *
-	 * @param WP_Post $post Запись, из которой читаем переопределение.
+	 * @param WP_Post $post Post to read the override from.
 	 *
-	 * @return string Чистое текстовое содержимое или пустая строка.
+	 * @return string Clean text content or an empty string.
 	 */
 	private function get_markdown_override( WP_Post $post ): string {
 		$val = get_post_meta( $post->ID, self::META_MD_OVERRIDE, true );
@@ -245,7 +245,7 @@ final class Exporter {
 			}
 
 			if ( $name === 'core/image' ) {
-				// Единая обработка одиночных изображений, чтобы переиспользовать логику парсинга подписи и alt.
+				// Single image handling to reuse caption/alt parsing logic.
 				$image = $this->extract_image_data_from_block( $b );
 				if ( $image['url'] !== '' ) {
 					$out[] = $this->build_image_markdown( $image['url'], $image['alt'], $image['caption'] );
@@ -255,7 +255,7 @@ final class Exporter {
 			}
 
 			if ( $name === 'core/gallery' ) {
-				// Галерея представляется последовательностью изображений — экспортируем каждое в Markdown.
+				// A gallery is a sequence of images; export each one to Markdown.
 				$gallery_md = $this->gallery_blocks_to_md( $inner, $innerHTML, $b );
 				if ( $gallery_md !== '' ) {
 					$out[] = $gallery_md;
@@ -401,11 +401,11 @@ final class Exporter {
 	}
 
 	/**
-	 * Аккуратно разделяет блоки Markdown пустыми строками, не трогая fenced-блоки.
+	 * Carefully separate Markdown blocks with blank lines without touching fenced blocks.
 	 *
-	 * @param string $md Исходный Markdown.
+	 * @param string $md Source Markdown.
 	 *
-	 * @return string Отформатированный Markdown с единообразными разрывами между блоками.
+	 * @return string Formatted Markdown with consistent spacing between blocks.
 	 */
 	private function normalize_markdown_blocks( string $md ): string {
 		$md = $this->normalize_newlines( (string) $md );
@@ -513,33 +513,33 @@ final class Exporter {
 	}
 
 	/**
-	 * Приводит переводы строк к Unix-формату \n.
+	 * Normalize line breaks to Unix format \n.
 	 *
-	 * @param string $s Любая строка с произвольными переводами строк.
+	 * @param string $s Any string with arbitrary line breaks.
 	 *
-	 * @return string Строка с единым разделителем \n.
+	 * @return string String with a unified \n separator.
 	 */
 	private function normalize_newlines( string $s ): string {
 		return str_replace( array( "\r\n", "\r" ), "\n", $s );
 	}
 
 	/**
-	 * Безопасно парсит HTML-фрагмент в DOM с отключенными внешними сущностями.
+	 * Safely parse an HTML fragment into DOM with external entities disabled.
 	 *
-	 * Используем упрощённый парсер libxml без DOCTYPE/ENTITY, чтобы минимизировать
-	 * риск XXE/SSRF при обработке пользовательских блоков и оверрайдов Markdown.
+	 * Use a restricted libxml parser without DOCTYPE/ENTITY to minimize
+	 * XXE/SSRF risk when handling user blocks and Markdown overrides.
 	 *
-	 * @param string $html  HTML-фрагмент без необходимости оборачивать в <html>.
-	 * @param int    $flags Дополнительные флаги libxml (будут объединены с безопасными).
+	 * @param string $html  HTML fragment without wrapping in <html>.
+	 * @param int    $flags Additional libxml flags (merged with safe defaults).
 	 *
-	 * @return \DOMDocument|null Готовый документ или null при неудаче/отключённом DOM.
+	 * @return \DOMDocument|null DOM document or null on failure/disabled DOM.
 	 */
 	private function dom_from_html_fragment( string $html, int $flags = 0 ): ?\DOMDocument {
 		if ( ! class_exists( 'DOMDocument' ) ) {
 			return null;
 		}
 
-		// Убираем потенциальные объявления DOCTYPE/ENTITY, чтобы их не обрабатывал libxml.
+		// Remove potential DOCTYPE/ENTITY declarations so libxml does not process them.
 		$safe_html = preg_replace( '/<!DOCTYPE.*?>/is', '', (string) $html );
 		$safe_html = preg_replace( '/<!ENTITY.*?>/is', '', (string) $safe_html );
 
@@ -886,13 +886,13 @@ final class Exporter {
 	}
 
 	/**
-	 * Строит Markdown для изображения с учётом alt и подписи.
+	 * Build Markdown for an image with alt text and caption.
 	 *
-	 * @param string $url     Ссылка на изображение.
-	 * @param string $alt     Атрибут alt.
-	 * @param string $caption Подпись под изображением.
+	 * @param string $url     Image URL.
+	 * @param string $alt     Alt attribute.
+	 * @param string $caption Image caption.
 	 *
-	 * @return string Готовый фрагмент Markdown с изображением.
+	 * @return string Markdown fragment with the image.
 	 */
 	private function build_image_markdown( string $url, string $alt, string $caption ): string {
 		$url     = trim( $url );
@@ -907,7 +907,7 @@ final class Exporter {
 		$md    = '![' . $this->escape_md( $label ) . '](' . $url . ')';
 
 		if ( $caption !== '' && $caption !== $alt ) {
-			// Отдельной строкой оставляем подпись, чтобы она не терялась при парсинге.
+			// Keep caption on its own line so it is not lost during parsing.
 			$md .= "\n" . $caption;
 		}
 
@@ -915,11 +915,11 @@ final class Exporter {
 	}
 
 	/**
-	 * Достаёт данные изображения из блока Gutenberg core/image или похожего HTML.
+	 * Extract image data from a Gutenberg core/image block or similar HTML.
 	 *
-	 * @param array<string,mixed> $block Массив блока с ключами attrs/innerHTML.
+	 * @param array<string,mixed> $block Block array with attrs/innerHTML keys.
 	 *
-	 * @return array{url:string,alt:string,caption:string} Чистые данные изображения.
+	 * @return array{url:string,alt:string,caption:string} Clean image data.
 	 */
 	private function extract_image_data_from_block( array $block ): array {
 		$attrs         = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
@@ -928,12 +928,12 @@ final class Exporter {
 		$inner_html    = trim( $innerHTML );
 		$rendered_html = '';
 
-		// Забираем данные из атрибутов, если WordPress их сохранил.
+		// Pull data from attributes if WordPress stored them.
 		$url     = isset( $attrs['url'] ) ? (string) $attrs['url'] : '';
 		$alt     = isset( $attrs['alt'] ) ? (string) $attrs['alt'] : '';
 		$caption = '';
 
-		// Подпись может лежать в attrs['caption'] (если блок сохранён без figure) или в figcaption.
+		// Caption may be in attrs['caption'] (if saved without figure) or in figcaption.
 		if ( isset( $attrs['caption'] ) && is_string( $attrs['caption'] ) ) {
 			$caption = $this->html_inline_to_md( $attrs['caption'] );
 		}
@@ -942,7 +942,7 @@ final class Exporter {
 			$caption = $this->html_inline_to_md( $m[1] );
 		}
 
-		// Если innerHTML пуст, пробуем собрать HTML из innerContent.
+		// If innerHTML is empty, build HTML from innerContent.
 		if ( $inner_html === '' && ! empty( $innerContent ) ) {
 			$content_html = array();
 			foreach ( $innerContent as $chunk ) {
@@ -953,12 +953,12 @@ final class Exporter {
 			$inner_html = trim( implode( '', $content_html ) );
 		}
 
-		// На некоторых версиях Gutenberg полезно отрендерить блок целиком: это даст готовый HTML figure/img.
+		// On some Gutenberg versions, rendering the block yields full figure/img HTML.
 		if ( function_exists( 'render_block' ) ) {
 			$rendered_html = (string) render_block( $block );
 		}
 
-		// Собираем кандидатов HTML, чтобы поочерёдно вытащить недостающие url/alt/caption.
+		// Collect HTML candidates to extract missing url/alt/caption values in order.
 		$html_candidates = array_filter( array( $inner_html, $rendered_html ), function ( $val ) {
 			return is_string( $val ) && trim( $val ) !== '';
 		} );
@@ -966,7 +966,7 @@ final class Exporter {
 		foreach ( $html_candidates as $candidate_html ) {
 			$parsed = $this->extract_image_data_from_html( (string) $candidate_html, $caption );
 
-			// Берём недостающие поля только если они пустые, чтобы не перезаписывать валидные значения из атрибутов.
+			// Fill missing fields only when empty to avoid overwriting attribute values.
 			if ( $url === '' && $parsed['url'] !== '' ) {
 				$url = $parsed['url'];
 			}
@@ -977,7 +977,7 @@ final class Exporter {
 				$caption = $parsed['caption'];
 			}
 
-			// Если собрали все поля, можно прекращать дальнейший парсинг.
+			// Stop parsing once all fields are collected.
 			if ( $url !== '' && $alt !== '' && $caption !== '' ) {
 				break;
 			}
@@ -991,12 +991,12 @@ final class Exporter {
 	}
 
 	/**
-	 * Аккуратно достаёт данные изображения из HTML-фрагмента figure/img.
+	 * Safely extract image data from an HTML fragment with figure/img.
 	 *
-	 * @param string $html             Сырый HTML с <img> или <figure>.
-	 * @param string $default_caption  Подпись, которую можно использовать, если в HTML нет своей.
+	 * @param string $html             Raw HTML with <img> or <figure>.
+	 * @param string $default_caption  Caption to use if HTML provides none.
 	 *
-	 * @return array{url:string,alt:string,caption:string} Готовые значения src/alt/caption.
+	 * @return array{url:string,alt:string,caption:string} Final src/alt/caption values.
 	 */
 	private function extract_image_data_from_html( string $html, string $default_caption = '' ): array {
 		$clean_html = trim( $html );
@@ -1016,7 +1016,7 @@ final class Exporter {
 			$root = $doc->getElementsByTagName( 'div' )->item( 0 );
 
 			if ( $root ) {
-				// Сначала пробуем вытащить figure: она может содержать и alt, и подпись.
+				// First try figure: it can contain both alt and caption.
 				$figures = $root->getElementsByTagName( 'figure' );
 				if ( $figures->length > 0 ) {
 					foreach ( $figures as $figure ) {
@@ -1042,12 +1042,12 @@ final class Exporter {
 							$data['caption'] = $this->html_inline_to_md( $doc->saveHTML( $figcaptions->item( 0 ) ) );
 						}
 
-						// Нашли полноценный набор данных — можно возвращать.
+						// Found a complete data set, return it.
 						return $data;
 					}
 				}
 
-				// Если figure нет, ищем первый img на уровне корня.
+				// If no figure exists, look for the first img at the root level.
 				$imgs = $root->getElementsByTagName( 'img' );
 				if ( $imgs->length > 0 ) {
 					$img = $imgs->item( 0 );
@@ -1059,7 +1059,7 @@ final class Exporter {
 			}
 		}
 
-		// Простейший regex-фолбэк на случай отсутствия DOM или отсутствия тегов figure/img в DOM-модели.
+		// Basic regex fallback in case DOM is unavailable or lacks figure/img tags.
 		if ( $data['url'] === '' && preg_match( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\']~i', $clean_html, $mm ) ) {
 			$data['url'] = trim( (string) $mm[1] );
 		}
@@ -1071,13 +1071,13 @@ final class Exporter {
 	}
 
 	/**
-	 * Собирает Markdown для блока core/gallery: последовательно выводим все изображения.
+	 * Build Markdown for a core/gallery block by outputting each image.
 	 *
-	 * @param array<int,mixed> $innerBlocks Вложенные блоки галереи (обычно core/image).
-	 * @param string           $innerHTML   Сырый HTML галереи для резервного парсинга.
-	 * @param array            $block       Исходный блок галереи (используется для рендера/innerContent).
+	 * @param array<int,mixed> $innerBlocks Nested gallery blocks (usually core/image).
+	 * @param string           $innerHTML   Raw gallery HTML for fallback parsing.
+	 * @param array            $block       Original gallery block (used for render/innerContent).
 	 *
-	 * @return string Markdown для всех изображений галереи.
+	 * @return string Markdown for all gallery images.
 	 */
 	private function gallery_blocks_to_md( $innerBlocks, $innerHTML, array $block = array() ): string {
 		$images = array();
@@ -1096,14 +1096,14 @@ final class Exporter {
 		}
 
 		if ( empty( $images ) ) {
-			// Список HTML-кандидатов: сначала innerHTML, затем innerContent, потом отрендеренный блок.
+			// HTML candidates: innerHTML, then innerContent, then rendered block.
 			$html_candidates = array();
 
 			if ( is_string( $innerHTML ) && trim( $innerHTML ) !== '' ) {
 				$html_candidates[] = $innerHTML;
 			}
 
-			// Если Gutenberg положил реальный HTML в innerContent — используем его.
+			// If Gutenberg stored real HTML in innerContent, use it.
 			if ( empty( $html_candidates ) && isset( $block['innerContent'] ) && is_array( $block['innerContent'] ) ) {
 				$content_html = array();
 				foreach ( $block['innerContent'] as $chunk ) {
@@ -1117,7 +1117,7 @@ final class Exporter {
 				}
 			}
 
-			// Рендер блока может вернуть готовый HTML-галерею, что полезно при нестандартных конфигурациях.
+			// Rendering the block can return ready HTML, useful for non-standard setups.
 			if ( function_exists( 'render_block' ) && is_array( $block ) && ! empty( $block ) ) {
 				$rendered = (string) render_block( $block );
 				if ( trim( $rendered ) !== '' ) {
@@ -1141,7 +1141,7 @@ final class Exporter {
 			return '';
 		}
 
-		// Каждое изображение отделяем пустой строкой, чтобы Markdown остался валидным.
+		// Separate each image with a blank line to keep Markdown valid.
 		$chunks = array();
 		foreach ( $images as $img ) {
 			$chunks[] = $this->build_image_markdown(
@@ -1155,11 +1155,11 @@ final class Exporter {
 	}
 
 	/**
-	 * Разбирает HTML-галерею и возвращает массив изображений.
+	 * Parse an HTML gallery and return an array of images.
 	 *
-	 * @param string $html Сырый HTML галереи (может содержать figure или просто img).
+	 * @param string $html Raw gallery HTML (may contain figure or img).
 	 *
-	 * @return array<int,array{url:string,alt:string,caption:string}> Список изображений.
+	 * @return array<int,array{url:string,alt:string,caption:string}> Image list.
 	 */
 	private function extract_images_from_gallery_html( string $html ): array {
 		$clean_html = trim( $html );
@@ -1197,7 +1197,7 @@ final class Exporter {
 			}
 		}
 
-		// Самый простой фолбэк без DOM: вытаскиваем <img> теги из HTML.
+		// Simplest fallback without DOM: extract <img> tags from HTML.
 		if ( empty( $images ) && preg_match_all( '~<img[^>]+src=[\"\\\']([^\"\\\']+)[\"\\\'][^>]*~i', $clean_html, $m ) ) {
 			$srcs = $m[1];
 			foreach ( $srcs as $src ) {
@@ -1461,8 +1461,7 @@ final class Exporter {
 		if ( is_array( $headers ) ) {
 			foreach ( $headers as $k => $v ) {
 				if ( is_string( $k ) && $k !== '' ) {
-					// Формируем готовую строку заголовка для пар «ключ => значение» один раз,
-					// чтобы избежать повторной отправки теми же данными ниже.
+					// Build the header line for "key => value" pairs once to avoid repetition below.
 					$v = (string) $v;
 					if ( $v !== '' ) {
 						$header_lines[] = $k . ': ' . $v;
@@ -1557,7 +1556,7 @@ final class Exporter {
 	 * @return string
 	 */
 	private function post_plain_text( WP_Post $post ) {
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- используем стандартный фильтр ядра WordPress.
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- using a core WordPress filter.
 		$html = apply_filters( 'the_content', (string) $post->post_content );
 		$html = $this->normalize_newlines( $html );
 		$text = wp_strip_all_tags( $html );
