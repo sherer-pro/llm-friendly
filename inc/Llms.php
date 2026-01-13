@@ -301,13 +301,13 @@ final class Llms {
 	private function get_recent_posts_by_type( $post_type, $limit ): array {
 		$excluded_ids = $this->options->excluded_post_ids( (string) $post_type );
 
-		// Желаемое количество элементов с учётом исходного лимита.
+		// Target number of items based on the requested limit.
 		$max_items = max( 0, (int) $limit );
 		if ( $max_items === 0 ) {
 			return array();
 		}
 
-		// Учитываем исключённые записи заранее, чтобы не использовать пост__not_in (дорогой параметр) и всё равно собрать нужное количество публикаций.
+		// Account for excluded posts up front to avoid using post__not_in (expensive) and still fill the list.
 		$requested_posts = $max_items;
 		if ( ! empty( $excluded_ids ) ) {
 			$requested_posts += count( $excluded_ids );
@@ -334,7 +334,7 @@ final class Llms {
 			if ( ! ( $p instanceof WP_Post ) ) {
 				continue;
 			}
-			// Пропускаем исключённые записи уже на уровне PHP, избегая дорогостоящего post__not_in в WP_Query.
+			// Skip excluded posts in PHP to avoid expensive post__not_in in WP_Query.
 			if ( in_array( (int) $p->ID, (array) $excluded_ids, true ) ) {
 				continue;
 			}
@@ -507,7 +507,7 @@ final class Llms {
 		if ( is_array( $headers ) ) {
 			foreach ( $headers as $k => $v ) {
 				if ( is_string( $k ) && $k !== '' ) {
-					// Собираем строки заголовков заранее, чтобы исключить повторную отправку далее.
+					// Build header lines in advance to avoid repeating them later.
 					$v = (string) $v;
 					if ( $v !== '' ) {
 						$header_lines[] = $k . ': ' . $v;
@@ -578,15 +578,15 @@ final class Llms {
 	}
 
 	/**
-	 * Нормализует блоки Markdown так, чтобы теги (заголовки, цитаты, списки)
-	 * были отделены пустыми строками, как в "чистом" Markdown.
+	 * Normalize Markdown blocks so tags (headings, quotes, lists)
+	 * are separated by blank lines, like in "clean" Markdown.
 	 *
-	 * @param string $md Исходный Markdown.
+	 * @param string $md Source Markdown.
 	 *
-	 * @return string Markdown с единообразными пустыми строками между блоками.
+	 * @return string Markdown with consistent blank lines between blocks.
 	 */
 	private function llmf_normalize_markdown_blocks( string $md ): string {
-		// Приводим переносы строк к Unix-формату, чтобы анализ строк был стабильным.
+		// Normalize line breaks to Unix format for stable line analysis.
 		$md = str_replace( array( "\r\n", "\r" ), "\n", $md );
 		$lines = explode( "\n", $md );
 
@@ -601,13 +601,13 @@ final class Llms {
 				return;
 			}
 
-			// Убираем только хвостовые пробелы, сохраняя внутреннюю структуру блока.
+			// Trim only trailing whitespace while keeping internal structure.
 			$tmp = array();
 			foreach ( $cur_lines as $line ) {
 				$tmp[] = rtrim( (string) $line );
 			}
 
-			// Очищаем пустые строки в начале и конце блока.
+			// Remove blank lines at the start and end of a block.
 			while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
 				array_shift( $tmp );
 			}
@@ -627,7 +627,7 @@ final class Llms {
 			$raw  = (string) $ln;
 			$trim = trim( $raw );
 
-			// Защищаем fenced-код, чтобы не вмешиваться в его внутренние переносы.
+			// Protect fenced code so we do not alter its internal line breaks.
 			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
 			if ( $is_fence ) {
 				if ( ! $in_code ) {
@@ -648,13 +648,13 @@ final class Llms {
 				continue;
 			}
 
-			// Пустая строка завершает текущий блок.
+			// A blank line ends the current block.
 			if ( $trim === '' ) {
 				$flush();
 				continue;
 			}
 
-			// Определяем тип блока, чтобы не разрывать список или цитату внутри.
+			// Identify block type to avoid splitting lists or quotes.
 			$type = 'para';
 			if ( preg_match( '/^\s{0,3}#{1,6}\s+/', $raw ) ) {
 				$type = 'heading';
@@ -663,11 +663,11 @@ final class Llms {
 			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
 				$type = 'list';
 			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
-				// Упрощённое определение Markdown-таблиц, чтобы не ломать пайпы.
+				// Simple Markdown table detection to avoid breaking pipes.
 				$type = 'table';
 			}
 
-			// Заголовки — отдельные блоки.
+			// Headings are standalone blocks.
 			if ( $type === 'heading' ) {
 				$flush();
 				$blocks[] = array( rtrim( $raw ) );
@@ -684,7 +684,7 @@ final class Llms {
 
 		$flush();
 
-		// Собираем Markdown с одной пустой строкой между блоками.
+		// Assemble Markdown with a single blank line between blocks.
 		$out = array();
 		foreach ( $blocks as $i => $b_lines ) {
 			if ( $i > 0 ) {

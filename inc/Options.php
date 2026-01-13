@@ -17,7 +17,7 @@ final class Options {
 	public const OPTION_KEY = 'llmf_options';
 
 	/**
-	 * Максимальная длина пользовательского Markdown-блока для llms.txt (в символах).
+	 * Maximum length for the custom Markdown block in llms.txt (in characters).
 	 */
 	private const CUSTOM_MD_MAX_LENGTH = 20000;
 
@@ -121,8 +121,8 @@ final class Options {
 
 		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : array() );
 
-		// Сбрасываем исключения по тем типам, которые не выбраны для экспорта,
-		// чтобы не хранить устаревшие ID и не показывать их в интерфейсе.
+		// Drop exclusions for post types that are no longer exported,
+		// so we do not keep stale IDs or show them in the UI.
 		if ( ! empty( $out['excluded_posts'] ) ) {
 			$allowed_map = array_fill_keys( $out['post_types'], true );
 
@@ -135,7 +135,7 @@ final class Options {
 			);
 		}
 
-		// Кеш управляется внутри класса, поддерживаем обязательные ключи.
+		// Cache fields are managed inside the class; ensure required keys exist.
 		if ( ! isset( $out['llms_cache'] ) ) {
 			$out['llms_cache'] = '';
 		}
@@ -143,7 +143,7 @@ final class Options {
 			$out['llms_cache_ts'] = 0;
 		}
 
-		// Эти ключи влияют на содержимое llms.txt, поэтому при их изменении сбрасываем кеш.
+		// These keys affect llms.txt output, so clear the cache when they change.
 		$affect_keys = array(
 			'enabled_markdown',
 			'enabled_llms_txt',
@@ -169,14 +169,14 @@ final class Options {
 		}
 
 		if ( $changed ) {
-			// Сбрасываем кеш и связанные метаданные, чтобы пересборка прошла корректно.
+			// Reset cache and related metadata to ensure a clean rebuild.
 			$out['llms_cache'] = '';
 			$out['llms_cache_ts'] = 0;
 			$out['llms_cache_rev'] = 0;
 			$out['llms_cache_hash'] = '';
 			$out['llms_cache_settings_hash'] = '';
 		} else {
-			// Поддерживаем служебные поля кеша, если сохраненные данные их не содержат.
+			// Preserve cache metadata fields if they are missing in saved data.
 			if ( ! isset( $out['llms_cache_rev'] ) ) {
 				$out['llms_cache_rev'] = 0;
 			}
@@ -188,7 +188,7 @@ final class Options {
 			}
 		}
 
-		// Эти параметры влияют на URL, поэтому ставим transient для последующего сброса правил.
+		// These settings affect URLs, so set a transient to flush rewrite rules later.
 		$rewrite_keys     = array( 'enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types' );
 		$rewrite_changed = false;
 		foreach ( $rewrite_keys as $k ) {
@@ -201,7 +201,7 @@ final class Options {
 		}
 
 		if ( $rewrite_changed ) {
-			// Откладываем flush до admin_init, чтобы избежать повторных вызовов во время сохранения настроек.
+			// Defer flush to admin_init to avoid repeated flushes during option saves.
 			set_transient( 'llmf_flush_rewrite_rules', 1, 10 * MINUTE_IN_SECONDS );
 		}
 
@@ -249,7 +249,7 @@ final class Options {
 	private function sanitize_llms_custom_markdown( $value ) {
 		$clean = $this->sanitize_markdown_block( (string) $value );
 
-		// Ограничиваем длину блока, чтобы предотвратить чрезмерный объём кеша и нагрузку на генерацию.
+		// Cap block length to prevent oversized caches and generation load.
 		$max = (int) self::CUSTOM_MD_MAX_LENGTH;
 		if ( $max > 0 ) {
 			if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
@@ -358,14 +358,14 @@ final class Options {
 	}
 
 	/**
-	 * Санитизирует произвольный блок Markdown для вставки в llms.txt.
+	 * Sanitize a custom Markdown block for insertion into llms.txt.
 	 *
-	 * Метод нормализует переносы строк, удаляет нулевые байты и обрезает пробелы,
-	 * чтобы подготовить содержимое к безопасной вставке без разрушения разметки.
+	 * The method normalizes newlines, removes null bytes, and trims whitespace
+	 * to prepare safe insertion without breaking Markdown formatting.
 	 *
-	 * @param string $md Произвольный Markdown-блок, полученный от пользователя.
+	 * @param string $md Custom Markdown block provided by the user.
 	 *
-	 * @return string Очищенный Markdown без управляющих байтов и с единым переводом строк.
+	 * @return string Cleaned Markdown without control bytes and with unified line breaks.
 	 */
 	private function sanitize_markdown_block( $md ) {
 		$md = (string) $md;
@@ -377,17 +377,17 @@ final class Options {
 	}
 
 	/**
-	 * Приводит список исключенных записей к безопасному виду.
+	 * Normalize the exclusion list into a safe structure.
 	 *
-	 * Структура хранится в формате:
+	 * Stored structure:
 	 * [
 	 *   'post' => [ 12, 15 ],
 	 *   'page' => [ 22 ]
 	 * ]
 	 *
-	 * @param mixed $raw Входные данные из формы настроек.
+	 * @param mixed $raw Input data from the settings form.
 	 *
-	 * @return array<string,array<int,int>> Отфильтрованные ID по типам записей.
+	 * @return array<string,array<int,int>> Filtered IDs by post type.
 	 */
 	public function sanitize_excluded_posts( $raw ): array {
 		$result = array();
@@ -420,11 +420,11 @@ final class Options {
 	}
 
 	/**
-	 * Возвращает список ID, исключенных из экспорта для конкретного типа.
+	 * Return list of IDs excluded from export for a given post type.
 	 *
-	 * @param string $post_type Тип записи.
+	 * @param string $post_type Post type.
 	 *
-	 * @return array<int,int> Массив уникальных ID записей.
+	 * @return array<int,int> List of unique post IDs.
 	 */
 	public function excluded_post_ids( string $post_type ): array {
 		$post_type = sanitize_key( (string) $post_type );
@@ -450,11 +450,11 @@ final class Options {
 	}
 
 	/**
-	 * Проверяет, исключена ли запись из llms.txt и Markdown-экспорта.
+	 * Check whether a post is excluded from llms.txt and Markdown exports.
 	 *
-	 * @param WP_Post $post Объект записи.
+	 * @param WP_Post $post Post object.
 	 *
-	 * @return bool True, если запись помечена как исключенная.
+	 * @return bool True if the post is marked as excluded.
 	 */
 	public function is_post_excluded( WP_Post $post ): bool {
 		if ( ! ( $post instanceof WP_Post ) ) {

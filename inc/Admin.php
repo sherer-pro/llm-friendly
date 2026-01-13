@@ -224,14 +224,14 @@ final class Admin {
 	 */
 
 	/**
-	 * Подключает JS ассеты для страницы настроек плагина.
+	 * Enqueue JS assets for the plugin settings page.
 	 *
-	 * @param string $hook Текущий экран в админке.
+	 * @param string $hook Current admin screen.
 	 *
 	 * @return void
 	 */
 	public function enqueue_admin_assets( $hook ) {
-		// Грузим только на странице настроек плагина, чтобы не засорять остальные экраны.
+		// Load only on the plugin settings page to avoid cluttering other screens.
 		if ( $hook !== 'settings_page_llm-friendly' ) {
 			return;
 		}
@@ -269,7 +269,7 @@ final class Admin {
 	}
 
 	/**
-	 * Рисует страницу настроек плагина в админке.
+	 * Render the plugin settings page in wp-admin.
 	 *
 	 * @return void
 	 */
@@ -310,15 +310,15 @@ final class Admin {
 	}
 
 	/**
-	 * AJAX-поиск записей для списка исключений.
+	 * AJAX search for the exclusion list.
 	 *
-	 * Вызывается из админского JS по мере ввода текста. Возвращает JSON
-	 * с подходящими записями выбранного типа или сообщение об ошибке.
+	 * Triggered by the admin JS as the user types. Returns JSON with matching
+	 * posts for the selected type or an error message.
 	 *
 	 * @return void
 	 */
 	public function ajax_search_posts() {
-		// Проверяем права раньше, чтобы не раскрывать наличие записей.
+		// Check permissions early to avoid leaking post existence.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Access denied.', 'llm-friendly' ) ), 403 );
 		}
@@ -329,7 +329,7 @@ final class Admin {
 		$query     = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['q'] ) ) : '';
 		$query     = trim( $query );
 
-		// Требуем минимум 2 символа, чтобы не нагружать БД.
+		// Require at least 2 characters to avoid unnecessary DB load.
 		if ( strlen( $query ) < 2 ) {
 			wp_send_json_error( array( 'message' => __( 'Enter at least 2 characters to search.', 'llm-friendly' ) ), 400 );
 		}
@@ -343,7 +343,7 @@ final class Admin {
 
 		$excluded_ids = $this->options->excluded_post_ids( $post_type );
 
-		// Готовим запрос только по опубликованным записям и без тяжелых подсчетов.
+		// Query only published posts and skip heavy calculations.
 		$args = array(
 			'post_type'              => $post_type,
 			'post_status'            => 'publish',
@@ -355,7 +355,7 @@ final class Admin {
 			'ignore_sticky_posts'    => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
-			// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- нужно исключить выбранные записи, чтобы администратор не добавил их повторно.
+			// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- exclude selected posts to prevent duplicates.
 			'post__not_in'           => $excluded_ids,
 		);
 
@@ -367,7 +367,7 @@ final class Admin {
 				continue;
 			}
 
-			// Не выдаем защищенные паролем материалы и уважаем внешний фильтр.
+			// Skip password-protected posts and respect the external filter.
 			if ( ! empty( $p->post_password ) ) {
 				continue;
 			}
@@ -600,10 +600,10 @@ public function field_llms_custom_markdown() {
 }
 
 	/**
-	 * Поле: Исключение записей из llms.txt и Markdown-экспорта.
+	 * Field: Exclude posts from llms.txt and Markdown exports.
 	 *
-	 * Показывает выбранные типы записей, позволяет искать материалы по названию
-	 * асинхронно (без перезагрузки страницы) и добавлять/удалять элементы списка исключений.
+	 * Shows the selected post types, enables async title search,
+	 * and lets users add/remove items in the exclusion list.
 	 *
 	 * @return void
 	 */
@@ -616,7 +616,7 @@ public function field_llms_custom_markdown() {
 			$pts = array();
 		}
 
-		// Исключаем вложения, чтобы не предлагать медиабиблиотеку.
+		// Exclude attachments to avoid suggesting media library items.
 		unset( $pts['attachment'] );
 
 		if ( empty( $pts ) ) {
@@ -624,7 +624,7 @@ public function field_llms_custom_markdown() {
 			return;
 		}
 
-		// Небольшие стили для удобства чтения нового интерфейса поиска/исключений.
+		// Small styles to improve readability of the search/exclusion UI.
 		$css = '.llmf-excluded-posts__wrap{border:1px solid #dcdcde;border-radius:6px;padding:12px;max-width:900px;}
 		.llmf-excluded-posts__type{border:1px solid #e0e0e0;border-radius:4px;padding:12px;margin-bottom:12px;background:#fff;position:relative;}
 		.llmf-excluded-posts__type--hidden{display:none;}
@@ -653,7 +653,7 @@ public function field_llms_custom_markdown() {
 			['br' => []])
 			. '</p><br>';
 
-		// Контейнер с данными для JS: подсказки и nonce уже выдаются через wp_localize_script().
+		// Container for JS data: hints and nonce are already provided via wp_localize_script().
 		echo '<div class="llmf-excluded-posts__wrap" id="llmf-excluded-posts">';
 
 		foreach ( $pts as $pt => $obj ) {
@@ -765,14 +765,13 @@ public function field_llms_custom_markdown() {
 	}
 
 	/**
-	 * Регистрирует метабокс «Markdown override» для любого редактора (Classic и Gutenberg).
+	 * Register the "Markdown override" metabox for Classic and Gutenberg editors.
 	 *
-	 * Gutenberg тоже умеет отображать классические метабоксы: они выводятся под редактором
-	 * (в блоке «Дополнительные настройки»). Поэтому оставляем единую точку регистрации и
-	 * не выводим отдельную боковую панель через PluginDocumentSettingPanel.
+	 * Gutenberg renders classic metaboxes under the editor (Additional settings),
+	 * so we keep a single registration point and do not add a separate sidebar panel.
 	 *
-	 * @param string  $post_type Текущий тип записи.
-	 * @param WP_Post $post      Объект записи.
+	 * @param string  $post_type Current post type.
+	 * @param WP_Post $post      Post object.
 	 * @return void
 	 */
 	public function maybe_add_md_override_metabox( $post_type, $post ) {
@@ -797,9 +796,9 @@ public function field_llms_custom_markdown() {
 	}
 
 	/**
-	 * Рендерит метабокс для ввода Markdown override (Classic + Gutenberg).
+	 * Render the Markdown override metabox (Classic + Gutenberg).
 	 *
-	 * @param WP_Post $post Текущая запись.
+	 * @param WP_Post $post Current post.
 	 * @return void
 	 */
 	public function render_md_override_metabox( $post ) {
@@ -872,13 +871,13 @@ public function field_llms_custom_markdown() {
 			return;
 		}
 
-		// Извлекаем пользовательский ввод, сохраняя Markdown, и очищаем его вручную, чтобы избежать небезопасных тегов.
+		// Extract user input, keep Markdown intact, and sanitize to avoid unsafe tags.
 		$raw_value = isset( $_POST['llmf_md_content_override'] )
 			? wp_unslash( $_POST['llmf_md_content_override'] )
 			: '';
-		$value     = is_string( $raw_value ) ? (string) wp_unslash( $raw_value ) : '';
+		$value     = is_string( $raw_value ) ? (string) $raw_value : '';
 		$value     = trim( $value );
-		// Разрешаем только безопасный подмножество Markdown/HTML, чтобы исключить опасные теги и атрибуты после санитизации пользовательского ввода.
+		// Allow only safe Markdown/HTML subset to strip unsafe tags and attributes.
 		$value     = wp_kses_post( $value );
 
 		if ( $value === '' ) {
