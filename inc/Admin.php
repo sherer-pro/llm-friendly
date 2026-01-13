@@ -873,7 +873,7 @@ public function field_llms_custom_markdown() {
 
 		// Extract user input, keep Markdown intact, and sanitize to avoid unsafe tags.
 		$raw_value = isset( $_POST['llmf_md_content_override'] )
-			? wp_unslash( $_POST['llmf_md_content_override'] )
+			? sanitize_text_field(wp_unslash( $_POST['llmf_md_content_override'] ))
 			: '';
 		$value     = is_string( $raw_value ) ? (string) $raw_value : '';
 		$value     = trim( $value );
