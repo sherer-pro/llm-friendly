@@ -84,7 +84,7 @@ function llmf_requirements_notice() {
 
 	$heading = esc_html__( 'LLM Friendly is disabled due to unmet requirements:', 'llm-friendly' );
 
-	echo '<div class="notice notice-error"><p><strong>' . $heading . '</strong></p><ul>';
+	echo '<div class="notice notice-error"><p><strong>' . esc_html($heading) . '</strong></p><ul>';
 
 	foreach ( $errors as $msg ) {
 		echo '<li>' . esc_html( $msg ) . '</li>';
