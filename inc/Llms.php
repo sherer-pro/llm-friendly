@@ -577,23 +577,37 @@ final class Llms {
 
 	}
 
+	/**
+	 * Нормализует блоки Markdown так, чтобы теги (заголовки, цитаты, списки)
+	 * были отделены пустыми строками, как в "чистом" Markdown.
+	 *
+	 * @param string $md Исходный Markdown.
+	 *
+	 * @return string Markdown с единообразными пустыми строками между блоками.
+	 */
 	private function llmf_normalize_markdown_blocks( string $md ): string {
-		// Normalize newlines.
+		// Приводим переносы строк к Unix-формату, чтобы регулярки были стабильны.
 		$md = str_replace( [ "\r\n", "\r" ], "\n", $md );
 
-		// Ensure a blank line AFTER headings.
+		// Гарантируем пустую строку ПОСЛЕ заголовков.
 		$md = preg_replace( '/^(#{1,6}[^\n]*)\n(?!\n)/m', "$1\n\n", $md );
 
-		// Ensure a blank line BEFORE headings (except at the very start).
+		// Гарантируем пустую строку ПЕРЕД заголовками (кроме самого начала текста).
 		$md = preg_replace( '/\n(#{1,6}\s+)/', "\n\n$1", $md );
 
-		// Ensure a blank line AFTER a blockquote line when the next line is not another quote.
+		// Гарантируем пустую строку ПЕРЕД цитатами, если перед ними нет пустой строки.
+		$md = preg_replace( '/\n(>)/', "\n\n$1", $md );
+
+		// Гарантируем пустую строку ПОСЛЕ строки цитаты, если следующая строка не цитата.
 		$md = preg_replace( '/^(>[^\n]*)\n(?!\n|>)/m', "$1\n\n", $md );
 
-		// Ensure a blank line BEFORE lists.
+		// Гарантируем пустую строку ПЕРЕД списками.
 		$md = preg_replace( '/\n(-\s+)/', "\n\n$1", $md );
 
-		// Collapse 3+ newlines into exactly 2.
+		// Гарантируем пустую строку ПОСЛЕ последнего пункта списка, если дальше не список.
+		$md = preg_replace( '/^(-\s[^\n]*)\n(?!\n|-\\s)/m', "$1\n\n", $md );
+
+		// Схлопываем 3+ переводов строки до двух, чтобы не раздувать отступы.
 		$md = preg_replace( "/\n{3,}/", "\n\n", $md );
 
 		return trim( $md ) . "\n";
