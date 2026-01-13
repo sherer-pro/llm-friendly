@@ -586,31 +586,116 @@ final class Llms {
 	 * @return string Markdown с единообразными пустыми строками между блоками.
 	 */
 	private function llmf_normalize_markdown_blocks( string $md ): string {
-		// Приводим переносы строк к Unix-формату, чтобы регулярки были стабильны.
-		$md = str_replace( [ "\r\n", "\r" ], "\n", $md );
+		// Приводим переносы строк к Unix-формату, чтобы анализ строк был стабильным.
+		$md = str_replace( array( "\r\n", "\r" ), "\n", $md );
+		$lines = explode( "\n", $md );
 
-		// Гарантируем пустую строку ПОСЛЕ заголовков.
-		$md = preg_replace( '/^(#{1,6}[^\n]*)\n(?!\n)/m', "$1\n\n", $md );
+		$blocks    = array();
+		$cur_lines = array();
+		$cur_type  = '';
+		$in_code   = false;
 
-		// Гарантируем пустую строку ПЕРЕД заголовками (кроме самого начала текста).
-		$md = preg_replace( '/\n(#{1,6}\s+)/', "\n\n$1", $md );
+		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type ): void {
+			if ( empty( $cur_lines ) ) {
+				$cur_type = '';
+				return;
+			}
 
-		// Гарантируем пустую строку ПЕРЕД цитатами, если перед ними нет пустой строки.
-		$md = preg_replace( '/\n(>)/', "\n\n$1", $md );
+			// Убираем только хвостовые пробелы, сохраняя внутреннюю структуру блока.
+			$tmp = array();
+			foreach ( $cur_lines as $line ) {
+				$tmp[] = rtrim( (string) $line );
+			}
 
-		// Гарантируем пустую строку ПОСЛЕ строки цитаты, если следующая строка не цитата.
-		$md = preg_replace( '/^(>[^\n]*)\n(?!\n|>)/m', "$1\n\n", $md );
+			// Очищаем пустые строки в начале и конце блока.
+			while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
+				array_shift( $tmp );
+			}
+			while ( ! empty( $tmp ) && trim( (string) $tmp[ count( $tmp ) - 1 ] ) === '' ) {
+				array_pop( $tmp );
+			}
 
-		// Гарантируем пустую строку ПЕРЕД списками.
-		$md = preg_replace( '/\n(-\s+)/', "\n\n$1", $md );
+			if ( ! empty( $tmp ) ) {
+				$blocks[] = $tmp;
+			}
 
-		// Гарантируем пустую строку ПОСЛЕ последнего пункта списка, если дальше не список.
-		$md = preg_replace( '/^(-\s[^\n]*)\n(?!\n|-\\s)/m', "$1\n\n", $md );
+			$cur_lines = array();
+			$cur_type  = '';
+		};
 
-		// Схлопываем 3+ переводов строки до двух, чтобы не раздувать отступы.
-		$md = preg_replace( "/\n{3,}/", "\n\n", $md );
+		foreach ( $lines as $ln ) {
+			$raw  = (string) $ln;
+			$trim = trim( $raw );
 
-		return trim( $md ) . "\n";
+			// Защищаем fenced-код, чтобы не вмешиваться в его внутренние переносы.
+			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
+			if ( $is_fence ) {
+				if ( ! $in_code ) {
+					$flush();
+					$in_code   = true;
+					$cur_type  = 'code';
+					$cur_lines[] = rtrim( $raw );
+				} else {
+					$cur_lines[] = rtrim( $raw );
+					$flush();
+					$in_code = false;
+				}
+				continue;
+			}
+
+			if ( $in_code ) {
+				$cur_lines[] = rtrim( $raw );
+				continue;
+			}
+
+			// Пустая строка завершает текущий блок.
+			if ( $trim === '' ) {
+				$flush();
+				continue;
+			}
+
+			// Определяем тип блока, чтобы не разрывать список или цитату внутри.
+			$type = 'para';
+			if ( preg_match( '/^\s{0,3}#{1,6}\s+/', $raw ) ) {
+				$type = 'heading';
+			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
+				$type = 'quote';
+			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
+				$type = 'list';
+			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
+				// Упрощённое определение Markdown-таблиц, чтобы не ломать пайпы.
+				$type = 'table';
+			}
+
+			// Заголовки — отдельные блоки.
+			if ( $type === 'heading' ) {
+				$flush();
+				$blocks[] = array( rtrim( $raw ) );
+				continue;
+			}
+
+			if ( $cur_type !== '' && $cur_type !== $type ) {
+				$flush();
+			}
+
+			$cur_type  = $type;
+			$cur_lines[] = rtrim( $raw );
+		}
+
+		$flush();
+
+		// Собираем Markdown с одной пустой строкой между блоками.
+		$out = array();
+		foreach ( $blocks as $i => $b_lines ) {
+			if ( $i > 0 ) {
+				$out[] = '';
+			}
+			foreach ( $b_lines as $b_ln ) {
+				$out[] = (string) $b_ln;
+			}
+		}
+
+		return trim( implode( "\n", $out ) ) . "\n";
 	}
 
 }
