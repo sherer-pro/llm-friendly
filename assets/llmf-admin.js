@@ -1,15 +1,14 @@
 /**
- * Админский скрипт управления исключениями.
+ * Admin script for managing exclusions.
  *
- * Реализует асинхронный поиск по мере ввода (от 2 символов), добавление
- * и удаление исключенных записей, а также синхронизацию блоков при
- * переключении чекбоксов типов записей.
+ * Implements async search while typing (from 2 characters), add/remove
+ * excluded posts, and syncs sections when post type checkboxes toggle.
  */
 (function () {
 	'use strict';
 
 	/**
-	 * Конфигурация, приходящая из PHP через wp_localize_script.
+	 * Configuration passed from PHP via wp_localize_script.
 	 *
 	 * @type {{ajaxUrl?: string, nonce?: string, minChars?: number, i18n?: Record<string,string>}}
 	 */
@@ -25,10 +24,10 @@
 	}
 
 	/**
-	 * Возвращает текст с запасным значением.
+	 * Return a localized string with a fallback.
 	 *
-	 * @param {string} key Ключ из объекта локализации.
-	 * @param {string} fallback Текст по умолчанию.
+	 * @param {string} key Localization key.
+	 * @param {string} fallback Fallback text.
 	 *
 	 * @returns {string}
 	 */
@@ -37,35 +36,34 @@
 	};
 
 	/**
-	 * Дебаунс для ввода: храним идентификаторы таймеров по типу записей,
-	 * чтобы не отправлять запрос на каждый символ.
+	 * Debounce map by post type to avoid sending a request per keystroke.
 	 */
 	const debounceMap = new Map();
 
 	/**
-	 * Простой помощник для поиска элементов.
+	 * Simple helper for querying a single element.
 	 *
-	 * @param {string} selector CSS-селектор.
-	 * @param {Element|Document} [ctx] Контекст поиска.
+	 * @param {string} selector CSS selector.
+	 * @param {Element|Document} [ctx] Search context.
 	 *
 	 * @returns {Element|null}
 	 */
 	const qs = (selector, ctx) => (ctx || document).querySelector(selector);
 
 	/**
-	 * Простой помощник для поиска коллекции элементов.
+	 * Simple helper for querying a list of elements.
 	 *
-	 * @param {string} selector CSS-селектор.
-	 * @param {Element|Document} [ctx] Контекст поиска.
+	 * @param {string} selector CSS selector.
+	 * @param {Element|Document} [ctx] Search context.
 	 *
 	 * @returns {Element[]}
 	 */
 	const qsa = (selector, ctx) => Array.from((ctx || document).querySelectorAll(selector));
 
 	/**
-	 * Прячет выпадающий список с подсказками.
+	 * Hide the suggestions dropdown.
 	 *
-	 * @param {Element} dropdown Узел списка.
+	 * @param {Element} dropdown Dropdown element.
 	 *
 	 * @returns {void}
 	 */
@@ -77,10 +75,10 @@
 	};
 
 	/**
-	 * Показывает информационное сообщение в выпадающем списке.
+	 * Show an informational message in the dropdown.
 	 *
-	 * @param {Element} dropdown Узел списка.
-	 * @param {string} message Текст сообщения.
+	 * @param {Element} dropdown Dropdown element.
+	 * @param {string} message Message text.
 	 *
 	 * @returns {void}
 	 */
@@ -91,9 +89,9 @@
 	};
 
 	/**
-	 * Возвращает множество уже выбранных ID для типа записей.
+	 * Return a set of already selected IDs for a post type.
 	 *
-	 * @param {string} postType Текущий тип записей.
+	 * @param {string} postType Current post type.
 	 *
 	 * @returns {Set<string>}
 	 */
@@ -115,9 +113,9 @@
 	};
 
 	/**
-	 * Удаляет сообщение "пусто" внутри контейнера списка.
+	 * Remove the "empty" notice within the list container.
 	 *
-	 * @param {Element} container Контейнер с выбранными элементами.
+	 * @param {Element} container Selected items container.
 	 *
 	 * @returns {void}
 	 */
@@ -129,11 +127,11 @@
 	};
 
 	/**
-	 * Добавляет запись в список исключений в DOM.
+	 * Add a post to the exclusion list in the DOM.
 	 *
-	 * @param {string} postType Тип записей.
-	 * @param {number} id ID записи.
-	 * @param {string} title Заголовок записи.
+	 * @param {string} postType Post type.
+	 * @param {number} id Post ID.
+	 * @param {string} title Post title.
 	 *
 	 * @returns {void}
 	 */
@@ -185,11 +183,11 @@
 	};
 
 	/**
-	 * Рендерит найденные записи в выпадающем списке.
+	 * Render found posts in the dropdown.
 	 *
-	 * @param {Element} dropdown Узел списка.
-	 * @param {string} postType Текущий тип записей.
-	 * @param {{id:number,title:string}[]} items Массив записей.
+	 * @param {Element} dropdown Dropdown element.
+	 * @param {string} postType Current post type.
+	 * @param {{id:number,title:string}[]} items Post list.
 	 */
 	const renderDropdown = (dropdown, postType, items) => {
 		if (!dropdown) return;
@@ -200,7 +198,7 @@
 		items
 			.filter((item) => item && typeof item.id === 'number' && item.id > 0 && item.title)
 			.forEach((item) => {
-				// Пропускаем уже выбранные записи, чтобы не дублировать.
+				// Skip already selected posts to avoid duplicates.
 				if (existing.has(String(item.id))) {
 					return;
 				}
@@ -237,9 +235,9 @@
 	};
 
 	/**
-	 * Выполняет AJAX-поиск по типу записей.
+	 * Perform an AJAX search by post type.
 	 *
-	 * @param {HTMLInputElement} input Поле ввода, которое инициировало поиск.
+	 * @param {HTMLInputElement} input Input that initiated the search.
 	 *
 	 * @returns {void}
 	 */
@@ -281,9 +279,9 @@
 	};
 
 	/**
-	 * Обработчик ввода в поле поиска с дебаунсом.
+	 * Debounced input handler for the search field.
 	 *
-	 * @param {Event} event Событие input.
+	 * @param {Event} event Input event.
 	 *
 	 * @returns {void}
 	 */
@@ -303,7 +301,7 @@
 			clearTimeout(existingTimer);
 		}
 
-		// Стартуем поиск спустя 250 мс после остановки ввода.
+		// Start search 250ms after typing stops.
 		const timer = setTimeout(() => performSearch(input), 250);
 		debounceMap.set(postType, timer);
 
@@ -313,9 +311,9 @@
 	};
 
 	/**
-	 * Удаляет элемент исключения по клику на кнопку.
+	 * Remove an exclusion item when clicking its button.
 	 *
-	 * @param {Element} item Узел выбранного элемента.
+	 * @param {Element} item Selected item element.
 	 *
 	 * @returns {void}
 	 */
@@ -324,7 +322,7 @@
 		const container = item.parentElement;
 		item.remove();
 
-		// Если после удаления контейнер пуст, показываем информационный текст.
+		// If the container is empty after removal, show the empty state text.
 		if (!container.querySelector('.llmf-excluded-posts__selected-item')) {
 			const p = document.createElement('p');
 			p.className = 'description llmf-excluded-posts__empty';
@@ -334,7 +332,7 @@
 	};
 
 	/**
-	 * Переключает видимость блоков поиска в зависимости от выбранных типов.
+	 * Toggle search block visibility based on selected post types.
 	 *
 	 * @returns {void}
 	 */
@@ -352,7 +350,7 @@
 
 			if (activeTypes.has(type)) {
 				block.classList.remove('llmf-excluded-posts__type--hidden');
-				// Включаем чекбоксы, чтобы значения отправились при сохранении.
+				// Enable checkboxes so values submit on save.
 				qsa('input.llmf-excluded-posts__checkbox', block).forEach((input) => {
 					if (input instanceof HTMLInputElement) {
 						input.disabled = false;
@@ -360,25 +358,25 @@
 				});
 			} else {
 				block.classList.add('llmf-excluded-posts__type--hidden');
-				// Отключаем чекбоксы скрытых типов, чтобы исключения не отправлялись.
+				// Disable checkboxes for hidden types so exclusions are not submitted.
 				qsa('input.llmf-excluded-posts__checkbox', block).forEach((input) => {
 					if (input instanceof HTMLInputElement) {
 						input.disabled = true;
 					}
 				});
-				// Прячем выпадающий список, если он был открыт.
+				// Hide the dropdown if it was open.
 				hideDropdown(qs('.llmf-excluded-posts__dropdown', block));
 			}
 		});
 	};
 
-	// Навешиваем обработчики на поля поиска.
+	// Attach handlers to search fields.
 	qsa('.llmf-excluded-posts__search-input', root).forEach((input) => {
 		input.addEventListener('input', handleSearchInput);
 		input.addEventListener('focus', handleSearchInput);
 	});
 
-	// Делегирование кликов по кнопкам удаления.
+	// Delegate clicks on remove buttons.
 	root.addEventListener('click', (event) => {
 		const target = event.target;
 		if (target instanceof HTMLElement && target.classList.contains('llmf-excluded-posts__remove')) {
@@ -387,12 +385,12 @@
 		}
 	});
 
-	// Закрытие выпадающих списков при клике вне их области.
+	// Close dropdowns when clicking outside.
 	document.addEventListener('click', (event) => {
 		const target = event.target;
 		if (!(target instanceof Element)) return;
 
-		// Игнорируем клики внутри блока поиска.
+		// Ignore clicks inside the search block.
 		if (target.closest('.llmf-excluded-posts__search')) {
 			return;
 		}
@@ -400,11 +398,11 @@
 		qsa('.llmf-excluded-posts__dropdown', root).forEach((dropdown) => hideDropdown(dropdown));
 	});
 
-	// Переключение видимости блоков при смене чекбоксов типов записей.
+	// Toggle block visibility when post type checkboxes change.
 	qsa('.llmf-post-type-toggle').forEach((cb) => {
 		cb.addEventListener('change', syncTypesVisibility);
 	});
 
-	// Начальное состояние блоков зависит от выбранных типов.
+	// Initial block visibility depends on selected types.
 	syncTypesVisibility();
 })();

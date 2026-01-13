@@ -1,5 +1,5 @@
 === LLM Friendly ===
-Contributors: skreep
+Contributors: skreep, sherer
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 6.9

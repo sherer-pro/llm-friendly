@@ -13,32 +13,32 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Plugin {
 	/**
-	 * @var Plugin|null Единственный экземпляр плагина (Singleton).
+	 * @var Plugin|null Singleton plugin instance.
 	 */
 	private static ?Plugin $instance = null;
 
 	/**
-	 * @var Options Объект работы с настройками.
+	 * @var Options Options service.
 	 */
 	private Options $options;
 
 	/**
-	 * @var Rewrites Сервис регистрации rewrite-правил.
+	 * @var Rewrites Rewrite rules service.
 	 */
 	private Rewrites $rewrites;
 
 	/**
-	 * @var Exporter Конвертер контента в Markdown.
+	 * @var Exporter Markdown content exporter.
 	 */
 	private Exporter $exporter;
 
 	/**
-	 * @var Llms Генератор llms.txt.
+	 * @var Llms llms.txt generator.
 	 */
 	private Llms $llms;
 
 	/**
-	 * @var Admin Админ-интерфейс плагина.
+	 * @var Admin Admin UI service.
 	 */
 	private Admin $admin;
 
@@ -296,7 +296,7 @@ final class Plugin {
 				return null;
 			}
 
-			// Если запись отмечена как исключенная, не отдаем Markdown-версию.
+			// If the post is excluded, do not serve its Markdown version.
 			if ( $this->options->is_post_excluded( $post ) ) {
 				return null;
 			}
@@ -333,7 +333,7 @@ final class Plugin {
 			return;
 		}
 
-		// Исключенные записи не должны публиковать ссылку на Markdown.
+		// Excluded posts should not output a Markdown link.
 		if ( $this->options->is_post_excluded( $post ) ) {
 			return;
 		}
