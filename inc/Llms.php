@@ -14,6 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Llms {
 	/**
+	 * Regeneration lock transient key.
+	 */
+	private const LOCK_KEY = 'llmf_llms_regen_lock';
+
+	/**
 	 * @var Options
 	 */
 	private Options $options;
@@ -25,6 +30,8 @@ final class Llms {
 		$this->options = $options;
 
 		add_action( 'save_post', array( $this, 'maybe_regenerate_on_save' ), 20, 3 );
+		add_action( 'transition_post_status', array( $this, 'maybe_regenerate_on_status_change' ), 20, 3 );
+		add_action( 'delete_post', array( $this, 'maybe_regenerate_on_delete' ), 20, 2 );
 	}
 
 	/**
@@ -37,21 +44,7 @@ final class Llms {
 	 * @return void
 	 */
 	public function maybe_regenerate_on_save( int $post_id, WP_Post $post, bool $update ): void {
-		$opt = $this->options->get();
-
-		if ( empty( $opt['enabled_llms_txt'] ) ) {
-			return;
-		}
-
-		if ( (string) $opt['llms_regen_mode'] !== 'auto' ) {
-			return;
-		}
-
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-			return;
-		}
-
-		if ( ! ( $post instanceof WP_Post ) ) {
 			return;
 		}
 
@@ -59,8 +52,59 @@ final class Llms {
 			return;
 		}
 
-		$allowed = is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		if ( ! in_array( $post->post_type, $allowed, true ) ) {
+		$this->maybe_regenerate_for_post( $post );
+	}
+
+	/**
+	 * Regenerate cache when a published exportable post changes visibility.
+	 *
+	 * @param string  $new_status New status.
+	 * @param string  $old_status Old status.
+	 * @param WP_Post $post Post object.
+	 * @return void
+	 */
+	public function maybe_regenerate_on_status_change( string $new_status, string $old_status, WP_Post $post ): void {
+		if ( $new_status === $old_status ) {
+			return;
+		}
+
+		if ( $new_status !== 'publish' && $old_status !== 'publish' ) {
+			return;
+		}
+
+		$this->maybe_regenerate_for_post( $post );
+	}
+
+	/**
+	 * Regenerate cache when an exportable post is deleted.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post Post object.
+	 * @return void
+	 */
+	public function maybe_regenerate_on_delete( int $post_id, WP_Post $post ): void {
+		if ( ! ( $post instanceof WP_Post ) || $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		$this->maybe_regenerate_for_post( $post );
+	}
+
+	/**
+	 * Regenerate llms.txt when auto mode is enabled and the post is selected.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return void
+	 */
+	private function maybe_regenerate_for_post( WP_Post $post ): void {
+		$opt = $this->options->get();
+
+		if ( empty( $opt['enabled_llms_txt'] ) || (string) $opt['llms_regen_mode'] !== 'auto' ) {
+			return;
+		}
+
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
 			return;
 		}
 
@@ -75,16 +119,17 @@ final class Llms {
 	public function regenerate( bool $force = false ): void {
 		// Manual regeneration must work regardless of the selected regeneration mode.
 		// The mode controls only automatic regeneration on publish/update.
-		$lock_key = 'llmf_llms_regen_lock';
+		$lock_acquired = false;
 
 		if ( ! $force ) {
-			$locked = get_transient( $lock_key );
+			$locked = get_transient( self::LOCK_KEY );
 			if ( $locked ) {
 				return;
 			}
-			set_transient( $lock_key, 1, 10 );
+			set_transient( self::LOCK_KEY, 1, 10 );
+			$lock_acquired = true;
 		} else {
-			delete_transient( $lock_key );
+			delete_transient( self::LOCK_KEY );
 		}
 
 		$content = $this->build_llms_txt();
@@ -124,6 +169,10 @@ final class Llms {
 		$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
 
 		update_option( Options::OPTION_KEY, $saved, false );
+
+		if ( $lock_acquired ) {
+			delete_transient( self::LOCK_KEY );
+		}
 	}
 
 
@@ -145,36 +194,59 @@ final class Llms {
 		$ts      = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
 
 		if ( trim( $content ) === '' ) {
-			$this->regenerate( true );
-			$opt     = $this->options->get();
-			$content = (string) $opt['llms_cache'];
-			$ts      = (int) $opt['llms_cache_ts'];
-		}
+			if ( get_transient( self::LOCK_KEY ) ) {
+				Response::send_service_unavailable( 10 );
+			}
 
-		if ( ! empty( $opt['llms_send_noindex'] ) ) {
-			header( 'X-Robots-Tag: noindex, nofollow' );
+			$this->regenerate( false );
+			$opt     = $this->options->get();
+			$content = isset( $opt['llms_cache'] ) ? (string) $opt['llms_cache'] : '';
+			$ts      = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
+
+			if ( trim( $content ) === '' ) {
+				Response::send_service_unavailable( 10 );
+			}
 		}
 
 		$rev_etag_part = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
 
 		// Normalize Markdown for output and compute ETag from the actual response body.
-		$md            = $this->llmf_normalize_markdown_blocks( $content );
+		$md            = rtrim( Markdown::normalize_blocks( $content ) ) . "\n";
 		$etag          = '"' . sha1( $md . '|' . $ts . '|' . $rev_etag_part ) . '"';
 		$rev           = isset( $opt['llms_cache_rev'] ) ? (int) $opt['llms_cache_rev'] : 0;
 		$hash          = isset( $opt['llms_cache_hash'] ) ? (string) $opt['llms_cache_hash'] : '';
 		$settings_hash = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
 
-		$this->send_common_headers(
-			array( 'Content-Type: text/markdown; charset=UTF-8' ),
-			$etag,
-			$ts > 0 ? $ts : time(),
-			$ts,
-			$rev,
-			$hash,
-			$settings_hash
+		$headers = array(
+			'Content-Type: text/markdown; charset=UTF-8',
+			'X-Content-Type-Options: nosniff',
 		);
-		// text/markdown response: do not HTML-escape (it breaks ">"); strip all HTML tags instead.
-		echo wp_strip_all_tags( $md, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		if ( ! empty( $opt['llms_send_noindex'] ) ) {
+			$headers[] = 'X-Robots-Tag: noindex, nofollow';
+		}
+
+		if ( apply_filters( 'llmf_debug_headers_enabled', false ) ) {
+			if ( $ts > 0 ) {
+				$headers['X-LLMF-Build'] = (string) $ts;
+			}
+			if ( $rev > 0 ) {
+				$headers['X-LLMF-Rev'] = (string) $rev;
+			}
+			if ( $hash !== '' ) {
+				$headers['X-LLMF-Hash'] = $hash;
+			}
+			if ( $settings_hash !== '' ) {
+				$headers['X-LLMF-Settings-Hash'] = $settings_hash;
+			}
+		}
+
+		Response::send_conditional_headers(
+			$headers,
+			$etag,
+			$ts > 0 ? $ts : time()
+		);
+		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown body is sanitized while being built.
 		exit;
 	}
 
@@ -186,17 +258,16 @@ final class Llms {
 	private function build_llms_txt(): string {
 		$opt = $this->options->get();
 
-		$title = $this->one_line( $this->options->site_title() );
-		$desc  = $this->one_line( $this->options->site_description() );
+		$title = Markdown::plain_text_line( $this->options->site_title() );
+		$desc  = Markdown::plain_text_line( $this->options->site_description() );
 
 		if ( $desc === '' ) {
 			$desc = __( 'LLM-friendly index of this website.', 'llm-friendly' );
 		}
 
-		$base         = $this->options->sanitize_base_path( isset( $opt['base_path'] ) ? (string) $opt['base_path'] : 'llm' );
-		$home         = home_url( '/' );
-		$rss          = get_feed_link();
-		$sitemap      = $this->options->sitemap_absolute_url();
+		$home         = Markdown::url_destination( home_url( '/' ), array( 'http', 'https' ), false );
+		$rss          = Markdown::url_destination( get_feed_link(), array( 'http', 'https' ), false );
+		$sitemap      = Markdown::url_destination( $this->options->sitemap_absolute_url(), array( 'http', 'https' ), false );
 		$md_enabled   = ! empty( $opt['enabled_markdown'] );
 		$show_excerpt = ! empty( $opt['llms_show_excerpt'] );
 
@@ -205,11 +276,11 @@ final class Llms {
 			$limit = 1;
 		}
 
-		$post_types = ( isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ) ? (array) $opt['post_types'] : array( 'post' );
+		$post_types = ( isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array( 'post' );
 
 		$blocks = array();
 
-		$blocks[] = '# ' . ( $title !== '' ? $title : $this->one_line( home_url() ) );
+		$blocks[] = '# ' . ( $title !== '' ? $title : Markdown::plain_text_line( home_url() ) );
 		$blocks[] = '> ' . $desc;
 
 		// Optional custom markdown block (inserted between site meta and the content sections).
@@ -235,6 +306,10 @@ final class Llms {
 				continue;
 			}
 
+			if ( ! $this->options->is_exportable_post_type( $pt ) ) {
+				continue;
+			}
+
 			$label    = $this->post_type_label( $pt );
 			$blocks[] = '## ' . $label;
 
@@ -250,36 +325,42 @@ final class Llms {
 			foreach ( $items as $item ) {
 				$item_lines = array();
 				$title_txt  = isset( $item['title'] ) ? (string) $item['title'] : '';
-				$path       = isset( $item['path'] ) ? (string) $item['path'] : '';
+				$md_url     = isset( $item['md_url'] ) ? (string) $item['md_url'] : '';
 				$canonical  = isset( $item['canonical'] ) ? (string) $item['canonical'] : '';
 				$modified   = isset( $item['modified'] ) ? (string) $item['modified'] : '';
 				$excerpt    = isset( $item['excerpt'] ) ? (string) $item['excerpt'] : '';
 
 				if ( $md_enabled ) {
-					$md_url       = home_url( '/' . $base . '/' . rawurlencode( $pt ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
+					$md_url       = Markdown::url_destination( $md_url, array( 'http', 'https' ), false );
 					$notes        = sprintf(
 					/* translators: 1: modified date, 2: canonical url */
 						__( 'Updated %1$s. Canonical URL: %2$s', 'llm-friendly' ),
 						$modified,
 						$canonical
 					);
-					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . $notes;
+					if ( $md_url !== '' ) {
+						$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . Markdown::plain_text_line( $notes );
+					}
 				} else {
 					$notes        = sprintf(
 					/* translators: 1: modified date */
 						__( 'Updated %1$s.', 'llm-friendly' ),
 						$modified
 					);
-					$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . $notes;
+					if ( $canonical !== '' ) {
+						$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . Markdown::plain_text_line( $notes );
+					}
 				}
 
-				if ( $show_excerpt && $excerpt !== '' ) {
+				if ( ! empty( $item_lines ) && $show_excerpt && $excerpt !== '' ) {
 					// Keep the excerpt inside the list item by indenting it.
 					$item_lines[] = '  ';
-					$item_lines[] = '  ' . $excerpt;
+					$item_lines[] = '  ' . Markdown::plain_text_line( $excerpt );
 					$item_lines[] = '  ';
 				}
-				$item_blocks[] = implode( "\n", $item_lines );
+				if ( ! empty( $item_lines ) ) {
+					$item_blocks[] = implode( "\n", $item_lines );
+				}
 			}
 
 			$blocks[] = implode( "\n\n", $item_blocks );
@@ -300,6 +381,11 @@ final class Llms {
 	 * @return array<int,array<string,string>>
 	 */
 	private function get_recent_posts_by_type( $post_type, $limit ): array {
+		$post_type = sanitize_key( (string) $post_type );
+		if ( ! $this->options->is_exportable_post_type( $post_type ) ) {
+			return array();
+		}
+
 		$excluded_ids = $this->options->excluded_post_ids( (string) $post_type );
 
 		// Target number of items based on the requested limit.
@@ -352,11 +438,11 @@ final class Llms {
 			}
 
 			$items[] = array(
-				'title'     => (string) get_the_title( $p ),
-				'path'      => (string) $this->options->post_path( $p ),
-				'canonical' => (string) get_permalink( $p ),
-				'modified'  => (string) get_the_modified_date( 'Y-m-d', $p ),
-				'excerpt'   => (string) $this->post_excerpt_one_line( $p ),
+				'title'     => Markdown::plain_text_line( get_the_title( $p ) ),
+				'md_url'    => (string) $this->options->markdown_url_for_post( $p ),
+				'canonical' => Markdown::url_destination( get_permalink( $p ), array( 'http', 'https' ), false ),
+				'modified'  => Markdown::plain_text_line( get_the_modified_date( 'Y-m-d', $p ) ),
+				'excerpt'   => Markdown::plain_text_line( $this->post_excerpt_one_line( $p ) ),
 			);
 
 			if ( count( $items ) >= $max_items ) {
@@ -377,10 +463,10 @@ final class Llms {
 	private function post_type_label( $post_type ) {
 		$obj = get_post_type_object( $post_type );
 		if ( $obj && isset( $obj->labels ) && isset( $obj->labels->name ) && is_string( $obj->labels->name ) && $obj->labels->name !== '' ) {
-			return $obj->labels->name;
+			return Markdown::plain_text_line( $obj->labels->name );
 		}
 
-		return $post_type;
+		return Markdown::plain_text_line( $post_type );
 	}
 
 	/**
@@ -391,11 +477,7 @@ final class Llms {
 	 * @return string
 	 */
 	private function one_line( $s ) {
-		$s = (string) $s;
-		$s = str_replace( array( "\r\n", "\r", "\n" ), ' ', $s );
-		$s = preg_replace( '/\s+/u', ' ', $s );
-
-		return trim( (string) $s );
+		return Markdown::plain_text_line( $s );
 	}
 
 	/**
@@ -465,238 +547,6 @@ final class Llms {
 	 * @return string
 	 */
 	private function md_link_text( $s ): string {
-		$s = wp_strip_all_tags( (string) $s, true );
-		$s = html_entity_decode( $s, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$s = str_replace( array( '[', ']' ), array( '\[', '\]' ), $s );
-
-		return trim( $s );
+		return Markdown::link_text( $s );
 	}
-
-	/**
-	 * Rawurlencode each segment of a path (keeps slashes).
-	 *
-	 * @param string $path
-	 *
-	 * @return string
-	 */
-	private function rawurlencode_path( $path ): string {
-		$path  = ltrim( (string) $path, '/' );
-		$parts = explode( '/', $path );
-		$out   = array();
-
-		foreach ( $parts as $p ) {
-			$out[] = rawurlencode( $p );
-		}
-
-		return implode( '/', $out );
-	}
-
-	/**
-	 * Conditional headers helper.
-	 *
-	 * @param array<int,string> $headers
-	 * @param string $etag
-	 * @param int $last_modified_ts
-	 *
-	 * @return void
-	 */
-	private function send_common_headers( array $headers, string $etag, int $last_modified_ts, int $build_ts = 0, int $rev = 0, string $hash = '', string $settings_hash = '' ): void {
-		status_header( 200 );
-
-		$header_lines = array();
-
-		if ( is_array( $headers ) ) {
-			foreach ( $headers as $k => $v ) {
-				if ( is_string( $k ) && $k !== '' ) {
-					// Build header lines in advance to avoid repeating them later.
-					$v = (string) $v;
-					if ( $v !== '' ) {
-						$header_lines[] = $k . ': ' . $v;
-					}
-					continue;
-				}
-
-				if ( is_string( $v ) && $v !== '' ) {
-					$header_lines[] = $v;
-				}
-			}
-		}
-
-		foreach ( $header_lines as $line ) {
-			header( $line );
-		}
-
-		$last_modified_ts = max( 1, (int) $last_modified_ts );
-		$last_modified    = gmdate( 'D, d M Y H:i:s', $last_modified_ts ) . ' GMT';
-
-		$build_ts      = max( 0, (int) $build_ts );
-		$rev           = (int) $rev;
-		$hash          = (string) $hash;
-		$settings_hash = (string) $settings_hash;
-
-		header( 'ETag: ' . $etag );
-		header( 'Last-Modified: ' . $last_modified );
-
-		if ( $build_ts > 0 ) {
-			header( 'X-LLMF-Build: ' . $build_ts );
-		}
-		if ( $rev > 0 ) {
-			header( 'X-LLMF-Rev: ' . $rev );
-		}
-		if ( $hash !== '' ) {
-			header( 'X-LLMF-Hash: ' . $hash );
-		}
-		if ( $settings_hash !== '' ) {
-			header( 'X-LLMF-Settings-Hash: ' . $settings_hash );
-		}
-
-		header( 'Cache-Control: public, max-age=0, must-revalidate' );
-
-		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
-		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
-
-		if ( $if_none_match !== '' ) {
-			if ( $if_none_match === $etag ) {
-				status_header( 304 );
-				exit;
-			}
-		} elseif ( $if_modified_since !== '' ) {
-			$ims = strtotime( $if_modified_since );
-			if ( $ims !== false && $ims >= $last_modified_ts ) {
-				status_header( 304 );
-				exit;
-			}
-		}
-
-		if ( $if_modified_since !== '' ) {
-			$ims = strtotime( $if_modified_since );
-			if ( $ims !== false && $ims >= $last_modified_ts ) {
-				status_header( 304 );
-				exit;
-			}
-		}
-
-	}
-
-	/**
-	 * Normalize Markdown blocks so tags (headings, quotes, lists)
-	 * are separated by blank lines, like in "clean" Markdown.
-	 *
-	 * @param string $md Source Markdown.
-	 *
-	 * @return string Markdown with consistent blank lines between blocks.
-	 */
-	private function llmf_normalize_markdown_blocks( string $md ): string {
-		// Normalize line breaks to Unix format for stable line analysis.
-		$md = str_replace( array( "\r\n", "\r" ), "\n", $md );
-		$lines = explode( "\n", $md );
-
-		$blocks    = array();
-		$cur_lines = array();
-		$cur_type  = '';
-		$in_code   = false;
-
-		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type ): void {
-			if ( empty( $cur_lines ) ) {
-				$cur_type = '';
-				return;
-			}
-
-			// Trim only trailing whitespace while keeping internal structure.
-			$tmp = array();
-			foreach ( $cur_lines as $line ) {
-				$tmp[] = rtrim( (string) $line );
-			}
-
-			// Remove blank lines at the start and end of a block.
-			while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
-				array_shift( $tmp );
-			}
-			while ( ! empty( $tmp ) && trim( (string) $tmp[ count( $tmp ) - 1 ] ) === '' ) {
-				array_pop( $tmp );
-			}
-
-			if ( ! empty( $tmp ) ) {
-				$blocks[] = $tmp;
-			}
-
-			$cur_lines = array();
-			$cur_type  = '';
-		};
-
-		foreach ( $lines as $ln ) {
-			$raw  = (string) $ln;
-			$trim = trim( $raw );
-
-			// Protect fenced code so we do not alter its internal line breaks.
-			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
-			if ( $is_fence ) {
-				if ( ! $in_code ) {
-					$flush();
-					$in_code   = true;
-					$cur_type  = 'code';
-					$cur_lines[] = rtrim( $raw );
-				} else {
-					$cur_lines[] = rtrim( $raw );
-					$flush();
-					$in_code = false;
-				}
-				continue;
-			}
-
-			if ( $in_code ) {
-				$cur_lines[] = rtrim( $raw );
-				continue;
-			}
-
-			// A blank line ends the current block.
-			if ( $trim === '' ) {
-				$flush();
-				continue;
-			}
-
-			// Identify block type to avoid splitting lists or quotes.
-			$type = 'para';
-			if ( preg_match( '/^\s{0,3}#{1,6}\s+/', $raw ) ) {
-				$type = 'heading';
-			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
-				$type = 'quote';
-			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
-				$type = 'list';
-			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
-				// Simple Markdown table detection to avoid breaking pipes.
-				$type = 'table';
-			}
-
-			// Headings are standalone blocks.
-			if ( $type === 'heading' ) {
-				$flush();
-				$blocks[] = array( rtrim( $raw ) );
-				continue;
-			}
-
-			if ( $cur_type !== '' && $cur_type !== $type ) {
-				$flush();
-			}
-
-			$cur_type  = $type;
-			$cur_lines[] = rtrim( $raw );
-		}
-
-		$flush();
-
-		// Assemble Markdown with a single blank line between blocks.
-		$out = array();
-		foreach ( $blocks as $i => $b_lines ) {
-			if ( $i > 0 ) {
-				$out[] = '';
-			}
-			foreach ( $b_lines as $b_ln ) {
-				$out[] = (string) $b_ln;
-			}
-		}
-
-		return trim( implode( "\n", $out ) ) . "\n";
-	}
-
 }

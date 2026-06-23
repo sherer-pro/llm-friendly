@@ -139,18 +139,15 @@ final class Plugin {
 	public function register_editor_meta(): void {
 		$opt   = $this->options->get();
 		$types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		$types = array_values( array_filter( array_map( 'sanitize_key', $types ) ) );
+		$types = $this->options->sanitize_post_types( $types );
 		if ( empty( $types ) ) {
 			return;
 		}
 
 		foreach ( $types as $post_type ) {
-			if ( ! post_type_exists( $post_type ) ) {
+			if ( ! $this->options->is_exportable_post_type( $post_type ) ) {
 				continue;
 			}
-
-			$pto = get_post_type_object( $post_type );
-			$cap = ( $pto && isset( $pto->cap ) && isset( $pto->cap->edit_posts ) ) ? (string) $pto->cap->edit_posts : 'edit_posts';
 
 			register_post_meta(
 				$post_type,
@@ -159,8 +156,10 @@ final class Plugin {
 					'type'              => 'string',
 					'single'            => true,
 					'sanitize_callback' => array( $this, 'sanitize_md_override_meta' ),
-					'auth_callback'     => function () use ( $cap ) {
-						return current_user_can( $cap );
+					'auth_callback'     => function ( $allowed = false, $meta_key = '', $post_id = 0 ) {
+						$post_id = (int) $post_id;
+
+						return $post_id > 0 && current_user_can( 'edit_post', $post_id );
 					},
 					'show_in_rest'      => array(
 						'schema' => array(
@@ -181,14 +180,7 @@ final class Plugin {
 	 * @return string
 	 */
 	public function sanitize_md_override_meta( $value ): string {
-		$value = is_string( $value ) ? $value : '';
-		$value = wp_unslash( $value );
-
-		if ( ! current_user_can( 'unfiltered_html' ) ) {
-			$value = wp_kses_post( $value );
-		}
-
-		return (string) $value;
+		return $this->options->sanitize_markdown_override( $value );
 	}
 
 	/**
@@ -277,8 +269,8 @@ final class Plugin {
 		}
 
 		$opt     = $this->options->get();
-		$allowed = is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		if ( ! in_array( $post_type, $allowed, true ) ) {
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( $post_type ) || ! in_array( $post_type, $allowed, true ) ) {
 			return null;
 		}
 
@@ -328,8 +320,8 @@ final class Plugin {
 			return;
 		}
 
-		$allowed = is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		if ( ! in_array( $post->post_type, $allowed, true ) ) {
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
 			return;
 		}
 
@@ -338,14 +330,11 @@ final class Plugin {
 			return;
 		}
 
-		$base = $this->options->sanitize_base_path( (string) $opt['base_path'] );
-		$path = $this->options->post_path( $post );
-
-		if ( $base === '' || $path === '' ) {
+		$url = $this->options->markdown_url_for_post( $post );
+		if ( $url === '' ) {
 			return;
 		}
 
-		$url = home_url( '/' . $base . '/' . $post->post_type . '/' . $path . '.md' );
 		echo "\n" . '<link rel="alternate" type="text/markdown" href="' . esc_url( $url ) . '" />' . "\n";
 	}
 }

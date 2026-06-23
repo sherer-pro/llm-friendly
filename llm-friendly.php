@@ -113,6 +113,8 @@ function llmf_deactivate() {
 }
 
 require_once LLMF_DIR . 'inc/Options.php';
+require_once LLMF_DIR . 'inc/Markdown.php';
+require_once LLMF_DIR . 'inc/Response.php';
 require_once LLMF_DIR . 'inc/Exporter.php';
 require_once LLMF_DIR . 'inc/Llms.php';
 require_once LLMF_DIR . 'inc/Rewrites.php';

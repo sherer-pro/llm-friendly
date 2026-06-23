@@ -20,16 +20,16 @@ An LLM-friendly index of the website with main links and a list of latest items 
 2) Markdown exports
 For selected post types, the plugin exposes .md endpoints under:
 {base}/{post_type}/{path}.md
-Entries can override their Markdown body via the “Markdown override” sidebar panel (or Classic Editor metabox) and can also be excluded from export through the same settings page.
+Entries can override their Markdown body via the “Markdown override (LLM Friendly)” editor metabox and can also be excluded from export through the same settings page.
 
 This is useful for LLMs, indexing bots, and users who prefer plain text.
 You can opt in to excerpts in llms.txt via `llms_show_excerpt`, and you can send `X-Robots-Tag: noindex, nofollow` for Markdown exports via `md_send_noindex` if you want Markdown-only consumers without search engine indexing.
-If the automatic Markdown conversion does not fit a post, use the “Markdown override” sidebar panel (Gutenberg) or the Classic Editor metabox to provide a custom Markdown or block-based replacement.
+If the automatic Markdown conversion does not fit a post, use the “Markdown override (LLM Friendly)” editor metabox to provide a custom Markdown or block-based replacement. In Gutenberg it appears with the editor’s additional panels/metaboxes.
 
 = Key features =
 
 * llms.txt endpoint with cached generation, optional excerpts, a configurable custom Markdown block, and a per-post exclusion list.
-* Markdown exports for selected post types with Gutenberg-to-Markdown conversion, per-post Markdown overrides (sidebar panel/metabox), and a per-post exclusion list shared with llms.txt.
+* Markdown exports for selected post types with Gutenberg-to-Markdown conversion, per-post Markdown overrides through an editor metabox, and a per-post exclusion list shared with llms.txt.
 * Configurable base path for exports (e.g. "llm") and per-post-type enable/disable toggles; changing the base path requires flushing rewrites.
 * Manual or automatic regeneration of the cached llms.txt with ETag/Last-Modified headers.
 * Optional X-Robots-Tag: noindex, nofollow for both /llms.txt and Markdown exports; the Markdown header is controlled by `md_send_noindex`.
@@ -52,6 +52,11 @@ If requirements are not met, the plugin displays an admin notice and does not ru
 5. Save changes.
 6. If you changed the base path or endpoints, re-save Permalinks if your server has custom rewrite rules.
 
+== Development ==
+
+Run `composer run lint` to syntax-check the plugin PHP files.
+See `TESTING.md` for WordPress integration scenarios.
+
 == Frequently Asked Questions ==
 
 = Where is llms.txt stored? =
@@ -69,7 +74,7 @@ Enable the “Send X-Robots-Tag: noindex, nofollow for Markdown” option (store
 
 = Can I ship a custom Markdown body or exclude a single item? =
 
-Yes. Open the post in Gutenberg and use the “Markdown override” sidebar panel; Classic Editor users get a “Markdown override (LLM Friendly)” metabox. The override accepts plain Markdown or block markup. If you want to hide a specific entry from llms.txt and Markdown exports, go to Settings → LLM Friendly → llms.txt → “Excluded items”, search by title, and add it to the exclusion list.
+Yes. Open the post editor and use the “Markdown override (LLM Friendly)” metabox. In Gutenberg it appears with the editor’s additional panels/metaboxes. The override accepts plain Markdown or block markup. If you want to hide a specific entry from llms.txt and Markdown exports, go to Settings → LLM Friendly → llms.txt → “Excluded items”, search by title, and add it to the exclusion list.
 
 == Screenshots ==
 
