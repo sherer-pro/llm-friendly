@@ -238,12 +238,20 @@ final class Admin {
 
 		$handle = 'llmf-admin';
 		$src    = trailingslashit( LLMF_URL ) . 'assets/llmf-admin.js';
+		$ver    = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : false;
+
+		wp_enqueue_style(
+			$handle,
+			trailingslashit( LLMF_URL ) . 'assets/llmf-admin.css',
+			array(),
+			$ver
+		);
 
 		wp_enqueue_script(
 			$handle,
 			$src,
 			array(),
-			defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : false,
+			$ver,
 			true
 		);
 
@@ -335,9 +343,9 @@ final class Admin {
 		}
 
 		$opt           = $this->options->get();
-		$allowed_types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? array_map( 'sanitize_key', $opt['post_types'] ) : array();
+		$allowed_types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
 
-		if ( $post_type === '' || ! in_array( $post_type, $allowed_types, true ) ) {
+		if ( $post_type === '' || ! $this->options->is_exportable_post_type( $post_type ) || ! in_array( $post_type, $allowed_types, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Post type is not allowed.', 'llm-friendly' ) ), 400 );
 		}
 
@@ -470,18 +478,14 @@ public function field_md_noindex() {
 	 */
 	public function field_post_types() {
 		$opt = $this->options->get();
-		$selected = isset($opt['post_types']) && is_array($opt['post_types']) ? $opt['post_types'] : array('post');
+		$selected = isset($opt['post_types']) && is_array($opt['post_types']) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array('post');
 
-		$pts = get_post_types(array('public' => true), 'objects');
-		if (!is_array($pts)) $pts = array();
+		$pts = $this->options->exportable_post_types();
 
 		echo '<fieldset>';
 		foreach ($pts as $pt => $obj) {
 			$pt = sanitize_key((string)$pt);
 			if ($pt === '') continue;
-
-			// Skip attachments by default.
-			if ($pt === 'attachment') continue;
 
 			$label = isset($obj->labels->name) ? (string)$obj->labels->name : $pt;
 
@@ -609,44 +613,14 @@ public function field_llms_custom_markdown() {
 	 */
 	public function field_excluded_posts() {
 		$opt      = $this->options->get();
-		$selected = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
+		$selected = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
 
-		$pts = get_post_types( array( 'public' => true ), 'objects' );
-		if ( ! is_array( $pts ) ) {
-			$pts = array();
-		}
-
-		// Exclude attachments to avoid suggesting media library items.
-		unset( $pts['attachment'] );
+		$pts = $this->options->exportable_post_types();
 
 		if ( empty( $pts ) ) {
 			echo '<p class="description">' . esc_html__( 'Select at least one post type above to manage exclusions.', 'llm-friendly' ) . '</p>';
 			return;
 		}
-
-		// Small styles to improve readability of the search/exclusion UI.
-		$css = '.llmf-excluded-posts__wrap{border:1px solid #dcdcde;border-radius:6px;padding:12px;max-width:900px;}
-		.llmf-excluded-posts__type{border:1px solid #e0e0e0;border-radius:4px;padding:12px;margin-bottom:12px;background:#fff;position:relative;}
-		.llmf-excluded-posts__type--hidden{display:none;}
-		.llmf-excluded-posts__search{position:relative;max-width:520px;}
-		.llmf-excluded-posts__dropdown{position:absolute;z-index:10;top:38px;left:0;right:0;background:#fff;border:1px solid #ccd0d4;box-shadow:0 2px 6px rgba(0,0,0,0.08);max-height:220px;overflow:auto;display:none;}
-		.llmf-excluded-posts__dropdown-item{padding:8px 10px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:8px;align-items:center;}
-		.llmf-excluded-posts__dropdown-item:last-child{border-bottom:0;}
-		.llmf-excluded-posts__dropdown-item button{white-space:nowrap;}
-		.llmf-excluded-posts__selected{border:1px solid #e5e5e5;border-radius:4px;padding:8px;max-height:240px;overflow:auto;background:#f8f9fa;}
-		.llmf-excluded-posts__selected-item{display:flex;align-items:center;justify-content:space-between;padding:6px 4px;border-bottom:1px solid #ececec;gap:8px;}
-		.llmf-excluded-posts__selected-item:last-child{border-bottom:0;}
-		.llmf-excluded-posts__selected-item .button-link{color:#b32d2e;}
-		.llmf-excluded-posts__empty{margin:0;}';
-
-		wp_register_style(
-			'llmf-admin',
-			false,
-			[],
-			LLMF_VERSION
-		);
-		wp_enqueue_style( 'llmf-admin' );
-		wp_add_inline_style( 'llmf-admin', $css );
 
 		echo '<p class="description">' . wp_kses(
 			__( 'Find items by title in real time, add them to the exclusion list, and remove them with one click. <br> Excluded items are omitted from llms.txt and Markdown exports.', 'llm-friendly' ),
@@ -780,8 +754,8 @@ public function field_llms_custom_markdown() {
 		}
 
 		$opt     = $this->options->get();
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		if ( ! in_array( (string) $post_type, $allowed, true ) ) {
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( (string) $post_type ) || ! in_array( (string) $post_type, $allowed, true ) ) {
 			return;
 		}
 
@@ -866,19 +840,16 @@ public function field_llms_custom_markdown() {
 		}
 
 		$opt     = $this->options->get();
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		if ( ! in_array( (string) $post->post_type, $allowed, true ) ) {
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( (string) $post->post_type, $allowed, true ) ) {
 			return;
 		}
 
 		// Extract user input, keep Markdown intact, and sanitize to avoid unsafe tags.
 		$raw_value = isset( $_POST['llmf_md_content_override'] )
-			? sanitize_text_field(wp_unslash( $_POST['llmf_md_content_override'] ))
+			? $_POST['llmf_md_content_override']
 			: '';
-		$value     = is_string( $raw_value ) ? (string) $raw_value : '';
-		$value     = trim( $value );
-		// Allow only safe Markdown/HTML subset to strip unsafe tags and attributes.
-		$value     = wp_kses_post( $value );
+		$value     = $this->options->sanitize_markdown_override( $raw_value );
 
 		if ( $value === '' ) {
 			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );

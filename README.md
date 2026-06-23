@@ -5,14 +5,14 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` — an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.4.1**
+Current version: **0.1.0**
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 
 ## Features
 
 - Generates an `llms.txt` index with links to your latest content, optional excerpts, and an optional custom Markdown block.
-- Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion and per-post Markdown overrides (Gutenberg sidebar panel or Classic Editor metabox); individual entries can override the Markdown body.
+- Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion and per-post Markdown overrides through the “Markdown override (LLM Friendly)” editor metabox; individual entries can override the Markdown body.
 - Configurable base path for Markdown exports (e.g. `llm`) and per-post-type enable/disable toggles; changing the base path requires updating rewrite rules.
 - Manual or automatic regeneration of the cached `llms.txt`, complete with ETag/Last-Modified headers.
 - Optional `X-Robots-Tag: noindex, nofollow` header for both `llms.txt` and Markdown exports (`md_send_noindex`).
@@ -39,6 +39,11 @@ If requirements are not met, the plugin shows an admin warning and does not run.
    - Set base path (optional)
 4. Save changes
 
+## Development
+
+- Run `composer run lint` to syntax-check the plugin PHP files.
+- See `TESTING.md` for WordPress integration scenarios.
+
 ## Usage
 
 - Open `https://example.com/llms.txt`
@@ -49,7 +54,7 @@ If requirements are not met, the plugin shows an admin warning and does not run.
   - Settings → LLM Friendly → llms.txt → “Show excerpts in llms.txt”
 - Enable `md_send_noindex` to keep Markdown exports out of search indices:
   - Settings → LLM Friendly → Markdown → “Send X-Robots-Tag: noindex, nofollow for Markdown”
-- Use the “Markdown override” sidebar panel (Gutenberg) or metabox (Classic Editor) to replace the generated Markdown with your own content or block markup; the override is applied per entry.
+- Use the “Markdown override (LLM Friendly)” editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor’s additional panels/metaboxes.
 - Use “Excluded items” in Settings → LLM Friendly → llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
 - To change the base path for exports (default `llm`), update “Base path” and re-save Permalinks if your server uses custom rewrites.
 

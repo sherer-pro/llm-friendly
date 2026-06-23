@@ -1,0 +1,22 @@
+{
+	"name": "sherer-pro/llm-friendly",
+	"description": "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.",
+	"type": "wordpress-plugin",
+	"license": "GPL-3.0-or-later",
+	"require": {
+		"php": ">=7.4"
+	},
+	"scripts": {
+		"lint": [
+			"@php -l llm-friendly.php",
+			"@php -l inc/Admin.php",
+			"@php -l inc/Exporter.php",
+			"@php -l inc/Llms.php",
+			"@php -l inc/Markdown.php",
+			"@php -l inc/Options.php",
+			"@php -l inc/Plugin.php",
+			"@php -l inc/Response.php",
+			"@php -l inc/Rewrites.php"
+		]
+	}
+}

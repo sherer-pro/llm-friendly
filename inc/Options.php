@@ -78,19 +78,7 @@ final class Options {
 
 		$out['base_path'] = $this->sanitize_base_path( isset( $input['base_path'] ) ? (string) $input['base_path'] : $prev['base_path'] );
 
-		$post_types = array();
-		if ( isset( $input['post_types'] ) && is_array( $input['post_types'] ) ) {
-			foreach ( $input['post_types'] as $pt ) {
-				$pt = sanitize_key( (string) $pt );
-				if ( $pt !== '' ) {
-					$post_types[] = $pt;
-				}
-			}
-		}
-		$out['post_types'] = array_values( array_unique( $post_types ) );
-		if ( empty( $out['post_types'] ) ) {
-			$out['post_types'] = array( 'post' );
-		}
+		$out['post_types'] = $this->sanitize_post_types( isset( $input['post_types'] ) ? $input['post_types'] : array() );
 
 		$out['llms_send_noindex'] = ! empty( $input['llms_send_noindex'] ) ? 1 : 0;
 		$out['md_send_noindex']   = ! empty( $input['md_send_noindex'] ) ? 1 : 0;
@@ -238,6 +226,80 @@ final class Options {
 	}
 
 	/**
+	 * Check whether a post type can be exported by the plugin.
+	 *
+	 * @param string $post_type Post type key.
+	 * @return bool True when the post type is public and supported.
+	 */
+	public function is_exportable_post_type( string $post_type ): bool {
+		$post_type = sanitize_key( (string) $post_type );
+		if ( $post_type === '' || $post_type === 'attachment' ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'post_type_exists' ) || ! post_type_exists( $post_type ) ) {
+			return false;
+		}
+
+		$obj = get_post_type_object( $post_type );
+
+		return $obj && ! empty( $obj->public );
+	}
+
+	/**
+	 * Return exportable public post type objects.
+	 *
+	 * @return array<string,object> Public post type objects keyed by name.
+	 */
+	public function exportable_post_types(): array {
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		if ( ! is_array( $post_types ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $post_types as $name => $obj ) {
+			$key = sanitize_key( (string) $name );
+			if ( $this->is_exportable_post_type( $key ) ) {
+				$out[ $key ] = $obj;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Sanitize a list of selected post types.
+	 *
+	 * @param mixed $raw Raw post type list.
+	 * @return array<int,string> Exportable post type keys.
+	 */
+	public function sanitize_post_types( $raw ): array {
+		$raw = is_array( $raw ) ? $raw : array();
+		$out = array();
+
+		foreach ( $raw as $post_type ) {
+			$post_type = sanitize_key( (string) $post_type );
+			if ( $this->is_exportable_post_type( $post_type ) ) {
+				$out[] = $post_type;
+			}
+		}
+
+		$out = array_values( array_unique( $out ) );
+		if ( ! empty( $out ) ) {
+			return $out;
+		}
+
+		if ( $this->is_exportable_post_type( 'post' ) ) {
+			return array( 'post' );
+		}
+
+		$available = array_keys( $this->exportable_post_types() );
+
+		return ! empty( $available ) ? array( (string) $available[0] ) : array();
+	}
+
+	/**
 	 * Sanitize custom markdown inserted into llms.txt.
 	 *
 	 * We do NOT attempt to fully parse Markdown here; the goal is to keep it as-is
@@ -262,6 +324,24 @@ final class Options {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Sanitize per-post Markdown override while preserving Markdown structure.
+	 *
+	 * @param mixed $value Raw meta value.
+	 * @return string Sanitized Markdown.
+	 */
+	public function sanitize_markdown_override( $value ): string {
+		$value = is_string( $value ) ? $value : '';
+		$value = wp_unslash( $value );
+		$value = $this->sanitize_markdown_block( $value );
+
+		if ( ! current_user_can( 'unfiltered_html' ) ) {
+			$value = wp_kses_post( $value );
+		}
+
+		return (string) $value;
 	}
 
 	/**
@@ -297,6 +377,28 @@ final class Options {
 		}
 
 		return (string) $post->post_name;
+	}
+
+	/**
+	 * Build the public Markdown export URL for a post.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return string Markdown URL or empty string.
+	 */
+	public function markdown_url_for_post( WP_Post $post ): string {
+		if ( ! $this->is_exportable_post_type( (string) $post->post_type ) ) {
+			return '';
+		}
+
+		$opt  = $this->get();
+		$base = $this->sanitize_base_path( isset( $opt['base_path'] ) ? (string) $opt['base_path'] : 'llm' );
+		$path = $this->post_path( $post );
+
+		if ( $base === '' || $path === '' ) {
+			return '';
+		}
+
+		return home_url( '/' . $base . '/' . rawurlencode( (string) $post->post_type ) . '/' . $this->rawurlencode_path( $path ) . '.md' );
 	}
 
 	/**
@@ -340,21 +442,32 @@ final class Options {
 	 * @return string
 	 */
 	public function sanitize_sitemap_url( $value ) {
+		$value = html_entity_decode( wp_strip_all_tags( (string) $value, true ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$value = preg_replace( '/[\x00-\x1F\x7F]+/u', '', (string) $value );
 		$value = trim( (string) $value );
 		if ( $value === '' ) {
 			return '/sitemap.xml';
 		}
 
 		if ( preg_match( '~^https?://~i', $value ) ) {
-			return esc_url_raw( $value );
+			$url = esc_url_raw( $value, array( 'http', 'https' ) );
+
+			return $url !== '' ? $url : '/sitemap.xml';
+		}
+
+		if ( preg_match( '~^[a-z][a-z0-9+.-]*:~i', $value ) || strpos( $value, '//' ) === 0 ) {
+			return '/sitemap.xml';
 		}
 
 		if ( $value[0] !== '/' ) {
 			$value = '/' . $value;
 		}
 
+		$value = str_replace( array( '<', '>', '"', "'" ), '', $value );
+		$value = esc_url_raw( $value );
+
 		// Keep as path; will be expanded via home_url() when output.
-		return $value;
+		return $value !== '' ? $value : '/sitemap.xml';
 	}
 
 	/**
@@ -398,7 +511,7 @@ final class Options {
 
 		foreach ( $raw as $type => $ids ) {
 			$type = sanitize_key( (string) $type );
-			if ( $type === '' || ! is_array( $ids ) ) {
+			if ( $type === '' || ! $this->is_exportable_post_type( $type ) || ! is_array( $ids ) ) {
 				continue;
 			}
 
@@ -481,6 +594,24 @@ final class Options {
 
 		$v = $this->sanitize_sitemap_url( $v );
 		return home_url( $v );
+	}
+
+	/**
+	 * Rawurlencode each segment of a path while preserving slashes.
+	 *
+	 * @param string $path Raw path.
+	 * @return string Encoded path.
+	 */
+	private function rawurlencode_path( string $path ): string {
+		$path  = ltrim( (string) $path, '/' );
+		$parts = explode( '/', $path );
+		$out   = array();
+
+		foreach ( $parts as $part ) {
+			$out[] = rawurlencode( (string) $part );
+		}
+
+		return implode( '/', $out );
 	}
 
 	/**

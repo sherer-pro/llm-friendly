@@ -93,13 +93,13 @@ final class Exporter {
 			$headers[] = 'X-Robots-Tag: noindex, nofollow';
 		}
 
-		$this->send_common_headers(
+		Response::send_conditional_headers(
 			$headers,
-			$this->etag_from_string( $md ),
+			Response::etag_from_string( $md ),
 			$this->post_modified_timestamp( $post )
 		);
 
-		echo wp_kses( $md, [] );
+		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
 		exit;
 	}
 
@@ -112,12 +112,15 @@ final class Exporter {
 	 * @return string
 	 */
 	private function post_to_markdown( WP_Post $post, string $override_md = '' ): string {
+		$title = Markdown::plain_text_line( get_the_title( $post ) );
+		$url   = Markdown::url_destination( get_permalink( $post ), array( 'http', 'https' ), false );
+
 		$meta = array(
-			'title'         => get_the_title( $post ),
-			'url'           => get_permalink( $post ),
+			'title'         => $title,
+			'url'           => $url,
 			'datePublished' => get_the_date( 'Y-m-d', $post ),
 			'dateModified'  => get_the_modified_date( 'Y-m-d', $post ),
-			'language'      => get_bloginfo( 'language' )
+			'language'      => sanitize_text_field( (string) get_bloginfo( 'language' ) ),
 		);
 
 		$meta_json = wp_json_encode( $meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
@@ -142,11 +145,11 @@ final class Exporter {
 		$out[] = $meta_json ? $meta_json : '{}';
 		$out[] = '```';
 		$out[] = '';
-		$out[] = '# ' . $meta['title'];
+		$out[] = '# ' . $title;
 		$out[] = '';
 		$out[] = $body;
 
-		return rtrim( $this->normalize_markdown_blocks( implode( "\n", $out ) ) ) . "\n";
+		return rtrim( Markdown::normalize_blocks( implode( "\n", $out ) ) ) . "\n";
 	}
 
 	/**
@@ -326,8 +329,8 @@ final class Exporter {
 		$html = preg_replace_callback(
 			'~<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>~is',
 			function ( $m ) {
-				$href = esc_url_raw( trim( (string) $m[1] ) );
-				$text = trim( wp_strip_all_tags( (string) $m[2], true ) );
+				$href = Markdown::url_destination( trim( (string) $m[1] ) );
+				$text = Markdown::link_text( (string) $m[2] );
 				if ( $href === '' ) {
 					return $text;
 				}
@@ -335,7 +338,7 @@ final class Exporter {
 					$text = $href;
 				}
 
-				return '[' . $this->escape_md( $text ) . '](' . $href . ')';
+				return '[' . $text . '](' . $href . ')';
 			},
 			$html
 		);
@@ -394,122 +397,7 @@ final class Exporter {
 	 * @return string
 	 */
 	private function escape_md( $s ) {
-		$s = (string) $s;
-		$s = str_replace( array( '[', ']' ), array( '\[', '\]' ), $s );
-
-		return $s;
-	}
-
-	/**
-	 * Carefully separate Markdown blocks with blank lines without touching fenced blocks.
-	 *
-	 * @param string $md Source Markdown.
-	 *
-	 * @return string Formatted Markdown with consistent spacing between blocks.
-	 */
-	private function normalize_markdown_blocks( string $md ): string {
-		$md = $this->normalize_newlines( (string) $md );
-		$lines = explode( "\n", $md );
-
-		$blocks = array();
-		$cur_lines = array();
-		$cur_type  = '';
-		$in_code   = false;
-
-		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type ) {
-			if ( ! empty( $cur_lines ) ) {
-				// Trim trailing whitespace on lines, but keep internal structure.
-				$tmp = array();
-				foreach ( $cur_lines as $ln ) {
-					$tmp[] = rtrim( (string) $ln );
-				}
-				// Remove leading/trailing empty lines inside the block.
-				while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
-					array_shift( $tmp );
-				}
-				while ( ! empty( $tmp ) && trim( (string) $tmp[ count( $tmp ) - 1 ] ) === '' ) {
-					array_pop( $tmp );
-				}
-				if ( ! empty( $tmp ) ) {
-					$blocks[] = $tmp;
-				}
-			}
-			$cur_lines = array();
-			$cur_type  = '';
-		};
-
-		foreach ( $lines as $ln ) {
-			$raw  = (string) $ln;
-			$trim = trim( $raw );
-
-			// Fenced code blocks: keep verbatim until closing fence.
-			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
-			if ( $is_fence ) {
-				if ( ! $in_code ) {
-					$flush();
-					$in_code  = true;
-					$cur_type = 'code';
-					$cur_lines[] = rtrim( $raw );
-				} else {
-					$cur_lines[] = rtrim( $raw );
-					$flush();
-					$in_code = false;
-				}
-				continue;
-			}
-
-			if ( $in_code ) {
-				$cur_lines[] = rtrim( $raw );
-				continue;
-			}
-
-			// Blank line separates blocks.
-			if ( $trim === '' ) {
-				$flush();
-				continue;
-			}
-
-			// Determine block type for grouping.
-			$type = 'para';
-			if ( preg_match( '/^\s{0,3}#{1,6}\s+/', $raw ) ) {
-				$type = 'heading';
-			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
-				$type = 'quote';
-			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
-				$type = 'list';
-			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
-				// Simple heuristic for Markdown tables (pipes).
-				$type = 'table';
-			}
-
-			// Headings are standalone blocks.
-			if ( $type === 'heading' ) {
-				$flush();
-				$blocks[] = array( rtrim( $raw ) );
-				continue;
-			}
-
-			if ( $cur_type !== '' && $cur_type !== $type ) {
-				$flush();
-			}
-			$cur_type = $type;
-			$cur_lines[] = rtrim( $raw );
-		}
-
-		$flush();
-
-		// Join blocks with a single blank line.
-		$out = array();
-		foreach ( $blocks as $i => $b_lines ) {
-			if ( $i > 0 ) {
-				$out[] = '';
-			}
-			foreach ( $b_lines as $b_ln ) {
-				$out[] = (string) $b_ln;
-			}
-		}
-
-		return implode( "\n", $out );
+		return Markdown::link_text( $s );
 	}
 
 	/**
@@ -520,7 +408,7 @@ final class Exporter {
 	 * @return string String with a unified \n separator.
 	 */
 	private function normalize_newlines( string $s ): string {
-		return str_replace( array( "\r\n", "\r" ), "\n", $s );
+		return Markdown::normalize_newlines( $s );
 	}
 
 	/**
@@ -843,7 +731,7 @@ final class Exporter {
 
 				$cap = '';
 				foreach ( $fig->getElementsByTagName( 'figcaption' ) as $fc ) {
-					$cap = trim( $this->html_inline_to_md( $this->dom_inner_html( $fc ) ) );
+					$cap = Markdown::plain_text_line( $this->html_inline_to_md( $this->dom_inner_html( $fc ) ) );
 					break;
 				}
 
@@ -861,7 +749,7 @@ final class Exporter {
 				continue;
 			}
 
-			$src = trim( (string) $img->getAttribute( 'src' ) );
+			$src = Markdown::url_destination( (string) $img->getAttribute( 'src' ), array( 'http', 'https' ), true );
 			if ( $src === '' ) {
 				continue;
 			}
@@ -872,7 +760,7 @@ final class Exporter {
 			$out = '![' . $this->escape_md( $label ) . '](' . $src . ')';
 
 			foreach ( $fig->getElementsByTagName( 'figcaption' ) as $fc ) {
-				$cap = trim( $this->html_inline_to_md( $this->dom_inner_html( $fc ) ) );
+				$cap = Markdown::plain_text_line( $this->html_inline_to_md( $this->dom_inner_html( $fc ) ) );
 				if ( $cap !== '' ) {
 					$out .= "\n\n" . $cap;
 				}
@@ -895,9 +783,9 @@ final class Exporter {
 	 * @return string Markdown fragment with the image.
 	 */
 	private function build_image_markdown( string $url, string $alt, string $caption ): string {
-		$url     = trim( $url );
-		$alt     = trim( $alt );
-		$caption = trim( $caption );
+		$url     = Markdown::url_destination( $url, array( 'http', 'https' ), true );
+		$alt     = Markdown::plain_text_line( $alt );
+		$caption = Markdown::plain_text_line( $caption );
 
 		if ( $url === '' ) {
 			return '';
@@ -1445,77 +1333,6 @@ final class Exporter {
 	}
 
 	/**
-	 * Send standard cache/conditional headers.
-	 *
-	 * @param array<int,string> $headers
-	 * @param string $etag
-	 * @param int $last_modified_ts
-	 *
-	 * @return void
-	 */
-	private function send_common_headers( $headers, $etag, $last_modified_ts ) {
-		status_header( 200 );
-
-		$header_lines = array();
-
-		if ( is_array( $headers ) ) {
-			foreach ( $headers as $k => $v ) {
-				if ( is_string( $k ) && $k !== '' ) {
-					// Build the header line for "key => value" pairs once to avoid repetition below.
-					$v = (string) $v;
-					if ( $v !== '' ) {
-						$header_lines[] = $k . ': ' . $v;
-					}
-					continue;
-				}
-
-				if ( is_string( $v ) && $v !== '' ) {
-					$header_lines[] = $v;
-				}
-			}
-		}
-
-		foreach ( $header_lines as $line ) {
-			header( $line );
-		}
-
-		$last_modified_ts = max( 1, (int) $last_modified_ts );
-		$last_modified    = gmdate( 'D, d M Y H:i:s', $last_modified_ts ) . ' GMT';
-
-		header( 'ETag: ' . $etag );
-		header( 'Last-Modified: ' . $last_modified );
-		header( 'Cache-Control: public, max-age=0, must-revalidate' );
-
-		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
-		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
-
-		if ( $if_none_match !== '' && $if_none_match === $etag ) {
-			status_header( 304 );
-			exit;
-		}
-
-		if ( $if_modified_since !== '' ) {
-			$since_ts = strtotime( $if_modified_since );
-			if ( $since_ts && $since_ts >= $last_modified_ts ) {
-				status_header( 304 );
-				exit;
-			}
-		}
-
-	}
-
-	/**
-	 * ETag from string body.
-	 *
-	 * @param string $body
-	 *
-	 * @return string
-	 */
-	private function etag_from_string( $body ) {
-		return '"' . sha1( (string) $body . '|' . ( defined( 'LLMF_VERSION' ) ? LLMF_VERSION : '0' ) ) . '"';
-	}
-
-	/**
 	 * Get modified timestamp (GMT).
 	 *
 	 * @param WP_Post $post
@@ -1548,22 +1365,4 @@ final class Exporter {
 		return $s;
 	}
 
-	/**
-	 * Build plain text from post content.
-	 *
-	 * @param WP_Post $post
-	 *
-	 * @return string
-	 */
-	private function post_plain_text( WP_Post $post ) {
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- using a core WordPress filter.
-		$html = apply_filters( 'the_content', (string) $post->post_content );
-		$html = $this->normalize_newlines( $html );
-		$text = wp_strip_all_tags( $html );
-		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$text = preg_replace( "/[ \t]+/", " ", $text );
-		$text = preg_replace( "/\n{3,}/", "\n\n", $text );
-
-		return trim( (string) $text );
-	}
 }
