@@ -2,9 +2,9 @@
 Contributors: skreep
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -34,7 +34,7 @@ If the automatic Markdown conversion does not fit a post, use the “Markdown ov
 * Manual or automatic regeneration of the cached llms.txt with ETag/Last-Modified headers.
 * Optional X-Robots-Tag: noindex, nofollow for both /llms.txt and Markdown exports; the Markdown header is controlled by `md_send_noindex`.
 * Toggle excerpts in llms.txt via `llms_show_excerpt` to add one-line summaries under each item.
-* Optional site title/description overrides plus a sitemap URL field for the generated llms.txt.
+* Optional site title/description overrides plus a same-site sitemap URL field for the generated llms.txt.
 
 = Requirements =
 
@@ -75,6 +75,18 @@ Enable the “Send X-Robots-Tag: noindex, nofollow for Markdown” option (store
 = Can I ship a custom Markdown body or exclude a single item? =
 
 Yes. Open the post editor and use the “Markdown override (LLM Friendly)” metabox. In Gutenberg it appears with the editor’s additional panels/metaboxes. The override accepts plain Markdown or block markup. If you want to hide a specific entry from llms.txt and Markdown exports, go to Settings → LLM Friendly → llms.txt → “Excluded items”, search by title, and add it to the exclusion list.
+
+= Can I use an external sitemap URL? =
+
+By default, the sitemap field accepts site-relative paths and same-site absolute URLs. External sitemap URLs are rejected unless a developer opts in with the `llmf_allow_external_sitemap_url` filter.
+
+== Developer Notes ==
+
+* `llmf_can_export_post` can deny a post for `markdown`, `llms`, or `llms_search` contexts.
+* `llmf_markdown_override_max_length` changes the per-post Markdown override length cap. Default: 200000 characters.
+* `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap. Default: 500.
+* `llmf_allow_external_sitemap_url` allows an external sitemap URL when returning `true`.
+* Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES.
 
 == Screenshots ==
 

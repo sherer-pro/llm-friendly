@@ -37,33 +37,8 @@ final class Exporter {
 	 * @return void
 	 */
 	public function output_markdown( WP_Post $post ): void {
-		// Do not export password-protected content.
-		if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
-			if ( function_exists( 'nocache_headers' ) ) {
-				nocache_headers();
-			}
-			status_header( 404 );
-			echo esc_html__( 'Not Found', 'llm-friendly' );
-			exit;
-		}
-		$can = apply_filters( 'llmf_can_export_post', true, $post, 'markdown' );
-		if ( ! $can ) {
-			if ( function_exists( 'nocache_headers' ) ) {
-				nocache_headers();
-			}
-			status_header( 404 );
-			echo esc_html__( 'Not Found', 'llm-friendly' );
-			exit;
-		}
-
-		// Respect exclusions: hide specific posts from Markdown exports.
-		if ( $this->options->is_post_excluded( $post ) ) {
-			if ( function_exists( 'nocache_headers' ) ) {
-				nocache_headers();
-			}
-			status_header( 404 );
-			echo esc_html__( 'Not Found', 'llm-friendly' );
-			exit;
+		if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
+			$this->send_not_found();
 		}
 
 		$modified = $this->post_modified_timestamp( $post );
@@ -100,6 +75,21 @@ final class Exporter {
 		);
 
 		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
+		exit;
+	}
+
+	/**
+	 * Send a not-found response for hidden Markdown exports.
+	 *
+	 * @return void
+	 */
+	private function send_not_found(): void {
+		if ( function_exists( 'nocache_headers' ) ) {
+			nocache_headers();
+		}
+
+		status_header( 404 );
+		echo esc_html__( 'Not Found', 'llm-friendly' );
 		exit;
 	}
 

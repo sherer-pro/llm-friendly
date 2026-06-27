@@ -36,6 +36,19 @@
 	};
 
 	/**
+	 * Clear a dropdown without parsing HTML.
+	 *
+	 * @param {Element} dropdown Dropdown element.
+	 *
+	 * @returns {void}
+	 */
+	const clearDropdown = (dropdown) => {
+		if (dropdown) {
+			dropdown.replaceChildren();
+		}
+	};
+
+	/**
 	 * Debounce map by post type to avoid sending a request per keystroke.
 	 */
 	const debounceMap = new Map();
@@ -70,7 +83,7 @@
 	const hideDropdown = (dropdown) => {
 		if (dropdown) {
 			dropdown.style.display = 'none';
-			dropdown.innerHTML = '';
+			clearDropdown(dropdown);
 		}
 	};
 
@@ -84,7 +97,13 @@
 	 */
 	const showDropdownMessage = (dropdown, message) => {
 		if (!dropdown) return;
-		dropdown.innerHTML = `<div class="llmf-excluded-posts__dropdown-item">${message}</div>`;
+
+		const row = document.createElement('div');
+		row.className = 'llmf-excluded-posts__dropdown-item';
+		row.textContent = message;
+
+		clearDropdown(dropdown);
+		dropdown.appendChild(row);
 		dropdown.style.display = 'block';
 	};
 
@@ -229,7 +248,7 @@
 			return;
 		}
 
-		dropdown.innerHTML = '';
+		clearDropdown(dropdown);
 		dropdown.appendChild(fragment);
 		dropdown.style.display = 'block';
 	};
