@@ -132,46 +132,48 @@ final class Llms {
 			delete_transient( self::LOCK_KEY );
 		}
 
-		$content = $this->build_llms_txt();
+		try {
+			$content = $this->build_llms_txt();
 
-		// Update ONLY cache fields to avoid overwriting settings in concurrent requests.
-		$saved = get_option( Options::OPTION_KEY, array() );
-		if ( ! is_array( $saved ) ) {
-			$saved = array();
-		}
+			// Update ONLY cache fields to avoid overwriting settings in concurrent requests.
+			$saved = get_option( Options::OPTION_KEY, array() );
+			if ( ! is_array( $saved ) ) {
+				$saved = array();
+			}
 
-		$prev_ts = isset( $saved['llms_cache_ts'] ) ? (int) $saved['llms_cache_ts'] : 0;
-		$now     = time();
-		$ts      = ( $now <= $prev_ts ) ? ( $prev_ts + 1 ) : $now;
-		$rev     = isset( $saved['llms_cache_rev'] ) ? (int) $saved['llms_cache_rev'] : 0;
-		$rev ++;
+			$prev_ts = isset( $saved['llms_cache_ts'] ) ? (int) $saved['llms_cache_ts'] : 0;
+			$now     = time();
+			$ts      = ( $now <= $prev_ts ) ? ( $prev_ts + 1 ) : $now;
+			$rev     = isset( $saved['llms_cache_rev'] ) ? (int) $saved['llms_cache_rev'] : 0;
+			$rev ++;
 
-		$saved['llms_cache']     = (string) $content;
-		$saved['llms_cache_ts']  = $ts;
-		$saved['llms_cache_rev'] = $rev;
+			$saved['llms_cache']     = (string) $content;
+			$saved['llms_cache_ts']  = $ts;
+			$saved['llms_cache_rev'] = $rev;
 
-		$settings        = $this->options->get();
-		$settings_subset = array(
-			'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
-			'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
-			'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
-			'post_types'                => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
-			'llms_recent_limit'         => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
-			'site_title_override'       => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
-			'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
-			'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
-			'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
-			'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
-			'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
-		);
+			$settings        = $this->options->get();
+			$settings_subset = array(
+				'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
+				'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
+				'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+				'post_types'                => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
+				'llms_recent_limit'         => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
+				'site_title_override'       => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
+				'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
+				'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
+				'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
+				'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
+				'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
+			);
 
-		$saved['llms_cache_hash']          = sha1( (string) $content );
-		$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
+			$saved['llms_cache_hash']          = sha1( (string) $content );
+			$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
 
-		update_option( Options::OPTION_KEY, $saved, false );
-
-		if ( $lock_acquired ) {
-			delete_transient( self::LOCK_KEY );
+			update_option( Options::OPTION_KEY, $saved, false );
+		} finally {
+			if ( $lock_acquired ) {
+				delete_transient( self::LOCK_KEY );
+			}
 		}
 	}
 
@@ -425,15 +427,7 @@ final class Llms {
 			if ( in_array( (int) $p->ID, (array) $excluded_ids, true ) ) {
 				continue;
 			}
-			// Skip password-protected posts.
-			if ( ! empty( $p->post_password ) ) {
-				continue;
-			}
-			$can = apply_filters( 'llmf_can_export_post', true, $p, 'llms' );
-			if ( ! $can ) {
-				continue;
-			}
-			if ( $this->options->is_post_excluded( $p ) ) {
+			if ( ! $this->options->can_export_post( $p, 'llms' ) ) {
 				continue;
 			}
 

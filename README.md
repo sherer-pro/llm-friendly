@@ -5,7 +5,7 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` — an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.1.0**
+Current version: **0.1.1**
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 
@@ -19,7 +19,7 @@ The goal is to make your site easier to navigate and consume for LLMs, indexing 
 - Toggle excerpts in `llms.txt` via `llms_show_excerpt` to add one-line summaries under each item.
 - Exclude specific items from both `llms.txt` and Markdown exports through the per-post-type exclusion picker in Settings → LLM Friendly.
 - Outputs `<link rel="alternate" type="text/markdown">` tags on singular views for supported post types.
-- Optional site title/description overrides and sitemap URL for the generated `llms.txt`.
+- Optional site title/description overrides and a same-site sitemap URL for the generated `llms.txt`.
 
 ## Requirements
 
@@ -56,6 +56,7 @@ If requirements are not met, the plugin shows an admin warning and does not run.
   - Settings → LLM Friendly → Markdown → “Send X-Robots-Tag: noindex, nofollow for Markdown”
 - Use the “Markdown override (LLM Friendly)” editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor’s additional panels/metaboxes.
 - Use “Excluded items” in Settings → LLM Friendly → llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
+- Use a site-relative or same-site absolute sitemap URL. External sitemap URLs are rejected by default unless a site owner opts in with the `llmf_allow_external_sitemap_url` filter.
 - To change the base path for exports (default `llm`), update “Base path” and re-save Permalinks if your server uses custom rewrites.
 
 Note: if you are running Nginx in front of Apache (or have aggressive static rules), make sure `.md` and `/llms.txt` requests are routed to WordPress (not treated as static files).
@@ -66,6 +67,16 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 
 - Do not enable post types that should not be publicly accessible.
 - Password-protected content should not be exported.
+- Custom Markdown in `llms.txt` is capped at 20,000 characters and per-post Markdown overrides are capped at 200,000 characters by default.
+- Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES.
+- Exclusion lists are validated server-side and capped at 500 items per post type by default.
+
+## Developer filters
+
+- `llmf_can_export_post` can deny a post for `markdown`, `llms`, or `llms_search` contexts.
+- `llmf_markdown_override_max_length` changes the per-post Markdown override length cap.
+- `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap.
+- `llmf_allow_external_sitemap_url` allows an external sitemap URL when returning `true`.
 
 ## License
 

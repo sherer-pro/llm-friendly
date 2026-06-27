@@ -22,6 +22,16 @@ final class Options {
 	private const CUSTOM_MD_MAX_LENGTH = 20000;
 
 	/**
+	 * Default maximum length for per-post Markdown overrides (in characters).
+	 */
+	private const MARKDOWN_OVERRIDE_MAX_LENGTH = 200000;
+
+	/**
+	 * Default maximum amount of excluded posts stored per post type.
+	 */
+	private const EXCLUDED_POSTS_MAX_PER_TYPE = 500;
+
+	/**
 	 * Ensure defaults exist in DB.
 	 *
 	 * @return void
@@ -247,6 +257,25 @@ final class Options {
 	}
 
 	/**
+	 * Check whether a post may be exposed by public plugin outputs.
+	 *
+	 * @param WP_Post $post    Post object.
+	 * @param string  $context Export context passed to llmf_can_export_post.
+	 * @return bool True when the post is safe to expose.
+	 */
+	public function can_export_post( WP_Post $post, string $context ): bool {
+		if ( ! $this->is_public_export_candidate( $post ) ) {
+			return false;
+		}
+
+		if ( $this->is_post_excluded( $post ) ) {
+			return false;
+		}
+
+		return (bool) apply_filters( 'llmf_can_export_post', true, $post, $context );
+	}
+
+	/**
 	 * Return exportable public post type objects.
 	 *
 	 * @return array<string,object> Public post type objects keyed by name.
@@ -309,18 +338,12 @@ final class Options {
 	 * @return string
 	 */
 	private function sanitize_llms_custom_markdown( $value ) {
+		$value = wp_unslash( (string) $value );
 		$clean = $this->sanitize_markdown_block( (string) $value );
+		$clean = $this->limit_markdown_length( $clean, self::CUSTOM_MD_MAX_LENGTH );
 
-		// Cap block length to prevent oversized caches and generation load.
-		$max = (int) self::CUSTOM_MD_MAX_LENGTH;
-		if ( $max > 0 ) {
-			if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
-				if ( mb_strlen( $clean, 'UTF-8' ) > $max ) {
-					$clean = mb_substr( $clean, 0, $max, 'UTF-8' );
-				}
-			} elseif ( strlen( $clean ) > $max ) {
-				$clean = substr( $clean, 0, $max );
-			}
+		if ( ! current_user_can( 'unfiltered_html' ) ) {
+			$clean = wp_kses_post( $clean );
 		}
 
 		return $clean;
@@ -336,6 +359,8 @@ final class Options {
 		$value = is_string( $value ) ? $value : '';
 		$value = wp_unslash( $value );
 		$value = $this->sanitize_markdown_block( $value );
+		$max   = (int) apply_filters( 'llmf_markdown_override_max_length', self::MARKDOWN_OVERRIDE_MAX_LENGTH );
+		$value = $this->limit_markdown_length( $value, $max );
 
 		if ( ! current_user_can( 'unfiltered_html' ) ) {
 			$value = wp_kses_post( $value );
@@ -452,7 +477,15 @@ final class Options {
 		if ( preg_match( '~^https?://~i', $value ) ) {
 			$url = esc_url_raw( $value, array( 'http', 'https' ) );
 
-			return $url !== '' ? $url : '/sitemap.xml';
+			if ( $url === '' ) {
+				return '/sitemap.xml';
+			}
+
+			if ( $this->is_same_origin_url( $url ) || apply_filters( 'llmf_allow_external_sitemap_url', false, $url ) ) {
+				return $url;
+			}
+
+			return '/sitemap.xml';
 		}
 
 		if ( preg_match( '~^[a-z][a-z0-9+.-]*:~i', $value ) || strpos( $value, '//' ) === 0 ) {
@@ -515,15 +548,37 @@ final class Options {
 				continue;
 			}
 
+			$max_ids = (int) apply_filters( 'llmf_max_excluded_posts_per_type', self::EXCLUDED_POSTS_MAX_PER_TYPE, $type );
+			if ( $max_ids < 1 ) {
+				$max_ids = self::EXCLUDED_POSTS_MAX_PER_TYPE;
+			}
+
 			$clean_ids = array();
 			foreach ( $ids as $id ) {
 				$id = (int) $id;
-				if ( $id > 0 ) {
-					$clean_ids[] = $id;
+				if ( $id <= 0 || in_array( $id, $clean_ids, true ) ) {
+					continue;
+				}
+
+				$post = get_post( $id );
+				if ( ! ( $post instanceof WP_Post ) || (string) $post->post_type !== $type ) {
+					continue;
+				}
+
+				if ( ! $this->is_public_export_candidate( $post ) ) {
+					continue;
+				}
+
+				if ( ! apply_filters( 'llmf_can_export_post', true, $post, 'llms' ) ) {
+					continue;
+				}
+
+				$clean_ids[] = $id;
+				if ( count( $clean_ids ) >= $max_ids ) {
+					break;
 				}
 			}
 
-			$clean_ids = array_values( array_unique( $clean_ids ) );
 			if ( ! empty( $clean_ids ) ) {
 				$result[ $type ] = $clean_ids;
 			}
@@ -586,14 +641,101 @@ final class Options {
 	 */
 	public function sitemap_absolute_url() {
 		$opt = $this->get();
-		$v   = (string) $opt['sitemap_url'];
+		$v   = $this->sanitize_sitemap_url( (string) $opt['sitemap_url'] );
 
 		if ( preg_match( '~^https?://~i', $v ) ) {
-			return esc_url_raw( $v );
+			return esc_url_raw( $v, array( 'http', 'https' ) );
 		}
 
-		$v = $this->sanitize_sitemap_url( $v );
 		return home_url( $v );
+	}
+
+	/**
+	 * Check whether a post is a public non-password-protected export candidate.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return bool True when the post passes base export constraints.
+	 */
+	private function is_public_export_candidate( WP_Post $post ): bool {
+		if ( ! $this->is_exportable_post_type( (string) $post->post_type ) ) {
+			return false;
+		}
+
+		if ( $post->post_status !== 'publish' ) {
+			return false;
+		}
+
+		return empty( $post->post_password ) && ! post_password_required( $post );
+	}
+
+	/**
+	 * Limit Markdown text length without breaking multibyte strings when possible.
+	 *
+	 * @param string $value Markdown text.
+	 * @param int    $max   Maximum character length.
+	 * @return string Limited Markdown text.
+	 */
+	private function limit_markdown_length( string $value, int $max ): string {
+		if ( $max <= 0 ) {
+			return $value;
+		}
+
+		if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+			if ( mb_strlen( $value, 'UTF-8' ) > $max ) {
+				return mb_substr( $value, 0, $max, 'UTF-8' );
+			}
+
+			return $value;
+		}
+
+		return strlen( $value ) > $max ? substr( $value, 0, $max ) : $value;
+	}
+
+	/**
+	 * Check whether an absolute URL points to the current site's origin.
+	 *
+	 * @param string $url Absolute URL.
+	 * @return bool True when scheme, host, and port match home_url().
+	 */
+	private function is_same_origin_url( string $url ): bool {
+		$target = wp_parse_url( $url );
+		$home   = wp_parse_url( home_url( '/' ) );
+
+		if ( ! is_array( $target ) || ! is_array( $home ) ) {
+			return false;
+		}
+
+		$target_scheme = isset( $target['scheme'] ) ? strtolower( (string) $target['scheme'] ) : '';
+		$home_scheme   = isset( $home['scheme'] ) ? strtolower( (string) $home['scheme'] ) : '';
+		$target_host   = isset( $target['host'] ) ? strtolower( (string) $target['host'] ) : '';
+		$home_host     = isset( $home['host'] ) ? strtolower( (string) $home['host'] ) : '';
+
+		if ( $target_scheme === '' || $home_scheme === '' || $target_host === '' || $home_host === '' ) {
+			return false;
+		}
+
+		$target_port = isset( $target['port'] ) ? (int) $target['port'] : $this->default_port_for_scheme( $target_scheme );
+		$home_port   = isset( $home['port'] ) ? (int) $home['port'] : $this->default_port_for_scheme( $home_scheme );
+
+		return $target_scheme === $home_scheme && $target_host === $home_host && $target_port === $home_port;
+	}
+
+	/**
+	 * Return default port for an URL scheme.
+	 *
+	 * @param string $scheme URL scheme.
+	 * @return int Default port or 0.
+	 */
+	private function default_port_for_scheme( string $scheme ): int {
+		if ( $scheme === 'https' ) {
+			return 443;
+		}
+
+		if ( $scheme === 'http' ) {
+			return 80;
+		}
+
+		return 0;
 	}
 
 	/**

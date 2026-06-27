@@ -277,22 +277,7 @@ final class Plugin {
 		$path = ltrim( $path, '/' );
 
 		$post = get_page_by_path( $path, OBJECT, $post_type );
-		if ( $post instanceof WP_Post && $post->post_status === 'publish' ) {
-			// Do not export password-protected content.
-			if ( ! empty( $post->post_password ) || post_password_required( $post ) ) {
-				return null;
-			}
-
-			$can = apply_filters( 'llmf_can_export_post', true, $post, 'markdown' );
-			if ( ! $can ) {
-				return null;
-			}
-
-			// If the post is excluded, do not serve its Markdown version.
-			if ( $this->options->is_post_excluded( $post ) ) {
-				return null;
-			}
-
+		if ( $post instanceof WP_Post && $this->options->can_export_post( $post, 'markdown' ) ) {
 			return $post;
 		}
 
@@ -321,12 +306,7 @@ final class Plugin {
 		}
 
 		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
-			return;
-		}
-
-		// Excluded posts should not output a Markdown link.
-		if ( $this->options->is_post_excluded( $post ) ) {
+		if ( ! in_array( $post->post_type, $allowed, true ) || ! $this->options->can_export_post( $post, 'markdown' ) ) {
 			return;
 		}
 

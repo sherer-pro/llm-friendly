@@ -70,7 +70,12 @@ final class Admin {
 		register_setting(
 			'llmf',
 			Options::OPTION_KEY,
-			array($this, 'sanitize_options')
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_options' ),
+				'default'           => $this->options->defaults(),
+				'show_in_rest'      => false,
+			)
 		);
 
 		add_settings_section(
@@ -218,6 +223,128 @@ final class Admin {
 	}
 
 	/**
+	 * Return selected post types after applying canonical option sanitization.
+	 *
+	 * @return array<int,string> Selected post type keys.
+	 */
+	private function selected_post_types(): array {
+		$opt = $this->options->get();
+
+		return isset( $opt['post_types'] ) && is_array( $opt['post_types'] )
+			? $this->options->sanitize_post_types( $opt['post_types'] )
+			: array();
+	}
+
+	/**
+	 * Return a Unicode-aware string length.
+	 *
+	 * @param string $value Text value.
+	 * @return int Character length.
+	 */
+	private function text_length( string $value ): int {
+		if ( function_exists( 'mb_strlen' ) ) {
+			return (int) mb_strlen( $value, 'UTF-8' );
+		}
+
+		if ( preg_match_all( '/./us', $value, $matches ) ) {
+			return count( $matches[0] );
+		}
+
+		return strlen( $value );
+	}
+
+	/**
+	 * Return display title for an admin post picker item.
+	 *
+	 * @param \WP_Post $post Post object.
+	 * @return string Non-empty title.
+	 */
+	private function post_picker_title( \WP_Post $post ): string {
+		$title = get_the_title( $post );
+
+		return $title !== '' ? (string) $title : sprintf(
+			/* translators: %d: Post ID. */
+			__( 'Item #%d', 'llm-friendly' ),
+			$post->ID
+		);
+	}
+
+	/**
+	 * Render a checkbox bound to a boolean plugin option.
+	 *
+	 * @param string $key   Option key.
+	 * @param string $label Field label.
+	 * @return void
+	 */
+	private function render_option_checkbox( string $key, string $label ): void {
+		$opt = $this->options->get();
+		$v   = ! empty( $opt[ $key ] ) ? 1 : 0;
+
+		echo '<label>';
+		echo '<input type="checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[' . esc_attr( $key ) . ']" value="1" ' . checked( 1, $v, false ) . ' />';
+		echo ' ' . esc_html( $label );
+		echo '</label>';
+	}
+
+	/**
+	 * Load excluded picker items for a post type.
+	 *
+	 * @param string         $post_type    Post type key.
+	 * @param array<int,int> $excluded_ids Stored excluded IDs.
+	 * @return array<int,array{id:int,title:string}> Picker item data.
+	 */
+	private function excluded_items_for_type( string $post_type, array $excluded_ids ): array {
+		if ( empty( $excluded_ids ) ) {
+			return array();
+		}
+
+		$query_args = array(
+			'post_type'              => $post_type,
+			'post__in'               => $excluded_ids,
+			'orderby'                => 'post__in',
+			'posts_per_page'         => count( $excluded_ids ),
+			'post_status'            => 'publish',
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+
+		$items = array();
+		$found = get_posts( $query_args );
+		foreach ( (array) $found as $post ) {
+			if ( ! ( $post instanceof \WP_Post ) ) {
+				continue;
+			}
+
+			$items[] = array(
+				'id'    => (int) $post->ID,
+				'title' => $this->post_picker_title( $post ),
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Render one selected excluded item.
+	 *
+	 * @param string $post_type Post type key.
+	 * @param int    $post_id   Post ID.
+	 * @param string $title     Display title.
+	 * @return void
+	 */
+	private function render_excluded_item( string $post_type, int $post_id, string $title ): void {
+		echo '<div class="llmf-excluded-posts__selected-item" data-post-id="' . esc_attr( (string) $post_id ) . '">';
+		echo '<label class="llmf-excluded-posts__selected-label" style="flex:1;">';
+		echo '<input type="checkbox" class="llmf-excluded-posts__checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $post_type ) . '][]" value="' . esc_attr( (string) $post_id ) . '" checked="checked" /> ';
+		echo esc_html( $title ) . ' <span class="description">(' . esc_html( sprintf( '#%d', $post_id ) ) . ')</span>';
+		echo '</label>';
+		echo '<button type="button" class="button-link llmf-excluded-posts__remove" aria-label="' . esc_attr__( 'Remove from exclusions', 'llm-friendly' ) . '">×</button>';
+		echo '</div>';
+	}
+
+	/**
 	 * Render settings page.
 	 *
 	 * @return void
@@ -338,12 +465,11 @@ final class Admin {
 		$query     = trim( $query );
 
 		// Require at least 2 characters to avoid unnecessary DB load.
-		if ( strlen( $query ) < 2 ) {
+		if ( $this->text_length( $query ) < 2 ) {
 			wp_send_json_error( array( 'message' => __( 'Enter at least 2 characters to search.', 'llm-friendly' ) ), 400 );
 		}
 
-		$opt           = $this->options->get();
-		$allowed_types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		$allowed_types = $this->selected_post_types();
 
 		if ( $post_type === '' || ! $this->options->is_exportable_post_type( $post_type ) || ! in_array( $post_type, $allowed_types, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Post type is not allowed.', 'llm-friendly' ) ), 400 );
@@ -375,23 +501,13 @@ final class Admin {
 				continue;
 			}
 
-			// Skip password-protected posts and respect the external filter.
-			if ( ! empty( $p->post_password ) ) {
+			if ( ! $this->options->can_export_post( $p, 'llms_search' ) ) {
 				continue;
 			}
-
-			$can = apply_filters( 'llmf_can_export_post', true, $p, 'llms_search' );
-			if ( ! $can ) {
-				continue;
-			}
-
-			$title = get_the_title( $p );
-			/* translators: %d: Post ID. */
-			$title = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $p->ID );
 
 			$items[] = array(
 				'id'    => (int) $p->ID,
-				'title' => (string) $title,
+				'title' => $this->post_picker_title( $p ),
 			);
 		}
 
@@ -435,27 +551,17 @@ final class Admin {
 	 * @return void
 	 */
 	public function field_enabled_markdown() {
-		$opt = $this->options->get();
-		$v = !empty($opt['enabled_markdown']) ? 1 : 0;
+		$this->render_option_checkbox( 'enabled_markdown', __( 'Enable .md endpoints for selected post types', 'llm-friendly' ) );
+	}
 
-		echo '<label>';
-		echo '<input type="checkbox" name="' . esc_attr(Options::OPTION_KEY) . '[enabled_markdown]" value="1" ' . checked(1, $v, false) . ' />';
-		echo ' ' . esc_html__('Enable .md endpoints for selected post types', 'llm-friendly');
-		echo '</label>';
-	}/**
- * Field: send X-Robots-Tag: noindex, nofollow for Markdown exports.
- *
- * @return void
- */
-public function field_md_noindex() {
-	$opt = $this->options->get();
-	$v = !empty($opt['md_send_noindex']) ? 1 : 0;
-
-	echo '<label>';
-	echo '<input type="checkbox" name="' . esc_attr(Options::OPTION_KEY) . '[md_send_noindex]" value="1" ' . checked(1, $v, false) . ' />';
-	echo ' ' . esc_html__('Add X-Robots-Tag: noindex, nofollow header for .md endpoints', 'llm-friendly');
-	echo '</label>';
-}
+	/**
+	 * Field: send X-Robots-Tag: noindex, nofollow for Markdown exports.
+	 *
+	 * @return void
+	 */
+	public function field_md_noindex() {
+		$this->render_option_checkbox( 'md_send_noindex', __( 'Add X-Robots-Tag: noindex, nofollow header for .md endpoints', 'llm-friendly' ) );
+	}
 
 
 	/**
@@ -477,8 +583,7 @@ public function field_md_noindex() {
 	 * @return void
 	 */
 	public function field_post_types() {
-		$opt = $this->options->get();
-		$selected = isset($opt['post_types']) && is_array($opt['post_types']) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array('post');
+		$selected = $this->selected_post_types();
 
 		$pts = $this->options->exportable_post_types();
 
@@ -489,10 +594,8 @@ public function field_md_noindex() {
 
 			$label = isset($obj->labels->name) ? (string)$obj->labels->name : $pt;
 
-			$checked = in_array($pt, $selected, true) ? 'checked="checked"' : '';
-
 			echo '<label style="display:block;margin:4px 0;">';
-			echo '<input type="checkbox" class="llmf-post-type-toggle" data-post-type="' . esc_attr( $pt ) . '" name="' . esc_attr(Options::OPTION_KEY) . '[post_types][]" value="' . esc_attr($pt) . '" ' . wp_kses( $checked, [] ) . ' />';
+			echo '<input type="checkbox" class="llmf-post-type-toggle" data-post-type="' . esc_attr( $pt ) . '" name="' . esc_attr(Options::OPTION_KEY) . '[post_types][]" value="' . esc_attr($pt) . '" ' . checked( true, in_array( $pt, $selected, true ), false ) . ' />';
 			echo ' ' . esc_html($label) . ' <code>' . esc_html($pt) . '</code>';
 			echo '</label>';
 		}
@@ -506,13 +609,7 @@ public function field_md_noindex() {
 	 * @return void
 	 */
 	public function field_enabled_llms_txt() {
-		$opt = $this->options->get();
-		$v = !empty($opt['enabled_llms_txt']) ? 1 : 0;
-
-		echo '<label>';
-		echo '<input type="checkbox" name="' . esc_attr(Options::OPTION_KEY) . '[enabled_llms_txt]" value="1" ' . checked(1, $v, false) . ' />';
-		echo ' ' . esc_html__('Serve /llms.txt', 'llm-friendly');
-		echo '</label>';
+		$this->render_option_checkbox( 'enabled_llms_txt', __( 'Serve /llms.txt', 'llm-friendly' ) );
 	}
 
 	/**
@@ -521,13 +618,7 @@ public function field_md_noindex() {
 	 * @return void
 	 */
 	public function field_llms_noindex() {
-		$opt = $this->options->get();
-		$v = !empty($opt['llms_send_noindex']) ? 1 : 0;
-
-		echo '<label>';
-		echo '<input type="checkbox" name="' . esc_attr(Options::OPTION_KEY) . '[llms_send_noindex]" value="1" ' . checked(1, $v, false) . ' />';
-		echo ' ' . esc_html__('Send X-Robots-Tag: noindex, nofollow for /llms.txt', 'llm-friendly');
-		echo '</label>';
+		$this->render_option_checkbox( 'llms_send_noindex', __( 'Send X-Robots-Tag: noindex, nofollow for /llms.txt', 'llm-friendly' ) );
 	}
 
 	/**
@@ -566,13 +657,7 @@ public function field_md_noindex() {
 	 * @return void
 	 */
 	public function field_llms_show_excerpt() {
-		$opt = $this->options->get();
-		$v   = ! empty( $opt['llms_show_excerpt'] ) ? 1 : 0;
-
-		echo '<label>';
-		echo '<input type="checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[llms_show_excerpt]" value="1" ' . checked( 1, $v, false ) . ' />';
-		echo ' ' . esc_html__( 'Add excerpt (if available) under each item in llms.txt', 'llm-friendly' );
-		echo '</label>';
+		$this->render_option_checkbox( 'llms_show_excerpt', __( 'Add excerpt (if available) under each item in llms.txt', 'llm-friendly' ) );
 	}
 
 	/**
@@ -585,23 +670,23 @@ public function field_md_noindex() {
 		$v = isset($opt['sitemap_url']) ? (string)$opt['sitemap_url'] : '/sitemap.xml';
 
 		echo '<input type="text" class="regular-text" name="' . esc_attr(Options::OPTION_KEY) . '[sitemap_url]" value="' . esc_attr($v) . '" />';
-		echo '<p class="description">' . esc_html__('Absolute URL or site-relative path. Default: /sitemap.xml', 'llm-friendly') . '</p>';
+		echo '<p class="description">' . esc_html__('Same-site absolute URL or site-relative path. Default: /sitemap.xml', 'llm-friendly') . '</p>';
 	}
 
-/**
- * Field: Custom markdown block for llms.txt.
- *
- * Inserted between site meta and the link sections.
- *
- * @return void
- */
-public function field_llms_custom_markdown() {
-	$opt = $this->options->get();
-	$v = isset($opt['llms_custom_markdown']) ? (string) $opt['llms_custom_markdown'] : '';
+	/**
+	 * Field: Custom markdown block for llms.txt.
+	 *
+	 * Inserted between site meta and the link sections.
+	 *
+	 * @return void
+	 */
+	public function field_llms_custom_markdown() {
+		$opt = $this->options->get();
+		$v = isset($opt['llms_custom_markdown']) ? (string) $opt['llms_custom_markdown'] : '';
 
-	echo '<textarea class="large-text code" rows="8" name="' . esc_attr(Options::OPTION_KEY) . '[llms_custom_markdown]">' . esc_textarea($v) . '</textarea>';
-	echo '<p class="description">' . esc_html__('Optional markdown inserted into llms.txt between the site meta and the content sections. Leave empty to insert nothing.', 'llm-friendly') . '</p>';
-}
+		echo '<textarea class="large-text code" rows="8" name="' . esc_attr(Options::OPTION_KEY) . '[llms_custom_markdown]">' . esc_textarea($v) . '</textarea>';
+		echo '<p class="description">' . esc_html__('Optional markdown inserted into llms.txt between the site meta and the content sections. Leave empty to insert nothing.', 'llm-friendly') . '</p>';
+	}
 
 	/**
 	 * Field: Exclude posts from llms.txt and Markdown exports.
@@ -612,9 +697,7 @@ public function field_llms_custom_markdown() {
 	 * @return void
 	 */
 	public function field_excluded_posts() {
-		$opt      = $this->options->get();
-		$selected = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-
+		$selected = $this->selected_post_types();
 		$pts = $this->options->exportable_post_types();
 
 		if ( empty( $pts ) ) {
@@ -640,34 +723,7 @@ public function field_llms_custom_markdown() {
 			}
 
 			$excluded_ids = $this->options->excluded_post_ids( $pt );
-			$items        = array();
-
-			if ( ! empty( $excluded_ids ) ) {
-				$query_args = array(
-					'post_type'              => $pt,
-					'post__in'               => $excluded_ids,
-					'orderby'                => 'post__in',
-					'posts_per_page'         => count( $excluded_ids ),
-					'post_status'            => 'publish',
-					'no_found_rows'          => true,
-					'ignore_sticky_posts'    => true,
-					'update_post_meta_cache' => false,
-					'update_post_term_cache' => false,
-				);
-				$found      = get_posts( $query_args );
-				foreach ( (array) $found as $p ) {
-					if ( ! ( $p instanceof \WP_Post ) ) {
-						continue;
-					}
-					$title = get_the_title( $p );
-					/* translators: %d: Post ID. */
-					$title = $title !== '' ? $title : sprintf( __( 'Item #%d', 'llm-friendly' ), $p->ID );
-					$items[] = array(
-						'id'    => (int) $p->ID,
-						'title' => $title,
-					);
-				}
-			}
+			$items        = $this->excluded_items_for_type( $pt, $excluded_ids );
 
 			$hidden_class = $is_enabled ? '' : ' llmf-excluded-posts__type--hidden';
 
@@ -694,13 +750,7 @@ public function field_llms_custom_markdown() {
 						continue;
 					}
 
-					echo '<div class="llmf-excluded-posts__selected-item" data-post-id="' . esc_attr( (string) $post_id ) . '">';
-					echo '<label class="llmf-excluded-posts__selected-label" style="flex:1;">';
-					echo '<input type="checkbox" class="llmf-excluded-posts__checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $pt ) . '][]" value="' . esc_attr( (string) $post_id ) . '" checked="checked" /> ';
-					echo esc_html( $title ) . ' <span class="description">(' . esc_html( sprintf( '#%d', $post_id ) ) . ')</span>';
-					echo '</label>';
-					echo '<button type="button" class="button-link llmf-excluded-posts__remove" aria-label="' . esc_attr__( 'Remove from exclusions', 'llm-friendly' ) . '">×</button>';
-					echo '</div>';
+					$this->render_excluded_item( $pt, $post_id, $title );
 				}
 			}
 
@@ -753,8 +803,7 @@ public function field_llms_custom_markdown() {
 			return;
 		}
 
-		$opt     = $this->options->get();
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		$allowed = $this->selected_post_types();
 		if ( ! $this->options->is_exportable_post_type( (string) $post_type ) || ! in_array( (string) $post_type, $allowed, true ) ) {
 			return;
 		}
@@ -839,8 +888,7 @@ public function field_llms_custom_markdown() {
 			}
 		}
 
-		$opt     = $this->options->get();
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		$allowed = $this->selected_post_types();
 		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( (string) $post->post_type, $allowed, true ) ) {
 			return;
 		}
