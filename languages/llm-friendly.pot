@@ -107,6 +107,10 @@ msgstr ""
 msgid "Site description override"
 msgstr ""
 
+#: inc/Admin.php:216
+msgid "Author override"
+msgstr ""
+
 #. translators: %d: Post ID.
 #: inc/Admin.php:267
 #, php-format
@@ -258,6 +262,10 @@ msgstr ""
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr ""
 
+#: inc/Admin.php:811
+msgid "If empty, Markdown metadata uses the post author display name."
+msgstr ""
+
 #: inc/Admin.php:813
 msgid "Markdown override (LLM Friendly)"
 msgstr ""
@@ -268,6 +276,14 @@ msgstr ""
 
 #: inc/Admin.php:843
 msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
+msgstr ""
+
+#: inc/Admin.php:874
+msgid "llms.txt description (overrides excerpt)"
+msgstr ""
+
+#: inc/Admin.php:876
+msgid "Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary."
 msgstr ""
 
 #: inc/Exporter.php:92

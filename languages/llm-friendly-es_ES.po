@@ -88,6 +88,10 @@ msgstr "Anular título del sitio"
 msgid "Site description override"
 msgstr "Anular descripción del sitio"
 
+#: inc/Admin.php:216
+msgid "Author override"
+msgstr "Sobrescribir autor"
+
 #: inc/Admin.php:393
 #: inc/Admin.php:735
 msgid "Start typing from 2 characters…"
@@ -235,6 +239,10 @@ msgstr "Si está vacío, se usa el ajuste de WordPress: «Título del sitio»."
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr "Si está vacío, se usa el ajuste de WordPress: «Descripción corta»."
 
+#: inc/Admin.php:811
+msgid "If empty, Markdown metadata uses the post author display name."
+msgstr "Si está vacío, los metadatos Markdown usan el nombre visible del autor de la entrada."
+
 #: inc/Admin.php:813
 msgid "Markdown override (LLM Friendly)"
 msgstr "Anulación de Markdown (LLM Friendly)"
@@ -246,6 +254,14 @@ msgstr "Si se completa, este texto reemplazará el contenido de la entrada en el
 #: inc/Admin.php:843
 msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
 msgstr "Déjalo vacío para exportar el contenido de la entrada. Puedes pegar Markdownsimple o marcado de bloques de Gutenberg (<!-- wp: ... -->)."
+
+#: inc/Admin.php:874
+msgid "llms.txt description (overrides excerpt)"
+msgstr "Descripción de llms.txt (sobrescribe el extracto)"
+
+#: inc/Admin.php:876
+msgid "Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary."
+msgstr "Resumen opcional de una línea usado en llms.txt y en los metadatos Markdown. Déjalo vacío para usar la meta descripción SEO, el extracto o un resumen generado."
 
 #: inc/Exporter.php:92
 #: inc/Llms.php:191
