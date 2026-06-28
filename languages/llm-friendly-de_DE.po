@@ -88,6 +88,10 @@ msgstr "Website-Titel überschreiben"
 msgid "Site description override"
 msgstr "Website-Beschreibung überschreiben"
 
+#: inc/Admin.php:216
+msgid "Author override"
+msgstr "Autor überschreiben"
+
 #: inc/Admin.php:393
 #: inc/Admin.php:735
 msgid "Start typing from 2 characters…"
@@ -235,6 +239,10 @@ msgstr "Leer: WordPress-Einstellung „Website-Titel“ wird verwendet."
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr "Leer: WordPress-Einstellung „Untertitel“ wird verwendet."
 
+#: inc/Admin.php:811
+msgid "If empty, Markdown metadata uses the post author display name."
+msgstr "Wenn leer, verwenden die Markdown-Metadaten den Anzeigenamen des Beitragsautors."
+
 #: inc/Admin.php:813
 msgid "Markdown override (LLM Friendly)"
 msgstr "Markdown-Überschreibung (LLM Friendly)"
@@ -246,6 +254,14 @@ msgstr "Wenn ausgefüllt, ersetzt dieser Text den Beitragsinhalt im Markdown-Exp
 #: inc/Admin.php:843
 msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
 msgstr "Leer lassen, um den Beitragsinhalt zu exportieren. Du kannst reines Markdownoder Gutenberg-Block-Markup (<!-- wp: ... -->) einfügen."
+
+#: inc/Admin.php:874
+msgid "llms.txt description (overrides excerpt)"
+msgstr "llms.txt-Beschreibung (überschreibt den Auszug)"
+
+#: inc/Admin.php:876
+msgid "Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary."
+msgstr "Optionale einzeilige Zusammenfassung für llms.txt und Markdown-Metadaten. Leer lassen, um die SEO-Metabeschreibung, den Auszug oder eine generierte Zusammenfassung zu verwenden."
 
 #: inc/Exporter.php:92
 #: inc/Llms.php:191
