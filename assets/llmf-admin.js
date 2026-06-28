@@ -192,7 +192,11 @@
 		removeBtn.type = 'button';
 		removeBtn.className = 'button-link llmf-excluded-posts__remove';
 		removeBtn.setAttribute('aria-label', t('removeAction', 'Remove from exclusions'));
-		removeBtn.textContent = '×';
+
+		const removeIcon = document.createElement('span');
+		removeIcon.className = 'dashicons dashicons-trash';
+		removeIcon.setAttribute('aria-hidden', 'true');
+		removeBtn.appendChild(removeIcon);
 
 		wrapper.appendChild(label);
 		wrapper.appendChild(removeBtn);
@@ -267,7 +271,7 @@
 		const dropdown = root.querySelector(`.llmf-excluded-posts__dropdown[data-post-type="${postType}"]`);
 
 		if (term.length < minChars) {
-			showDropdownMessage(dropdown, t('typeMore', 'Enter at least 2 characters to search.'));
+			hideDropdown(dropdown);
 			return;
 		}
 
@@ -324,7 +328,7 @@
 		debounceMap.set(postType, timer);
 
 		if (input.value.trim().length < minChars) {
-			showDropdownMessage(dropdown, t('typeMore', 'Enter at least 2 characters to search.'));
+			hideDropdown(dropdown);
 		}
 	};
 
