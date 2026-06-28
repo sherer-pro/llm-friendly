@@ -149,6 +149,12 @@ final class Plugin {
 				continue;
 			}
 
+			$auth_callback = function ( $allowed = false, $meta_key = '', $post_id = 0 ) {
+				$post_id = (int) $post_id;
+
+				return $post_id > 0 && current_user_can( 'edit_post', $post_id );
+			};
+
 			register_post_meta(
 				$post_type,
 				Exporter::META_MD_OVERRIDE,
@@ -156,14 +162,27 @@ final class Plugin {
 					'type'              => 'string',
 					'single'            => true,
 					'sanitize_callback' => array( $this, 'sanitize_md_override_meta' ),
-					'auth_callback'     => function ( $allowed = false, $meta_key = '', $post_id = 0 ) {
-						$post_id = (int) $post_id;
-
-						return $post_id > 0 && current_user_can( 'edit_post', $post_id );
-					},
+					'auth_callback'     => $auth_callback,
 					'show_in_rest'      => array(
 						'schema' => array(
 							'type' => 'string',
+						),
+					),
+				)
+			);
+
+			register_post_meta(
+				$post_type,
+				Options::META_LLMS_DESCRIPTION,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'sanitize_callback' => array( $this, 'sanitize_llms_description_meta' ),
+					'auth_callback'     => $auth_callback,
+					'show_in_rest'      => array(
+						'schema' => array(
+							'type'      => 'string',
+							'maxLength' => 500,
 						),
 					),
 				)
@@ -181,6 +200,16 @@ final class Plugin {
 	 */
 	public function sanitize_md_override_meta( $value ): string {
 		return $this->options->sanitize_markdown_override( $value );
+	}
+
+	/**
+	 * Sanitize llms.txt description post meta.
+	 *
+	 * @param mixed $value Value to sanitize.
+	 * @return string
+	 */
+	public function sanitize_llms_description_meta( $value ): string {
+		return $this->options->sanitize_llms_description( $value );
 	}
 
 	/**

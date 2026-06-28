@@ -1,3 +1,16 @@
+.llmf-checkbox-row {
+	margin: 4px 0;
+}
+
+.llmf-inline-checkbox {
+	align-items: center;
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	max-width: 100%;
+	vertical-align: top;
+}
+
 .llmf-excluded-posts__wrap {
 	border: 1px solid #dcdcde;
 	border-radius: 6px;
@@ -78,6 +91,12 @@
 
 .llmf-excluded-posts__selected-item .button-link {
 	color: #b32d2e;
+	margin-left: auto;
+}
+
+.llmf-excluded-posts__selected-label {
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
 .llmf-excluded-posts__empty {

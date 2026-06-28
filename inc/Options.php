@@ -17,6 +17,11 @@ final class Options {
 	public const OPTION_KEY = 'llmf_options';
 
 	/**
+	 * Post meta key used for a one-line llms.txt and Markdown metadata description.
+	 */
+	public const META_LLMS_DESCRIPTION = '_llmf_llms_description';
+
+	/**
 	 * Maximum length for the custom Markdown block in llms.txt (in characters).
 	 */
 	private const CUSTOM_MD_MAX_LENGTH = 20000;
@@ -25,6 +30,11 @@ final class Options {
 	 * Default maximum length for per-post Markdown overrides (in characters).
 	 */
 	private const MARKDOWN_OVERRIDE_MAX_LENGTH = 200000;
+
+	/**
+	 * Default maximum length for per-post llms.txt descriptions (in characters).
+	 */
+	private const LLMS_DESCRIPTION_MAX_LENGTH = 500;
 
 	/**
 	 * Default maximum amount of excluded posts stored per post type.
@@ -108,6 +118,7 @@ final class Options {
 
 		$out['site_title_override']      = isset( $input['site_title_override'] ) ? $this->sanitize_textline( $input['site_title_override'] ) : (string) $prev['site_title_override'];
 		$out['site_description_override'] = isset( $input['site_description_override'] ) ? $this->sanitize_textline( $input['site_description_override'] ) : (string) $prev['site_description_override'];
+		$out['site_author_override']     = isset( $input['site_author_override'] ) ? $this->sanitize_textline( $input['site_author_override'] ) : (string) $prev['site_author_override'];
 
 		$out['sitemap_url'] = isset( $input['sitemap_url'] ) ? $this->sanitize_sitemap_url( (string) $input['sitemap_url'] ) : (string) $prev['sitemap_url'];
 
@@ -223,6 +234,7 @@ final class Options {
 			'llms_recent_limit'=> 30,       // per post type
 			'site_title_override' => '',
 			'site_description_override' => '',
+			'site_author_override' => '',
 			'sitemap_url'      => '/sitemap.xml',
 			'llms_custom_markdown' => '',
 			'llms_show_excerpt' => 0,
@@ -370,6 +382,23 @@ final class Options {
 	}
 
 	/**
+	 * Sanitize the per-post one-line llms.txt description.
+	 *
+	 * @param mixed $value Raw description.
+	 * @return string Sanitized description.
+	 */
+	public function sanitize_llms_description( $value ): string {
+		$value = is_string( $value ) ? $value : '';
+		$value = $this->sanitize_textline( $value );
+		$max   = (int) apply_filters( 'llmf_llms_description_max_length', self::LLMS_DESCRIPTION_MAX_LENGTH );
+		if ( $max < 1 ) {
+			$max = self::LLMS_DESCRIPTION_MAX_LENGTH;
+		}
+
+		return $this->limit_markdown_length( $value, $max );
+	}
+
+	/**
 	 * Sanitize base path used in URLs (no leading/trailing slashes).
 	 *
 	 * @param string $path
@@ -459,6 +488,81 @@ final class Options {
 	}
 
 	/**
+	 * Get the global Markdown metadata author override.
+	 *
+	 * @return string
+	 */
+	public function site_author_override(): string {
+		$opt = $this->get();
+
+		return $this->sanitize_textline( isset( $opt['site_author_override'] ) ? $opt['site_author_override'] : '' );
+	}
+
+	/**
+	 * Get the author name for Markdown metadata.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return string
+	 */
+	public function author_name_for_post( WP_Post $post ): string {
+		$override = $this->site_author_override();
+		if ( $override !== '' ) {
+			return $override;
+		}
+
+		$author = get_the_author_meta( 'display_name', (int) $post->post_author );
+
+		return $this->sanitize_textline( is_string( $author ) ? $author : '' );
+	}
+
+	/**
+	 * Get the publisher name for Markdown metadata.
+	 *
+	 * @return string
+	 */
+	public function publisher_name(): string {
+		return $this->sanitize_textline( $this->site_title() );
+	}
+
+	/**
+	 * Get the best one-line description for llms.txt and Markdown metadata.
+	 *
+	 * Priority: explicit LLM description, SEO meta description, explicit excerpt,
+	 * then a short content-derived fallback.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return string
+	 */
+	public function llms_description_for_post( WP_Post $post ): string {
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return '';
+		}
+
+		$custom = get_post_meta( $post->ID, self::META_LLMS_DESCRIPTION, true );
+		$custom = $this->sanitize_llms_description( is_string( $custom ) ? $custom : '' );
+		if ( $custom !== '' ) {
+			return $custom;
+		}
+
+		$seo = $this->seo_description_for_post( $post );
+		if ( $seo !== '' ) {
+			return $seo;
+		}
+
+		$excerpt = $this->explicit_excerpt_for_post( $post );
+		if ( $excerpt !== '' ) {
+			return $excerpt;
+		}
+
+		$raw     = wp_strip_all_tags( (string) $post->post_content, true );
+		$raw     = html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$raw     = $this->sanitize_textline( $raw );
+		$summary = wp_trim_words( $raw, 30, '…' );
+
+		return $this->sanitize_llms_description( $summary );
+	}
+
+	/**
 	 * Normalize and validate sitemap URL/path.
 	 *
 	 * Accepts absolute URL or site-relative path.
@@ -520,6 +624,42 @@ final class Options {
 		$md = trim( $md );
 
 		return $md;
+	}
+
+	/**
+	 * Get SEO plugin description metadata for a post.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return string
+	 */
+	private function seo_description_for_post( WP_Post $post ): string {
+		$keys = array( '_yoast_wpseo_metadesc', 'wpseo_metadesc' );
+
+		foreach ( $keys as $key ) {
+			$value = get_post_meta( $post->ID, $key, true );
+			$value = $this->sanitize_llms_description( is_string( $value ) ? $value : '' );
+			if ( $value !== '' ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Get only the explicit WordPress excerpt for a post.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return string
+	 */
+	private function explicit_excerpt_for_post( WP_Post $post ): string {
+		if ( trim( (string) $post->post_excerpt ) === '' ) {
+			return '';
+		}
+
+		$excerpt = get_the_excerpt( $post );
+
+		return $this->sanitize_llms_description( is_string( $excerpt ) ? $excerpt : '' );
 	}
 
 	/**

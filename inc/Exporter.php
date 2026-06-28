@@ -47,11 +47,13 @@ final class Exporter {
 		// Markdown override affects cache key (post meta updates don't change post_modified).
 		$override      = $this->get_markdown_override( $post );
 		$override_hash = $override !== '' ? md5( $override ) : '0';
+		$metadata      = $this->markdown_metadata_for_post( $post );
+		$metadata_hash = $this->metadata_hash( $metadata );
 
-		$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash;
+		$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash . '_' . $metadata_hash;
 		$md       = get_transient( $key );
 		if ( ! is_string( $md ) || $md === '' ) {
-			$md = $this->post_to_markdown( $post, $override );
+			$md = $this->post_to_markdown( $post, $override, $metadata );
 			$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
 			if ( $ttl < 0 ) {
 				$ttl = 0;
@@ -71,7 +73,8 @@ final class Exporter {
 		Response::send_conditional_headers(
 			$headers,
 			Response::etag_from_string( $md ),
-			$this->post_modified_timestamp( $post )
+			$this->post_modified_timestamp( $post ),
+			false
 		);
 
 		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
@@ -94,14 +97,12 @@ final class Exporter {
 	}
 
 	/**
-	 * Build Markdown for a post.
+	 * Build the JSON metadata block for a Markdown export.
 	 *
 	 * @param WP_Post $post Post object.
-	 * @param string  $override_md Custom Markdown that should replace post content.
-	 *
-	 * @return string
+	 * @return array<string,mixed>
 	 */
-	private function post_to_markdown( WP_Post $post, string $override_md = '' ): string {
+	private function markdown_metadata_for_post( WP_Post $post ): array {
 		$title = Markdown::plain_text_line( get_the_title( $post ) );
 		$url   = Markdown::url_destination( get_permalink( $post ), array( 'http', 'https' ), false );
 
@@ -111,7 +112,51 @@ final class Exporter {
 			'datePublished' => get_the_date( 'Y-m-d', $post ),
 			'dateModified'  => get_the_modified_date( 'Y-m-d', $post ),
 			'language'      => sanitize_text_field( (string) get_bloginfo( 'language' ) ),
+			'description'   => $this->options->llms_description_for_post( $post ),
+			'author'        => $this->options->author_name_for_post( $post ),
+			'publisher'     => $this->options->publisher_name(),
 		);
+
+		/**
+		 * Filter the metadata array emitted at the top of each Markdown export.
+		 *
+		 * @param array<string,mixed> $meta Markdown metadata.
+		 * @param WP_Post            $post Post object.
+		 */
+		$filtered = apply_filters( 'llmf_markdown_metadata', $meta, $post );
+
+		return is_array( $filtered ) ? $filtered : $meta;
+	}
+
+	/**
+	 * Hash metadata for the Markdown export cache key.
+	 *
+	 * @param array<string,mixed> $metadata Metadata array.
+	 * @return string
+	 */
+	private function metadata_hash( array $metadata ): string {
+		$encoded = wp_json_encode( $metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+		if ( is_string( $encoded ) && $encoded !== '' ) {
+			return md5( $encoded );
+		}
+
+		return md5( serialize( $metadata ) );
+	}
+
+	/**
+	 * Build Markdown for a post.
+	 *
+	 * @param WP_Post             $post Post object.
+	 * @param string              $override_md Custom Markdown that should replace post content.
+	 * @param array<string,mixed> $meta Metadata for the JSON block.
+	 *
+	 * @return string
+	 */
+	private function post_to_markdown( WP_Post $post, string $override_md = '', array $meta = array() ): string {
+		$title = Markdown::plain_text_line( get_the_title( $post ) );
+		if ( empty( $meta ) ) {
+			$meta = $this->markdown_metadata_for_post( $post );
+		}
 
 		$meta_json = wp_json_encode( $meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
 

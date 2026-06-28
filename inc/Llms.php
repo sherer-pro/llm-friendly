@@ -32,6 +32,9 @@ final class Llms {
 		add_action( 'save_post', array( $this, 'maybe_regenerate_on_save' ), 20, 3 );
 		add_action( 'transition_post_status', array( $this, 'maybe_regenerate_on_status_change' ), 20, 3 );
 		add_action( 'delete_post', array( $this, 'maybe_regenerate_on_delete' ), 20, 2 );
+		add_action( 'added_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
+		add_action( 'updated_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
+		add_action( 'deleted_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
 	}
 
 	/**
@@ -91,6 +94,34 @@ final class Llms {
 	}
 
 	/**
+	 * Clear cached llms.txt when metadata used in item descriptions changes directly.
+	 *
+	 * @param mixed  $meta_id    Meta row ID.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 * @return void
+	 */
+	public function maybe_clear_cache_on_description_meta_change( $meta_id, int $post_id, string $meta_key, $meta_value = null ): void {
+		$description_keys = array(
+			Options::META_LLMS_DESCRIPTION,
+			'_yoast_wpseo_metadesc',
+			'wpseo_metadesc',
+		);
+
+		if ( ! in_array( $meta_key, $description_keys, true ) ) {
+			return;
+		}
+
+		$post = get_post( $post_id );
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return;
+		}
+
+		$this->clear_cache_for_post( $post );
+	}
+
+	/**
 	 * Regenerate llms.txt when auto mode is enabled and the post is selected.
 	 *
 	 * @param WP_Post $post Post object.
@@ -109,6 +140,51 @@ final class Llms {
 		}
 
 		$this->regenerate( true );
+	}
+
+	/**
+	 * Clear cached llms.txt when auto mode is enabled and the post is listed.
+	 *
+	 * @param WP_Post $post Post object.
+	 * @return void
+	 */
+	private function clear_cache_for_post( WP_Post $post ): void {
+		$opt = $this->options->get();
+
+		if ( empty( $opt['enabled_llms_txt'] ) || (string) $opt['llms_regen_mode'] !== 'auto' ) {
+			return;
+		}
+
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
+			return;
+		}
+
+		if ( ! $this->options->can_export_post( $post, 'llms' ) ) {
+			return;
+		}
+
+		$this->clear_cache();
+	}
+
+	/**
+	 * Reset cached llms.txt content without changing user settings.
+	 *
+	 * @return void
+	 */
+	private function clear_cache(): void {
+		$saved = get_option( Options::OPTION_KEY, array() );
+		if ( ! is_array( $saved ) ) {
+			$saved = array();
+		}
+
+		$saved['llms_cache']               = '';
+		$saved['llms_cache_ts']            = 0;
+		$saved['llms_cache_rev']           = 0;
+		$saved['llms_cache_hash']          = '';
+		$saved['llms_cache_settings_hash'] = '';
+
+		update_option( Options::OPTION_KEY, $saved, false );
 	}
 
 	/**
@@ -436,7 +512,7 @@ final class Llms {
 				'md_url'    => (string) $this->options->markdown_url_for_post( $p ),
 				'canonical' => Markdown::url_destination( get_permalink( $p ), array( 'http', 'https' ), false ),
 				'modified'  => Markdown::plain_text_line( get_the_modified_date( 'Y-m-d', $p ) ),
-				'excerpt'   => Markdown::plain_text_line( $this->post_excerpt_one_line( $p ) ),
+				'excerpt'   => Markdown::plain_text_line( $this->options->llms_description_for_post( $p ) ),
 			);
 
 			if ( count( $items ) >= $max_items ) {
@@ -461,76 +537,6 @@ final class Llms {
 		}
 
 		return Markdown::plain_text_line( $post_type );
-	}
-
-	/**
-	 * Normalize string to one line.
-	 *
-	 * @param string $s
-	 *
-	 * @return string
-	 */
-	private function one_line( $s ) {
-		return Markdown::plain_text_line( $s );
-	}
-
-	/**
-	 * Get post excerpt as a single line of plain text.
-	 *
-	 * @param WP_Post $post
-	 *
-	 * @return string
-	 */
-	private function post_excerpt_one_line( WP_Post $post ): string {
-		if ( ! ( $post instanceof WP_Post ) ) {
-			return '';
-		}
-
-		$excerpt = '';
-
-		// 1) Prefer an explicit WordPress excerpt (post_excerpt). Avoid auto-generated excerpts.
-		$has_wp_excerpt = trim( (string) $post->post_excerpt ) !== '';
-		if ( $has_wp_excerpt ) {
-			$excerpt = get_the_excerpt( $post );
-			if ( ! is_string( $excerpt ) ) {
-				$excerpt = '';
-			}
-		}
-
-		// 2) If there's no WP excerpt, try Yoast SEO meta description.
-		if ( $excerpt === '' ) {
-			$yoast = get_post_meta( $post->ID, 'wpseo_metadesc', true );
-			if ( ! is_string( $yoast ) ) {
-				$yoast = '';
-			}
-			$yoast = trim( $yoast );
-
-			if ( $yoast === '' ) {
-				$yoast = get_post_meta( $post->ID, '_yoast_wpseo_metadesc', true );
-				if ( ! is_string( $yoast ) ) {
-					$yoast = '';
-				}
-				$yoast = trim( $yoast );
-			}
-
-			if ( $yoast !== '' ) {
-				$excerpt = $yoast;
-			}
-		}
-
-		// 3) Fallback: derive a short snippet from content.
-		if ( $excerpt === '' ) {
-			$raw     = wp_strip_all_tags( (string) $post->post_content, true );
-			$raw     = html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-			$raw     = $this->one_line( $raw );
-			$excerpt = wp_trim_words( $raw, 30, '…' );
-		}
-
-		$excerpt = wp_strip_all_tags( (string) $excerpt, true );
-		$excerpt = html_entity_decode( $excerpt, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$excerpt = $this->one_line( $excerpt );
-
-		return $excerpt;
 	}
 
 	/**
