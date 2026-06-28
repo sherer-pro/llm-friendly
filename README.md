@@ -11,15 +11,15 @@ The goal is to make your site easier to navigate and consume for LLMs, indexing 
 
 ## Features
 
-- Generates an `llms.txt` index with links to your latest content, optional excerpts, and an optional custom Markdown block.
-- Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion and per-post Markdown overrides through the “Markdown override (LLM Friendly)” editor metabox; individual entries can override the Markdown body.
+- Generates an `llms.txt` index with links to your latest content, optional LLM descriptions, and an optional custom Markdown block.
+- Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion, expanded JSON metadata, and per-post Markdown overrides through the “Markdown override (LLM Friendly)” editor metabox.
 - Configurable base path for Markdown exports (e.g. `llm`) and per-post-type enable/disable toggles; changing the base path requires updating rewrite rules.
 - Manual or automatic regeneration of the cached `llms.txt`, complete with ETag/Last-Modified headers.
 - Optional `X-Robots-Tag: noindex, nofollow` header for both `llms.txt` and Markdown exports (`md_send_noindex`).
-- Toggle excerpts in `llms.txt` via `llms_show_excerpt` to add one-line summaries under each item.
+- Toggle excerpts in `llms.txt` via `llms_show_excerpt` to add one-line summaries under each item. The summary uses the per-post llms.txt description first, then SEO meta description, explicit excerpt, and a generated content summary.
 - Exclude specific items from both `llms.txt` and Markdown exports through the per-post-type exclusion picker in Settings → LLM Friendly.
 - Outputs `<link rel="alternate" type="text/markdown">` tags on singular views for supported post types.
-- Optional site title/description overrides and a same-site sitemap URL for the generated `llms.txt`.
+- Optional site title/description/author overrides and a same-site sitemap URL for generated outputs.
 
 ## Requirements
 
@@ -55,7 +55,9 @@ If requirements are not met, the plugin shows an admin warning and does not run.
 - Enable `md_send_noindex` to keep Markdown exports out of search indices:
   - Settings → LLM Friendly → Markdown → “Send X-Robots-Tag: noindex, nofollow for Markdown”
 - Use the “Markdown override (LLM Friendly)” editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor’s additional panels/metaboxes.
+- Use the “llms.txt description (overrides excerpt)” field in the same metabox to provide a one-line AI-facing summary for both `llms.txt` and Markdown metadata.
 - Use “Excluded items” in Settings → LLM Friendly → llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
+- Use “Author override” in Settings → LLM Friendly → Site meta overrides when Markdown metadata should attribute posts to a company or publication rather than individual WordPress authors.
 - Use a site-relative or same-site absolute sitemap URL. External sitemap URLs are rejected by default unless a site owner opts in with the `llmf_allow_external_sitemap_url` filter.
 - To change the base path for exports (default `llm`), update “Base path” and re-save Permalinks if your server uses custom rewrites.
 
@@ -67,7 +69,7 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 
 - Do not enable post types that should not be publicly accessible.
 - Password-protected content should not be exported.
-- Custom Markdown in `llms.txt` is capped at 20,000 characters and per-post Markdown overrides are capped at 200,000 characters by default.
+- Custom Markdown in `llms.txt` is capped at 20,000 characters, per-post Markdown overrides are capped at 200,000 characters, and per-post llms.txt descriptions are capped at 500 characters by default.
 - Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES.
 - Exclusion lists are validated server-side and capped at 500 items per post type by default.
 
@@ -75,6 +77,8 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 
 - `llmf_can_export_post` can deny a post for `markdown`, `llms`, or `llms_search` contexts.
 - `llmf_markdown_override_max_length` changes the per-post Markdown override length cap.
+- `llmf_llms_description_max_length` changes the per-post llms.txt description length cap.
+- `llmf_markdown_metadata` filters the JSON metadata array emitted at the top of each Markdown export.
 - `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap.
 - `llmf_allow_external_sitemap_url` allows an external sitemap URL when returning `true`.
 
