@@ -210,6 +210,14 @@ final class Admin {
 			'llm-friendly',
 			'llmf_overrides'
 		);
+
+		add_settings_field(
+			'site_author_override',
+			__( 'Author override', 'llm-friendly' ),
+			array( $this, 'field_site_author_override' ),
+			'llm-friendly',
+			'llmf_overrides'
+		);
 	}
 
 	/**
@@ -336,7 +344,7 @@ final class Admin {
 	 */
 	private function render_excluded_item( string $post_type, int $post_id, string $title ): void {
 		echo '<div class="llmf-excluded-posts__selected-item" data-post-id="' . esc_attr( (string) $post_id ) . '">';
-		echo '<label class="llmf-excluded-posts__selected-label" style="flex:1;">';
+		echo '<label class="llmf-inline-checkbox llmf-excluded-posts__selected-label">';
 		echo '<input type="checkbox" class="llmf-excluded-posts__checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $post_type ) . '][]" value="' . esc_attr( (string) $post_id ) . '" checked="checked" /> ';
 		echo esc_html( $title ) . ' <span class="description">(' . esc_html( sprintf( '#%d', $post_id ) ) . ')</span>';
 		echo '</label>';
@@ -469,9 +477,9 @@ final class Admin {
 			wp_send_json_error( array( 'message' => __( 'Enter at least 2 characters to search.', 'llm-friendly' ) ), 400 );
 		}
 
-		$allowed_types = $this->selected_post_types();
-
-		if ( $post_type === '' || ! $this->options->is_exportable_post_type( $post_type ) || ! in_array( $post_type, $allowed_types, true ) ) {
+		// Allow any public exportable type here, including a type the user just
+		// checked on the settings page before saving the whole form.
+		if ( $post_type === '' || ! $this->options->is_exportable_post_type( $post_type ) ) {
 			wp_send_json_error( array( 'message' => __( 'Post type is not allowed.', 'llm-friendly' ) ), 400 );
 		}
 
@@ -594,10 +602,12 @@ final class Admin {
 
 			$label = isset($obj->labels->name) ? (string)$obj->labels->name : $pt;
 
-			echo '<label style="display:block;margin:4px 0;">';
+			echo '<div class="llmf-checkbox-row">';
+			echo '<label class="llmf-inline-checkbox">';
 			echo '<input type="checkbox" class="llmf-post-type-toggle" data-post-type="' . esc_attr( $pt ) . '" name="' . esc_attr(Options::OPTION_KEY) . '[post_types][]" value="' . esc_attr($pt) . '" ' . checked( true, in_array( $pt, $selected, true ), false ) . ' />';
 			echo ' ' . esc_html($label) . ' <code>' . esc_html($pt) . '</code>';
 			echo '</label>';
+			echo '</div>';
 		}
 		echo '<p class="description">' . esc_html__('These types will appear in llms.txt and will have Markdown exports.', 'llm-friendly') . '</p>';
 		echo '</fieldset>';
@@ -789,6 +799,19 @@ final class Admin {
 	}
 
 	/**
+	 * Field: Author override.
+	 *
+	 * @return void
+	 */
+	public function field_site_author_override() {
+		$opt = $this->options->get();
+		$v   = isset( $opt['site_author_override'] ) ? (string) $opt['site_author_override'] : '';
+
+		echo '<input type="text" class="regular-text" name="' . esc_attr( Options::OPTION_KEY ) . '[site_author_override]" value="' . esc_attr( $v ) . '" />';
+		echo '<p class="description">' . esc_html__( 'If empty, Markdown metadata uses the post author display name.', 'llm-friendly' ) . '</p>';
+	}
+
+	/**
 	 * Register the "Markdown override" metabox for Classic and Gutenberg editors.
 	 *
 	 * Gutenberg renders classic metaboxes under the editor (Additional settings),
@@ -835,12 +858,22 @@ final class Admin {
 
 		$val = get_post_meta( $post->ID, Exporter::META_MD_OVERRIDE, true );
 		$val = is_string( $val ) ? $val : '';
+		$description = get_post_meta( $post->ID, Options::META_LLMS_DESCRIPTION, true );
+		$description = is_string( $description ) ? $description : '';
+		$description_max = (int) apply_filters( 'llmf_llms_description_max_length', 500 );
+		if ( $description_max < 1 ) {
+			$description_max = 500;
+		}
 
 		wp_nonce_field( 'llmf_md_override_save', 'llmf_md_override_nonce' );
 
 		echo '<p class="description">' . esc_html__( 'If filled, this text will replace the post content in the Markdown export.', 'llm-friendly' ) . '</p>';
 		echo '<textarea style="width:100%;min-height:240px" name="llmf_md_content_override">' . esc_textarea( $val ) . '</textarea>';
 		echo '<p class="description">' . esc_html__( 'Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->).', 'llm-friendly' ) . '</p>';
+		echo '<hr />';
+		echo '<p><label for="llmf-llms-description"><strong>' . esc_html__( 'llms.txt description (overrides excerpt)', 'llm-friendly' ) . '</strong></label></p>';
+		echo '<input type="text" class="widefat" id="llmf-llms-description" name="llmf_llms_description" maxlength="' . esc_attr( (string) $description_max ) . '" value="' . esc_attr( $description ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary.', 'llm-friendly' ) . '</p>';
 	}
 
 	/**
@@ -901,10 +934,21 @@ final class Admin {
 
 		if ( $value === '' ) {
 			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
+		} else {
+			update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, $value );
+		}
+
+		$raw_description = isset( $_POST['llmf_llms_description'] )
+			? wp_unslash( $_POST['llmf_llms_description'] )
+			: '';
+		$description = $this->options->sanitize_llms_description( $raw_description );
+
+		if ( $description === '' ) {
+			delete_post_meta( $post_id, Options::META_LLMS_DESCRIPTION );
 			return;
 		}
 
-		update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, $value );
+		update_post_meta( $post_id, Options::META_LLMS_DESCRIPTION, $description );
 	}
 
 

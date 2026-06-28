@@ -171,8 +171,7 @@
 		wrapper.dataset.postId = idStr;
 
 		const label = document.createElement('label');
-		label.className = 'llmf-excluded-posts__selected-label';
-		label.style.flex = '1';
+		label.className = 'llmf-inline-checkbox llmf-excluded-posts__selected-label';
 
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';

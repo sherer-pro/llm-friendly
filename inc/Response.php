@@ -16,9 +16,15 @@ final class Response {
 	 * @param array<int|string,string> $headers Response headers.
 	 * @param string                   $etag Strong ETag value.
 	 * @param int                      $last_modified_ts Last modified timestamp.
+	 * @param bool                     $allow_last_modified_conditional Whether If-Modified-Since can return 304 without ETag.
 	 * @return void
 	 */
-	public static function send_conditional_headers( array $headers, string $etag, int $last_modified_ts ): void {
+	public static function send_conditional_headers(
+		array $headers,
+		string $etag,
+		int $last_modified_ts,
+		bool $allow_last_modified_conditional = true
+	): void {
 		status_header( 200 );
 
 		foreach ( self::header_lines( $headers ) as $line ) {
@@ -40,7 +46,7 @@ final class Response {
 			exit;
 		}
 
-		if ( $if_none_match === '' && $if_modified_since !== '' ) {
+		if ( $allow_last_modified_conditional && $if_none_match === '' && $if_modified_since !== '' ) {
 			$since_ts = strtotime( $if_modified_since );
 			if ( $since_ts !== false && $since_ts >= $last_modified_ts ) {
 				status_header( 304 );
