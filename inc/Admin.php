@@ -348,7 +348,7 @@ final class Admin {
 		echo '<input type="checkbox" class="llmf-excluded-posts__checkbox" name="' . esc_attr( Options::OPTION_KEY ) . '[excluded_posts][' . esc_attr( $post_type ) . '][]" value="' . esc_attr( (string) $post_id ) . '" checked="checked" /> ';
 		echo esc_html( $title ) . ' <span class="description">(' . esc_html( sprintf( '#%d', $post_id ) ) . ')</span>';
 		echo '</label>';
-		echo '<button type="button" class="button-link llmf-excluded-posts__remove" aria-label="' . esc_attr__( 'Remove from exclusions', 'llm-friendly' ) . '">×</button>';
+		echo '<button type="button" class="button-link llmf-excluded-posts__remove" aria-label="' . esc_attr__( 'Remove from exclusions', 'llm-friendly' ) . '"><span class="dashicons dashicons-trash" aria-hidden="true"></span></button>';
 		echo '</div>';
 	}
 
@@ -400,7 +400,6 @@ final class Admin {
 				'i18n'     => array(
 					'searchPlaceholder' => __( 'Start typing from 2 characters…', 'llm-friendly' ),
 					'searching'         => __( 'Searching…', 'llm-friendly' ),
-					'typeMore'          => __( 'Enter at least 2 characters to search.', 'llm-friendly' ),
 					'nothingFound'      => __( 'Nothing found for this query.', 'llm-friendly' ),
 					'addAction'         => __( 'Add to exclusions', 'llm-friendly' ),
 					'removeAction'      => __( 'Remove from exclusions', 'llm-friendly' ),
@@ -742,8 +741,10 @@ final class Admin {
 
 			echo '<div class="llmf-excluded-posts__search">';
 			echo '<label style="display:block;margin-bottom:4px;" for="llmf-search-' . esc_attr( $pt ) . '">' . esc_html__( 'Search by title', 'llm-friendly' ) . '</label>';
+			echo '<div class="llmf-excluded-posts__search-control">';
 			echo '<input type="text" class="regular-text llmf-excluded-posts__search-input" id="llmf-search-' . esc_attr( $pt ) . '" data-post-type="' . esc_attr( $pt ) . '" placeholder="' . esc_attr__( 'Start typing from 2 characters…', 'llm-friendly' ) . '" />';
 			echo '<div class="llmf-excluded-posts__dropdown" data-post-type="' . esc_attr( $pt ) . '"></div>';
+			echo '</div>';
 			echo '<p class="description" style="margin-top:6px;">' . esc_html__( 'Type at least two characters to search. Results appear in the dropdown instantly.', 'llm-friendly' ) . '</p>';
 			echo '</div>';
 
