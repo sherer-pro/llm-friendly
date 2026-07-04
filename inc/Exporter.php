@@ -61,14 +61,7 @@ final class Exporter {
 			set_transient( $key, $md, $ttl );
 		}
 
-		$headers = array(
-			'Content-Type: text/markdown; charset=UTF-8',
-			'X-Content-Type-Options: nosniff',
-		);
-		$opt     = $this->options->get();
-		if ( ! empty( $opt['md_send_noindex'] ) ) {
-			$headers[] = 'X-Robots-Tag: noindex, nofollow';
-		}
+		$headers = $this->markdown_headers_for_post( $post );
 
 		Response::send_conditional_headers(
 			$headers,
@@ -79,6 +72,31 @@ final class Exporter {
 
 		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
 		exit;
+	}
+
+	/**
+	 * Build HTTP headers for a Markdown export.
+	 *
+	 * @param WP_Post $post Post being exported.
+	 * @return array<int,string> Header lines.
+	 */
+	private function markdown_headers_for_post( WP_Post $post ): array {
+		$headers = array(
+			'Content-Type: text/markdown; charset=UTF-8',
+			'X-Content-Type-Options: nosniff',
+		);
+
+		$canonical = Markdown::url_destination( get_permalink( $post ), array( 'http', 'https' ), false );
+		if ( $canonical !== '' ) {
+			$headers[] = 'Link: <' . $canonical . '>; rel="canonical"';
+		}
+
+		$opt = $this->options->get();
+		if ( ! empty( $opt['md_send_noindex'] ) ) {
+			$headers[] = 'X-Robots-Tag: noindex';
+		}
+
+		return $headers;
 	}
 
 	/**
@@ -251,6 +269,72 @@ final class Exporter {
 				continue;
 			}
 
+			if ( in_array( $name, array( 'core/group', 'core/columns', 'core/column', 'core/cover' ), true ) ) {
+				$txt = trim( $this->blocks_to_markdown( $inner, $list_depth ) );
+				if ( $txt === '' ) {
+					$txt = trim( $this->html_block_to_md( $this->block_html( $b ) ) );
+				}
+				if ( $txt !== '' ) {
+					$out[] = $txt;
+					$out[] = '';
+				}
+				continue;
+			}
+
+			if ( $name === 'core/media-text' ) {
+				$chunks = array();
+				$media  = isset( $attrs['mediaUrl'] ) ? Markdown::url_destination( $attrs['mediaUrl'], array( 'http', 'https' ), true ) : '';
+				if ( $media !== '' ) {
+					$alt      = isset( $attrs['mediaAlt'] ) ? (string) $attrs['mediaAlt'] : '';
+					$chunks[] = $this->build_image_markdown( $media, $alt, '' );
+				}
+				$nested = trim( $this->blocks_to_markdown( $inner, $list_depth ) );
+				if ( $nested !== '' ) {
+					$chunks[] = $nested;
+				}
+				if ( ! empty( $chunks ) ) {
+					$out[] = implode( "\n\n", array_filter( $chunks ) );
+					$out[] = '';
+				}
+				continue;
+			}
+
+			if ( $name === 'core/buttons' ) {
+				$txt = trim( $this->blocks_to_markdown( $inner, $list_depth ) );
+				if ( $txt !== '' ) {
+					$out[] = $txt;
+					$out[] = '';
+				}
+				continue;
+			}
+
+			if ( $name === 'core/button' || $name === 'core/file' ) {
+				$txt = trim( $this->html_block_to_md( $this->block_html( $b ) ) );
+				if ( $txt !== '' ) {
+					$out[] = $txt;
+					$out[] = '';
+				}
+				continue;
+			}
+
+			if ( $name === 'core/embed' ) {
+				$txt = $this->embed_block_to_md( $b );
+				if ( $txt !== '' ) {
+					$out[] = $txt;
+					$out[] = '';
+				}
+				continue;
+			}
+
+			if ( $name === 'core/details' ) {
+				$txt = $this->details_block_to_md( $b, $list_depth );
+				if ( $txt !== '' ) {
+					$out[] = $txt;
+					$out[] = '';
+				}
+				continue;
+			}
+
 			if ( $name === 'core/quote' || $name === 'core/pullquote' ) {
 				$html = function_exists( 'render_block' ) ? (string) render_block( $b ) : $innerHTML;
 				$txt  = trim( $this->html_block_to_md( $html ) );
@@ -263,10 +347,11 @@ final class Exporter {
 
 			if ( $name === 'core/code' ) {
 				$code  = isset( $attrs['content'] ) ? (string) $attrs['content'] : '';
+				if ( $code === '' && $innerHTML !== '' ) {
+					$code = wp_strip_all_tags( $innerHTML, true );
+				}
 				$code  = html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-				$out[] = "```";
-				$out[] = rtrim( $code );
-				$out[] = "```";
+				$out[] = $this->code_fence( $code );
 				$out[] = '';
 				continue;
 			}
@@ -274,9 +359,7 @@ final class Exporter {
 			if ( $name === 'core/preformatted' || $name === 'core/verse' ) {
 				$text = $this->html_inline_to_md( $innerHTML );
 				if ( $text !== '' ) {
-					$out[] = "```";
-					$out[] = $text;
-					$out[] = "```";
+					$out[] = $this->code_fence( $text );
 					$out[] = '';
 				}
 				continue;
@@ -383,9 +466,8 @@ final class Exporter {
 			function ( $m ) {
 				$t = wp_strip_all_tags( (string) $m[1], true );
 				$t = html_entity_decode( $t, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-				$t = str_replace( '`', '\`', $t );
 
-				return '`' . $t . '`';
+				return $this->inline_code( $t );
 			},
 			$html
 		);
@@ -395,9 +477,8 @@ final class Exporter {
 			function ( $m ) {
 				$t = wp_strip_all_tags( (string) $m[1], true );
 				$t = html_entity_decode( $t, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-				$t = str_replace( '`', '\`', $t );
 
-				return '`' . $t . '`';
+				return $this->inline_code( $t );
 			},
 			$html
 		);
@@ -444,6 +525,139 @@ final class Exporter {
 	 */
 	private function normalize_newlines( string $s ): string {
 		return Markdown::normalize_newlines( $s );
+	}
+
+	/**
+	 * Return rendered block HTML, falling back to stored inner HTML/content.
+	 *
+	 * @param array<string,mixed> $block Gutenberg block array.
+	 * @return string HTML fragment.
+	 */
+	private function block_html( array $block ): string {
+		$html = '';
+		if ( function_exists( 'render_block' ) ) {
+			$html = (string) render_block( $block );
+		}
+
+		if ( trim( $html ) === '' && isset( $block['innerHTML'] ) ) {
+			$html = (string) $block['innerHTML'];
+		}
+
+		if ( trim( $html ) === '' && isset( $block['innerContent'] ) && is_array( $block['innerContent'] ) ) {
+			$chunks = array();
+			foreach ( $block['innerContent'] as $chunk ) {
+				if ( is_string( $chunk ) ) {
+					$chunks[] = $chunk;
+				}
+			}
+			$html = implode( '', $chunks );
+		}
+
+		return (string) $html;
+	}
+
+	/**
+	 * Build a Markdown code fence that cannot be closed by code content.
+	 *
+	 * @param string $code Raw code.
+	 * @param string $language Optional info string.
+	 * @return string Markdown fenced code block.
+	 */
+	private function code_fence( string $code, string $language = '' ): string {
+		$code = html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$code = $this->normalize_newlines( $code );
+
+		$max_ticks = 2;
+		if ( preg_match_all( '/`+/', $code, $matches ) ) {
+			foreach ( $matches[0] as $ticks ) {
+				$max_ticks = max( $max_ticks, strlen( (string) $ticks ) );
+			}
+		}
+
+		$fence    = str_repeat( '`', max( 3, $max_ticks + 1 ) );
+		$language = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $language );
+
+		return $fence . $language . "\n" . rtrim( $code ) . "\n" . $fence;
+	}
+
+	/**
+	 * Build an inline code span that supports literal backticks.
+	 *
+	 * @param string $text Raw inline code text.
+	 * @return string Markdown inline code span.
+	 */
+	private function inline_code( string $text ): string {
+		$text = $this->normalize_newlines( $text );
+		$text = str_replace( "\n", ' ', $text );
+
+		$max_ticks = 0;
+		if ( preg_match_all( '/`+/', $text, $matches ) ) {
+			foreach ( $matches[0] as $ticks ) {
+				$max_ticks = max( $max_ticks, strlen( (string) $ticks ) );
+			}
+		}
+
+		$ticks = str_repeat( '`', max( 1, $max_ticks + 1 ) );
+		if ( $max_ticks > 0 || preg_match( '/^\s|\s$/', $text ) ) {
+			return $ticks . ' ' . $text . ' ' . $ticks;
+		}
+
+		return $ticks . $text . $ticks;
+	}
+
+	/**
+	 * Convert an embed block into a preserved source URL.
+	 *
+	 * @param array<string,mixed> $block Gutenberg block array.
+	 * @return string Markdown link or fallback text.
+	 */
+	private function embed_block_to_md( array $block ): string {
+		$attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+		$url   = isset( $attrs['url'] ) ? Markdown::url_destination( $attrs['url'], array( 'http', 'https' ), false ) : '';
+
+		if ( $url !== '' ) {
+			$provider = isset( $attrs['providerNameSlug'] ) ? Markdown::plain_text_line( $attrs['providerNameSlug'] ) : '';
+			$label    = $provider !== '' ? 'Embed: ' . $provider : 'Embedded content';
+			$caption  = isset( $attrs['caption'] ) ? Markdown::plain_text_line( $this->html_inline_to_md( (string) $attrs['caption'] ) ) : '';
+
+			return '- [' . Markdown::link_text( $label ) . '](' . $url . ')' . ( $caption !== '' ? ': ' . $caption : '' );
+		}
+
+		return trim( $this->html_block_to_md( $this->block_html( $block ) ) );
+	}
+
+	/**
+	 * Convert a details block while preserving the summary as text.
+	 *
+	 * @param array<string,mixed> $block Gutenberg block array.
+	 * @param int                 $list_depth Current list depth.
+	 * @return string Markdown details content.
+	 */
+	private function details_block_to_md( array $block, int $list_depth ): string {
+		$attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+		$inner = isset( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ? $block['innerBlocks'] : array();
+		$html  = $this->block_html( $block );
+
+		$summary = isset( $attrs['summary'] ) ? Markdown::plain_text_line( $attrs['summary'] ) : '';
+		if ( $summary === '' && preg_match( '~<summary[^>]*>(.*?)</summary>~is', $html, $m ) ) {
+			$summary = Markdown::plain_text_line( $this->html_inline_to_md( (string) $m[1] ) );
+		}
+
+		$body = trim( $this->blocks_to_markdown( $inner, $list_depth ) );
+		if ( $body === '' && $html !== '' ) {
+			$html_without_summary = preg_replace( '~<summary[^>]*>.*?</summary>~is', '', $html );
+			$body = trim( $this->html_block_to_md( (string) $html_without_summary ) );
+		}
+
+		$parts = array();
+		if ( $summary !== '' ) {
+			$parts[] = '**' . Markdown::plain_text_line( $summary ) . '**';
+		}
+		if ( $body !== '' ) {
+			$parts[] = $body;
+		}
+
+		return trim( implode( "\n\n", $parts ) );
 	}
 
 	/**
@@ -642,7 +856,7 @@ final class Exporter {
 				$code = html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 				$code = rtrim( $code );
 				if ( $code !== '' ) {
-					$parts[] = "```\n" . $code . "\n```";
+					$parts[] = $this->code_fence( $code );
 				}
 				continue;
 			}

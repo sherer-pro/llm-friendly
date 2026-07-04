@@ -120,3 +120,16 @@
 .llmf-excluded-posts__empty {
 	margin: 0;
 }
+
+.llmf-crawler-diagnostics {
+	max-width: 760px;
+}
+
+.llmf-crawler-diagnostics__list {
+	list-style: disc;
+	margin: 8px 0 10px 20px;
+}
+
+.llmf-crawler-diagnostics code {
+	word-break: break-all;
+}

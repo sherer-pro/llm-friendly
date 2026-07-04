@@ -126,6 +126,10 @@ final class Options {
 			? $this->sanitize_llms_custom_markdown( (string) $input['llms_custom_markdown'] )
 			: (string) $prev['llms_custom_markdown'];
 
+		$out['llms_essential_links'] = isset( $input['llms_essential_links'] )
+			? $this->sanitize_essential_links( (string) $input['llms_essential_links'] )
+			: (string) $prev['llms_essential_links'];
+
 		$out['llms_show_excerpt'] = ! empty( $input['llms_show_excerpt'] ) ? 1 : 0;
 
 		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : array() );
@@ -163,6 +167,7 @@ final class Options {
 			'site_description_override',
 			'sitemap_url',
 			'llms_custom_markdown',
+			'llms_essential_links',
 			'llms_show_excerpt',
 			'excluded_posts',
 		);
@@ -229,7 +234,7 @@ final class Options {
 			'base_path'        => 'llm',
 			'post_types'       => array( 'post' ),
 			'llms_send_noindex'=> 1,
-			'md_send_noindex'   => 0,
+			'md_send_noindex'   => 1,
 			'llms_regen_mode'  => 'auto',   // auto | manual
 			'llms_recent_limit'=> 30,       // per post type
 			'site_title_override' => '',
@@ -237,6 +242,7 @@ final class Options {
 			'site_author_override' => '',
 			'sitemap_url'      => '/sitemap.xml',
 			'llms_custom_markdown' => '',
+			'llms_essential_links' => '',
 			'llms_show_excerpt' => 0,
 			'excluded_posts'   => array(),
 			'llms_cache'       => '',
@@ -352,6 +358,7 @@ final class Options {
 	private function sanitize_llms_custom_markdown( $value ) {
 		$value = wp_unslash( (string) $value );
 		$clean = $this->sanitize_markdown_block( (string) $value );
+		$clean = $this->strip_markdown_headings( $clean );
 		$clean = $this->limit_markdown_length( $clean, self::CUSTOM_MD_MAX_LENGTH );
 
 		if ( ! current_user_can( 'unfiltered_html' ) ) {
@@ -359,6 +366,47 @@ final class Options {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Sanitize curated llms.txt links.
+	 *
+	 * Accepted line format: Title | URL | Optional notes.
+	 *
+	 * @param string $value Raw textarea value.
+	 * @return string Normalized lines.
+	 */
+	private function sanitize_essential_links( string $value ): string {
+		$value = wp_unslash( (string) $value );
+		$value = Markdown::normalize_newlines( $value );
+		$value = preg_replace( '/\x00+/', '', (string) $value );
+
+		$lines = array();
+		foreach ( explode( "\n", (string) $value ) as $line ) {
+			$line = trim( (string) $line );
+			if ( $line === '' ) {
+				continue;
+			}
+
+			$parts = array_map( 'trim', explode( '|', $line, 3 ) );
+			if ( count( $parts ) < 2 ) {
+				continue;
+			}
+
+			$title = $this->sanitize_textline( $parts[0] );
+			$url   = Markdown::url_destination( $parts[1], array( 'http', 'https' ), true );
+			$notes = isset( $parts[2] ) ? $this->sanitize_textline( $parts[2] ) : '';
+
+			if ( $title === '' || $url === '' ) {
+				continue;
+			}
+
+			$lines[] = $title . ' | ' . $url . ( $notes !== '' ? ' | ' . $notes : '' );
+		}
+
+		$clean = implode( "\n", $lines );
+
+		return $this->limit_markdown_length( $clean, self::CUSTOM_MD_MAX_LENGTH );
 	}
 
 	/**
@@ -624,6 +672,59 @@ final class Options {
 		$md = trim( $md );
 
 		return $md;
+	}
+
+	/**
+	 * Keep the free-form llms.txt notes area from introducing Markdown headings.
+	 *
+	 * The llms.txt proposal reserves H2 sections for file lists. Custom headings
+	 * before those sections can make the document ambiguous for parsers.
+	 *
+	 * @param string $markdown User-supplied Markdown block.
+	 * @return string Markdown block with heading markers removed outside code fences.
+	 */
+	private function strip_markdown_headings( string $markdown ): string {
+		$markdown = preg_replace_callback(
+			'~<h[1-6][^>]*>(.*?)</h[1-6]>~is',
+			function ( $m ) {
+				return "\n" . $this->sanitize_textline( $m[1] ) . "\n";
+			},
+			$markdown
+		);
+
+		$lines   = explode( "\n", Markdown::normalize_newlines( (string) $markdown ) );
+		$out     = array();
+		$in_code = false;
+
+		for ( $i = 0; $i < count( $lines ); $i ++ ) {
+			$line = (string) $lines[ $i ];
+			$trim = trim( $line );
+
+			if ( preg_match( '/^\s{0,3}(```+|~~~+)/', $line ) ) {
+				$in_code = ! $in_code;
+				$out[]   = $line;
+				continue;
+			}
+
+			if ( $in_code ) {
+				$out[] = $line;
+				continue;
+			}
+
+			if ( $trim !== '' && isset( $lines[ $i + 1 ] ) && preg_match( '/^\s{0,3}(=+|-+)\s*$/', (string) $lines[ $i + 1 ] ) ) {
+				$out[] = $line;
+				$i ++;
+				continue;
+			}
+
+			if ( preg_match( '/^\s{0,3}#{1,6}\s*(.*?)\s*#*\s*$/u', $line, $m ) ) {
+				$line = trim( (string) $m[1] );
+			}
+
+			$out[] = $line;
+		}
+
+		return trim( implode( "\n", $out ) );
 	}
 
 	/**
