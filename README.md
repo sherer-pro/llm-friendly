@@ -11,11 +11,11 @@ The goal is to make your site easier to navigate and consume for LLMs, indexing 
 
 ## Features
 
-- Generates an `llms.txt` index with main links, curated Essential links, latest content, optional LLM descriptions, and an optional custom Markdown notes block.
+- Generates an `llms.txt` index with main links, an Essential section for key site resources, latest content, optional LLM descriptions, and an optional custom Markdown notes block.
 - Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion, expanded JSON metadata, canonical `Link` headers, and per-post Markdown overrides through the “Markdown override (LLM Friendly)” editor metabox.
 - Configurable base path for Markdown exports (e.g. `llm`) and per-post-type enable/disable toggles; changing the base path requires updating rewrite rules.
 - Manual or automatic regeneration of the cached `llms.txt`, complete with ETag/Last-Modified headers.
-- Optional `X-Robots-Tag: noindex` header for both `llms.txt` and Markdown exports (`md_send_noindex` is enabled by default for Markdown exports).
+- Optional `X-Robots-Tag: noindex` headers for both `llms.txt` and Markdown exports. `/llms.txt` is controlled by `llms_send_noindex`; `.md` endpoints are controlled by `md_send_noindex`; both are enabled by default.
 - Toggle excerpts in `llms.txt` via `llms_show_excerpt` to add one-line summaries under each item. The summary uses the per-post llms.txt description first, then SEO meta description, explicit excerpt, and a generated content summary.
 - Exclude specific items from both `llms.txt` and Markdown exports through the per-post-type exclusion picker in Settings → LLM Friendly.
 - Outputs `<link rel="alternate" type="text/markdown">` tags on singular views for supported post types.
@@ -54,10 +54,13 @@ If requirements are not met, the plugin shows an admin warning and does not run.
   - `https://example.com/llm/page/about.md`
 - Enable `llms_show_excerpt` to include short descriptions in `llms.txt`:
   - Settings → LLM Friendly → llms.txt → “Show excerpts in llms.txt”
+- Control whether `/llms.txt` sends a noindex header:
+  - Settings → LLM Friendly → llms.txt → “Send X-Robots-Tag: noindex for /llms.txt”
 - Enable `md_send_noindex` to keep Markdown exports out of search indices:
-  - Settings → LLM Friendly → Markdown → “Send X-Robots-Tag: noindex for Markdown”
+  - Settings → LLM Friendly → General → “Send noindex header for Markdown exports”
 - Add curated resources to the `llms.txt` Essential section:
   - Settings → LLM Friendly → llms.txt → “Essential links”
+  - Use one line per item: `Title | URL | Notes`; URLs may be absolute or site-relative. The Essential section also includes configured front page, posts page, and privacy policy links when available.
 - Use the “Markdown override (LLM Friendly)” editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor’s additional panels/metaboxes.
 - Use the “llms.txt description (overrides excerpt)” field in the same metabox to provide a one-line AI-facing summary for both `llms.txt` and Markdown metadata.
 - Use “Excluded items” in Settings → LLM Friendly → llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
@@ -84,7 +87,9 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 - `llmf_markdown_override_max_length` changes the per-post Markdown override length cap.
 - `llmf_llms_description_max_length` changes the per-post llms.txt description length cap.
 - `llmf_markdown_metadata` filters the JSON metadata array emitted at the top of each Markdown export.
+- `llmf_markdown_cache_ttl` changes the transient TTL for cached Markdown export bodies.
 - `llmf_llms_essential_links` filters curated link items emitted in the `llms.txt` Essential section.
+- `llmf_debug_headers_enabled` enables diagnostic `X-LLMF-*` headers for `llms.txt` responses when returning `true`.
 - `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap.
 - `llmf_allow_external_sitemap_url` allows an external sitemap URL when returning `true`.
 
