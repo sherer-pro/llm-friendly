@@ -16,7 +16,11 @@
 			"@php -l inc/Options.php",
 			"@php -l inc/Plugin.php",
 			"@php -l inc/Response.php",
-			"@php -l inc/Rewrites.php"
+			"@php -l inc/Rewrites.php",
+			"@php -l tests/run.php"
+		],
+		"test": [
+			"@php tests/run.php"
 		]
 	}
 }

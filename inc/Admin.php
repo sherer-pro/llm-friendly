@@ -188,6 +188,14 @@ final class Admin {
 			'llmf_llms'
 		);
 
+		add_settings_field(
+			'llms_essential_links',
+			__( 'Essential links', 'llm-friendly' ),
+			array( $this, 'field_llms_essential_links' ),
+			'llm-friendly',
+			'llmf_llms'
+		);
+
 		add_settings_section(
 			'llmf_overrides',
 			__('Site meta overrides', 'llm-friendly'),
@@ -217,6 +225,21 @@ final class Admin {
 			array( $this, 'field_site_author_override' ),
 			'llm-friendly',
 			'llmf_overrides'
+		);
+
+		add_settings_section(
+			'llmf_crawlers',
+			__( 'AI crawler diagnostics', 'llm-friendly' ),
+			'__return_null',
+			'llm-friendly'
+		);
+
+		add_settings_field(
+			'crawler_diagnostics',
+			__( 'Crawler recommendations', 'llm-friendly' ),
+			array( $this, 'field_crawler_diagnostics' ),
+			'llm-friendly',
+			'llmf_crawlers'
 		);
 	}
 
@@ -562,12 +585,12 @@ final class Admin {
 	}
 
 	/**
-	 * Field: send X-Robots-Tag: noindex, nofollow for Markdown exports.
+	 * Field: send X-Robots-Tag: noindex for Markdown exports.
 	 *
 	 * @return void
 	 */
 	public function field_md_noindex() {
-		$this->render_option_checkbox( 'md_send_noindex', __( 'Add X-Robots-Tag: noindex, nofollow header for .md endpoints', 'llm-friendly' ) );
+		$this->render_option_checkbox( 'md_send_noindex', __( 'Add X-Robots-Tag: noindex header for .md endpoints', 'llm-friendly' ) );
 	}
 
 
@@ -627,7 +650,7 @@ final class Admin {
 	 * @return void
 	 */
 	public function field_llms_noindex() {
-		$this->render_option_checkbox( 'llms_send_noindex', __( 'Send X-Robots-Tag: noindex, nofollow for /llms.txt', 'llm-friendly' ) );
+		$this->render_option_checkbox( 'llms_send_noindex', __( 'Send X-Robots-Tag: noindex for /llms.txt', 'llm-friendly' ) );
 	}
 
 	/**
@@ -694,7 +717,41 @@ final class Admin {
 		$v = isset($opt['llms_custom_markdown']) ? (string) $opt['llms_custom_markdown'] : '';
 
 		echo '<textarea class="large-text code" rows="8" name="' . esc_attr(Options::OPTION_KEY) . '[llms_custom_markdown]">' . esc_textarea($v) . '</textarea>';
-		echo '<p class="description">' . esc_html__('Optional markdown inserted into llms.txt between the site meta and the content sections. Leave empty to insert nothing.', 'llm-friendly') . '</p>';
+		echo '<p class="description">' . esc_html__('Optional markdown inserted into llms.txt between the site meta and the content sections. Heading markers are removed so this block cannot break the llms.txt section order.', 'llm-friendly') . '</p>';
+	}
+
+	/**
+	 * Field: curated important links for llms.txt.
+	 *
+	 * @return void
+	 */
+	public function field_llms_essential_links() {
+		$opt = $this->options->get();
+		$v   = isset( $opt['llms_essential_links'] ) ? (string) $opt['llms_essential_links'] : '';
+
+		echo '<textarea class="large-text code" rows="5" name="' . esc_attr( Options::OPTION_KEY ) . '[llms_essential_links]">' . esc_textarea( $v ) . '</textarea>';
+		echo '<p class="description">' . esc_html__( 'Optional curated links for the llms.txt Essential section. One per line: Title | URL | Notes. URLs may be absolute or site-relative.', 'llm-friendly' ) . '</p>';
+	}
+
+	/**
+	 * Field: AI crawler diagnostics and recommendations.
+	 *
+	 * @return void
+	 */
+	public function field_crawler_diagnostics() {
+		$sitemap = $this->options->sitemap_absolute_url();
+
+		echo '<div class="llmf-crawler-diagnostics">';
+		echo '<p>' . esc_html__( 'LLM Friendly does not edit robots.txt automatically. Use these checks to align site policy with AI search and training crawlers.', 'llm-friendly' ) . '</p>';
+		echo '<ul class="llmf-crawler-diagnostics__list">';
+		echo '<li>' . esc_html__( 'Allow OAI-SearchBot when you want pages to appear in ChatGPT search answers.', 'llm-friendly' ) . '</li>';
+		echo '<li>' . esc_html__( 'Decide on GPTBot separately; it is used for OpenAI model training rather than ChatGPT search inclusion.', 'llm-friendly' ) . '</li>';
+		echo '<li>' . esc_html__( 'For Google AI Overviews and AI Mode, Googlebot crawl and normal Search index eligibility remain the key controls.', 'llm-friendly' ) . '</li>';
+		echo '<li>' . esc_html__( 'Use Google-Extended separately if you need to limit training or grounding in some Google AI systems outside Search.', 'llm-friendly' ) . '</li>';
+		echo '</ul>';
+		echo '<p class="description">' . esc_html__( 'Configured sitemap URL:', 'llm-friendly' ) . ' <code>' . esc_html( $sitemap ) . '</code></p>';
+		echo '<p class="description">' . esc_html__( 'Recommended robots.txt policy depends on your content strategy; this plugin only surfaces the decision points.', 'llm-friendly' ) . '</p>';
+		echo '</div>';
 	}
 
 	/**

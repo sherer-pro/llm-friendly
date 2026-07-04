@@ -238,6 +238,7 @@ final class Llms {
 				'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
 				'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
 				'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
+				'llms_essential_links'      => isset( $settings['llms_essential_links'] ) ? (string) $settings['llms_essential_links'] : '',
 				'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
 				'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
 			);
@@ -301,7 +302,7 @@ final class Llms {
 		);
 
 		if ( ! empty( $opt['llms_send_noindex'] ) ) {
-			$headers[] = 'X-Robots-Tag: noindex, nofollow';
+			$headers[] = 'X-Robots-Tag: noindex';
 		}
 
 		if ( apply_filters( 'llmf_debug_headers_enabled', false ) ) {
@@ -377,6 +378,12 @@ final class Llms {
 				'- [' . $this->md_link_text( 'RSS' ) . '](' . $rss . '): ' . 'Latest updates feed',
 			)
 		);
+
+		$essential_links = $this->get_essential_links( $md_enabled );
+		if ( ! empty( $essential_links ) ) {
+			$blocks[] = '## ' . 'Essential';
+			$blocks[] = implode( "\n", $essential_links );
+		}
 
 		foreach ( $post_types as $pt ) {
 			$pt = sanitize_key( (string) $pt );
@@ -537,6 +544,141 @@ final class Llms {
 		}
 
 		return Markdown::plain_text_line( $post_type );
+	}
+
+	/**
+	 * Build a curated list of important site resources for llms.txt.
+	 *
+	 * @param bool $md_enabled Whether Markdown endpoints are enabled.
+	 * @return array<int,string> Markdown list items.
+	 */
+	private function get_essential_links( bool $md_enabled ): array {
+		$items = array();
+		$seen  = array();
+		$opt   = $this->options->get();
+
+		$special_pages = array(
+			'Front page content' => (int) get_option( 'page_on_front', 0 ),
+			'Posts page'         => (int) get_option( 'page_for_posts', 0 ),
+			'Privacy policy'     => (int) get_option( 'wp_page_for_privacy_policy', 0 ),
+		);
+
+		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
+
+		foreach ( $special_pages as $label => $post_id ) {
+			if ( $post_id <= 0 || isset( $seen[ $post_id ] ) ) {
+				continue;
+			}
+
+			$post = get_post( $post_id );
+			if ( ! ( $post instanceof WP_Post ) || ! $this->options->can_export_post( $post, 'llms' ) ) {
+				continue;
+			}
+
+			$seen[ $post_id ] = true;
+			$title            = Markdown::plain_text_line( get_the_title( $post ) );
+			if ( $title === '' ) {
+				$title = Markdown::plain_text_line( $label );
+			}
+
+			$canonical = Markdown::url_destination( get_permalink( $post ), array( 'http', 'https' ), false );
+			$url       = $canonical;
+			$notes     = Markdown::plain_text_line( $label );
+
+			if ( $md_enabled && in_array( (string) $post->post_type, $allowed, true ) ) {
+				$md_url = Markdown::url_destination( $this->options->markdown_url_for_post( $post ), array( 'http', 'https' ), false );
+				if ( $md_url !== '' ) {
+					$url   = $md_url;
+					$notes = sprintf(
+					/* translators: 1: label for the special page, 2: canonical URL */
+						__( '%1$s. Canonical URL: %2$s', 'llm-friendly' ),
+						$label,
+						$canonical
+					);
+				}
+			}
+
+			if ( $url !== '' ) {
+				$items[] = array(
+					'title' => $title,
+					'url'   => $url,
+					'notes' => Markdown::plain_text_line( $notes ),
+				);
+			}
+		}
+
+		$custom = isset( $opt['llms_essential_links'] ) ? (string) $opt['llms_essential_links'] : '';
+		foreach ( explode( "\n", Markdown::normalize_newlines( $custom ) ) as $line ) {
+			$parts = array_map( 'trim', explode( '|', (string) $line, 3 ) );
+			if ( count( $parts ) < 2 ) {
+				continue;
+			}
+
+			$title = Markdown::plain_text_line( $parts[0] );
+			$url   = $this->absolute_link_url( $parts[1] );
+			$notes = isset( $parts[2] ) ? Markdown::plain_text_line( $parts[2] ) : '';
+
+			if ( $title !== '' && $url !== '' ) {
+				$items[] = array(
+					'title' => $title,
+					'url'   => $url,
+					'notes' => $notes,
+				);
+			}
+		}
+
+		/**
+		 * Filter the curated links emitted in the llms.txt Essential section.
+		 *
+		 * Each item is an array with title, url, and notes keys.
+		 *
+		 * @param array<int,array{title:string,url:string,notes:string}> $items Essential link items.
+		 * @param array<string,mixed>                                    $opt   Plugin options.
+		 */
+		$filtered = apply_filters( 'llmf_llms_essential_links', $items, $opt );
+		$items    = is_array( $filtered ) ? $filtered : $items;
+
+		$out = array();
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$title = isset( $item['title'] ) ? Markdown::link_text( $item['title'] ) : '';
+			$url   = isset( $item['url'] ) ? Markdown::url_destination( $item['url'], array( 'http', 'https' ), false ) : '';
+			$notes = isset( $item['notes'] ) ? Markdown::plain_text_line( $item['notes'] ) : '';
+
+			if ( $title === '' || $url === '' ) {
+				continue;
+			}
+
+			$out[] = '- [' . $title . '](' . $url . ')' . ( $notes !== '' ? ': ' . $notes : '' );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Normalize a configured link to an absolute HTTP(S) URL.
+	 *
+	 * @param string $url Raw URL or site-relative path.
+	 * @return string Absolute URL or empty string.
+	 */
+	private function absolute_link_url( string $url ): string {
+		$url = Markdown::url_destination( $url, array( 'http', 'https' ), true );
+		if ( $url === '' ) {
+			return '';
+		}
+
+		if ( preg_match( '~^https?://~i', $url ) ) {
+			return $url;
+		}
+
+		if ( strpos( $url, '/' ) === 0 ) {
+			return Markdown::url_destination( home_url( $url ), array( 'http', 'https' ), false );
+		}
+
+		return Markdown::url_destination( home_url( '/' . ltrim( $url, '/' ) ), array( 'http', 'https' ), false );
 	}
 
 	/**
