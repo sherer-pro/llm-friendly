@@ -138,8 +138,7 @@ final class Plugin {
 	 */
 	public function register_editor_meta(): void {
 		$opt   = $this->options->get();
-		$types = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $opt['post_types'] : array();
-		$types = $this->options->sanitize_post_types( $types );
+		$types = $this->options->selected_post_types( $opt );
 		if ( empty( $types ) ) {
 			return;
 		}
@@ -297,9 +296,8 @@ final class Plugin {
 			return null;
 		}
 
-		$opt     = $this->options->get();
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-		if ( ! $this->options->is_exportable_post_type( $post_type ) || ! in_array( $post_type, $allowed, true ) ) {
+		$opt = $this->options->get();
+		if ( ! $this->options->is_selected_post_type( $post_type, $opt ) ) {
 			return null;
 		}
 
@@ -334,8 +332,7 @@ final class Plugin {
 			return;
 		}
 
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-		if ( ! in_array( $post->post_type, $allowed, true ) || ! $this->options->can_export_post( $post, 'markdown' ) ) {
+		if ( ! $this->options->is_selected_post_type( (string) $post->post_type, $opt ) || ! $this->options->can_export_post( $post, 'markdown' ) ) {
 			return;
 		}
 

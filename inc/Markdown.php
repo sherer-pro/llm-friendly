@@ -61,7 +61,9 @@ final class Markdown {
 	 */
 	public static function url_destination( $url, array $allowed_protocols = array( 'http', 'https', 'mailto' ), bool $allow_relative = true ): string {
 		$url = html_entity_decode( wp_strip_all_tags( (string) $url, true ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$url = preg_replace( '/[\x00-\x1F\x7F]+/u', '', (string) $url );
+		if ( preg_match( '/[\x00-\x1F\x7F]/u', (string) $url ) ) {
+			return '';
+		}
 		$url = trim( (string) $url );
 
 		if ( $url === '' ) {

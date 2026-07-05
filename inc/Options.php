@@ -32,14 +32,29 @@ final class Options {
 	private const MARKDOWN_OVERRIDE_MAX_LENGTH = 200000;
 
 	/**
+	 * Hard upper limit for per-post Markdown overrides after filters.
+	 */
+	private const MARKDOWN_OVERRIDE_ABSOLUTE_MAX_LENGTH = 500000;
+
+	/**
 	 * Default maximum length for per-post llms.txt descriptions (in characters).
 	 */
 	private const LLMS_DESCRIPTION_MAX_LENGTH = 500;
 
 	/**
+	 * Hard upper limit for per-post llms.txt descriptions after filters.
+	 */
+	private const LLMS_DESCRIPTION_ABSOLUTE_MAX_LENGTH = 2000;
+
+	/**
 	 * Default maximum amount of excluded posts stored per post type.
 	 */
 	private const EXCLUDED_POSTS_MAX_PER_TYPE = 500;
+
+	/**
+	 * Hard upper limit for excluded posts per post type after filters.
+	 */
+	private const EXCLUDED_POSTS_ABSOLUTE_MAX_PER_TYPE = 5000;
 
 	/**
 	 * Ensure defaults exist in DB.
@@ -271,7 +286,24 @@ final class Options {
 
 		$obj = get_post_type_object( $post_type );
 
-		return $obj && ! empty( $obj->public );
+		if ( ! $obj ) {
+			return false;
+		}
+
+		$eligible = ! empty( $obj->public ) && ! empty( $obj->publicly_queryable );
+
+		/**
+		 * Filter whether a post type is eligible for public LLM Friendly exports.
+		 *
+		 * Attachments are always denied before this filter. Use this to opt in
+		 * public edge-case post types that intentionally set publicly_queryable
+		 * to false but are still safe for Markdown/llms.txt exposure.
+		 *
+		 * @param bool   $eligible  Default hardened eligibility result.
+		 * @param string $post_type Post type key.
+		 * @param object $obj       WordPress post type object.
+		 */
+		return (bool) apply_filters( 'llmf_exportable_post_type', $eligible, $post_type, $obj );
 	}
 
 	/**
@@ -347,6 +379,38 @@ final class Options {
 	}
 
 	/**
+	 * Return selected exportable post types from an option array.
+	 *
+	 * @param array<string,mixed>|null $opt Optional options array.
+	 * @return array<int,string> Exportable post type keys.
+	 */
+	public function selected_post_types( ?array $opt = null ): array {
+		if ( $opt === null ) {
+			$opt = $this->get();
+		}
+
+		return isset( $opt['post_types'] ) && is_array( $opt['post_types'] )
+			? $this->sanitize_post_types( $opt['post_types'] )
+			: array();
+	}
+
+	/**
+	 * Check whether a post type is selected for plugin exports.
+	 *
+	 * @param string                   $post_type Post type key.
+	 * @param array<string,mixed>|null $opt       Optional options array.
+	 * @return bool True when the type is selected and exportable.
+	 */
+	public function is_selected_post_type( string $post_type, ?array $opt = null ): bool {
+		$post_type = sanitize_key( (string) $post_type );
+		if ( $post_type === '' ) {
+			return false;
+		}
+
+		return in_array( $post_type, $this->selected_post_types( $opt ), true );
+	}
+
+	/**
 	 * Sanitize custom markdown inserted into llms.txt.
 	 *
 	 * We do NOT attempt to fully parse Markdown here; the goal is to keep it as-is
@@ -419,7 +483,11 @@ final class Options {
 		$value = is_string( $value ) ? $value : '';
 		$value = wp_unslash( $value );
 		$value = $this->sanitize_markdown_block( $value );
-		$max   = (int) apply_filters( 'llmf_markdown_override_max_length', self::MARKDOWN_OVERRIDE_MAX_LENGTH );
+		$max   = $this->bounded_filter_int(
+			'llmf_markdown_override_max_length',
+			self::MARKDOWN_OVERRIDE_MAX_LENGTH,
+			self::MARKDOWN_OVERRIDE_ABSOLUTE_MAX_LENGTH
+		);
 		$value = $this->limit_markdown_length( $value, $max );
 
 		if ( ! current_user_can( 'unfiltered_html' ) ) {
@@ -438,10 +506,11 @@ final class Options {
 	public function sanitize_llms_description( $value ): string {
 		$value = is_string( $value ) ? $value : '';
 		$value = $this->sanitize_textline( $value );
-		$max   = (int) apply_filters( 'llmf_llms_description_max_length', self::LLMS_DESCRIPTION_MAX_LENGTH );
-		if ( $max < 1 ) {
-			$max = self::LLMS_DESCRIPTION_MAX_LENGTH;
-		}
+		$max   = $this->bounded_filter_int(
+			'llmf_llms_description_max_length',
+			self::LLMS_DESCRIPTION_MAX_LENGTH,
+			self::LLMS_DESCRIPTION_ABSOLUTE_MAX_LENGTH
+		);
 
 		return $this->limit_markdown_length( $value, $max );
 	}
@@ -620,7 +689,9 @@ final class Options {
 	 */
 	public function sanitize_sitemap_url( $value ) {
 		$value = html_entity_decode( wp_strip_all_tags( (string) $value, true ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-		$value = preg_replace( '/[\x00-\x1F\x7F]+/u', '', (string) $value );
+		if ( preg_match( '/[\x00-\x1F\x7F]/u', (string) $value ) ) {
+			return '/sitemap.xml';
+		}
 		$value = trim( (string) $value );
 		if ( $value === '' ) {
 			return '/sitemap.xml';
@@ -653,6 +724,29 @@ final class Options {
 
 		// Keep as path; will be expanded via home_url() when output.
 		return $value !== '' ? $value : '/sitemap.xml';
+	}
+
+	/**
+	 * Normalize a configured URL or path to an absolute HTTP(S) URL.
+	 *
+	 * @param mixed $url Raw URL or site-relative path.
+	 * @return string Absolute URL or empty string.
+	 */
+	public function absolute_http_url( $url ): string {
+		$url = Markdown::url_destination( $url, array( 'http', 'https' ), true );
+		if ( $url === '' ) {
+			return '';
+		}
+
+		if ( preg_match( '~^https?://~i', $url ) ) {
+			return Markdown::url_destination( $url, array( 'http', 'https' ), false );
+		}
+
+		if ( strpos( $url, '/' ) === 0 ) {
+			return Markdown::url_destination( home_url( $url ), array( 'http', 'https' ), false );
+		}
+
+		return Markdown::url_destination( home_url( '/' . ltrim( $url, '/' ) ), array( 'http', 'https' ), false );
 	}
 
 	/**
@@ -789,10 +883,12 @@ final class Options {
 				continue;
 			}
 
-			$max_ids = (int) apply_filters( 'llmf_max_excluded_posts_per_type', self::EXCLUDED_POSTS_MAX_PER_TYPE, $type );
-			if ( $max_ids < 1 ) {
-				$max_ids = self::EXCLUDED_POSTS_MAX_PER_TYPE;
-			}
+			$max_ids = $this->bounded_filter_int(
+				'llmf_max_excluded_posts_per_type',
+				self::EXCLUDED_POSTS_MAX_PER_TYPE,
+				self::EXCLUDED_POSTS_ABSOLUTE_MAX_PER_TYPE,
+				$type
+			);
 
 			$clean_ids = array();
 			foreach ( $ids as $id ) {
@@ -884,11 +980,9 @@ final class Options {
 		$opt = $this->get();
 		$v   = $this->sanitize_sitemap_url( (string) $opt['sitemap_url'] );
 
-		if ( preg_match( '~^https?://~i', $v ) ) {
-			return esc_url_raw( $v, array( 'http', 'https' ) );
-		}
+		$absolute = $this->absolute_http_url( $v );
 
-		return home_url( $v );
+		return $absolute !== '' ? $absolute : home_url( '/sitemap.xml' );
 	}
 
 	/**
@@ -929,7 +1023,33 @@ final class Options {
 			return $value;
 		}
 
+		if ( preg_match( '/^(.{0,' . $max . '})/us', $value, $matches ) ) {
+			return isset( $matches[1] ) ? (string) $matches[1] : '';
+		}
+
 		return strlen( $value ) > $max ? substr( $value, 0, $max ) : $value;
+	}
+
+	/**
+	 * Read a filter-controlled integer while enforcing a hard upper bound.
+	 *
+	 * @param string $hook         Filter hook name.
+	 * @param int    $default      Default value.
+	 * @param int    $absolute_max Hard maximum value.
+	 * @param mixed  ...$args      Additional filter arguments.
+	 * @return int Bounded positive integer.
+	 */
+	private function bounded_filter_int( string $hook, int $default, int $absolute_max, ...$args ): int {
+		$value = (int) apply_filters( $hook, $default, ...$args );
+		if ( $value < 1 ) {
+			$value = $default;
+		}
+
+		if ( $absolute_max > 0 && $value > $absolute_max ) {
+			$value = $absolute_max;
+		}
+
+		return $value;
 	}
 
 	/**

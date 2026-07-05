@@ -14,6 +14,8 @@ if ( ! defined( 'LLMF_VERSION' ) ) {
 $GLOBALS['llmf_test_options'] = array();
 $GLOBALS['llmf_test_posts']   = array();
 $GLOBALS['llmf_test_meta']    = array();
+$GLOBALS['llmf_test_filters'] = array();
+$GLOBALS['llmf_test_scheduled_events'] = array();
 $GLOBALS['llmf_tests_run']    = 0;
 
 if ( ! class_exists( 'WP_Post' ) ) {
@@ -66,8 +68,27 @@ function esc_textarea( $text ) { return esc_html( $text ); }
 function checked( $checked, $current = true, $echo = true ) { return $checked == $current ? ' checked="checked"' : ''; }
 function selected( $selected, $current = true, $echo = true ) { return $selected == $current ? ' selected="selected"' : ''; }
 function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) { return true; }
-function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) { return true; }
-function apply_filters( $hook, $value ) { return $value; }
+function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+	$GLOBALS['llmf_test_filters'][ $hook ][] = $callback;
+	return true;
+}
+function apply_filters( $hook, $value, ...$args ) {
+	if ( empty( $GLOBALS['llmf_test_filters'][ $hook ] ) ) {
+		return $value;
+	}
+	foreach ( $GLOBALS['llmf_test_filters'][ $hook ] as $callback ) {
+		$value = $callback( $value, ...$args );
+	}
+	return $value;
+}
+function remove_all_filters( $hook = null ) {
+	if ( $hook === null ) {
+		$GLOBALS['llmf_test_filters'] = array();
+		return true;
+	}
+	unset( $GLOBALS['llmf_test_filters'][ $hook ] );
+	return true;
+}
 function wp_unslash( $value ) { return is_string( $value ) ? stripslashes( $value ) : $value; }
 function wp_kses_post( $value ) { return (string) $value; }
 function wp_strip_all_tags( $text, $remove_breaks = false ) { return strip_tags( (string) $text ); }
@@ -122,13 +143,16 @@ function add_option( $key, $value, $deprecated = '', $autoload = null ) {
 function set_transient( $key, $value, $expiration = 0 ) { $GLOBALS['llmf_test_options'][ 'transient_' . $key ] = $value; return true; }
 function get_transient( $key ) { return $GLOBALS['llmf_test_options'][ 'transient_' . $key ] ?? false; }
 function delete_transient( $key ) { unset( $GLOBALS['llmf_test_options'][ 'transient_' . $key ] ); return true; }
-function post_type_exists( $post_type ) { return in_array( $post_type, array( 'post', 'page' ), true ); }
+function wp_next_scheduled( $hook ) { return isset( $GLOBALS['llmf_test_scheduled_events'][ $hook ] ) ? $GLOBALS['llmf_test_scheduled_events'][ $hook ] : false; }
+function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { $GLOBALS['llmf_test_scheduled_events'][ $hook ] = (int) $timestamp; return true; }
+function post_type_exists( $post_type ) { return in_array( $post_type, array( 'post', 'page', 'attachment', 'private_type', 'public_hidden' ), true ); }
 function get_post_type_object( $post_type ) {
 	if ( ! post_type_exists( $post_type ) ) {
 		return null;
 	}
 	$obj               = new stdClass();
-	$obj->public       = true;
+	$obj->public       = $post_type !== 'private_type';
+	$obj->publicly_queryable = ! in_array( $post_type, array( 'private_type', 'public_hidden' ), true );
 	$obj->hierarchical = $post_type === 'page';
 	$obj->labels       = (object) array( 'name' => $post_type === 'page' ? 'Pages' : 'Posts' );
 	return $obj;
@@ -157,6 +181,8 @@ function get_post_meta( $post_id, $key = '', $single = false ) {
 	return $single ? $meta : array( $meta );
 }
 function wp_parse_url( $url ) { return parse_url( (string) $url ); }
+function wp_is_post_revision( $post_id ) { return false; }
+function wp_is_post_autosave( $post_id ) { return false; }
 function parse_blocks( $content ) { return array(); }
 
 require_once __DIR__ . '/../inc/Markdown.php';
@@ -202,6 +228,25 @@ $GLOBALS['llmf_test_posts'][12] = new WP_Post( array( 'ID' => 12, 'post_type' =>
 
 assert_true( Markdown::url_destination( 'javascript:alert(1)' ) === '', 'Unsafe URL protocols are rejected.' );
 assert_true( Markdown::link_text( 'A [B]' ) === 'A \[B\]', 'Markdown link labels are escaped.' );
+assert_true( Markdown::url_destination( '//evil.test/x' ) === '', 'Protocol-relative URLs are rejected.' );
+assert_true( Markdown::url_destination( "https://example.test/a\r\nX-Test: bad" ) === '', 'URLs with control characters are rejected.' );
+assert_true( $options->sanitize_sitemap_url( 'https://evil.test/sitemap.xml' ) === '/sitemap.xml', 'External sitemap URLs are rejected by default.' );
+assert_true( $options->sanitize_sitemap_url( '//evil.test/sitemap.xml' ) === '/sitemap.xml', 'Protocol-relative sitemap URLs are rejected.' );
+assert_true( $options->sanitize_sitemap_url( "/sitemap.xml\r\nBad: yes" ) === '/sitemap.xml', 'Sitemap URLs with control characters fall back to default.' );
+assert_true( $options->absolute_http_url( '/docs' ) === 'https://example.test/docs', 'Site-relative URLs are normalized to absolute HTTP URLs.' );
+
+assert_true( $options->is_exportable_post_type( 'post' ), 'Public queryable posts are exportable.' );
+assert_true( ! $options->is_exportable_post_type( 'attachment' ), 'Attachments are never exportable.' );
+assert_true( ! $options->is_exportable_post_type( 'private_type' ), 'Non-public post types are not exportable.' );
+assert_true( ! $options->is_exportable_post_type( 'public_hidden' ), 'Public but non-queryable post types are not exportable by default.' );
+add_filter(
+	'llmf_exportable_post_type',
+	function ( $eligible, $post_type, $obj ) {
+		return $post_type === 'public_hidden' ? true : $eligible;
+	}
+);
+assert_true( $options->is_exportable_post_type( 'public_hidden' ), 'The exportable post type filter can opt in public edge-case types.' );
+remove_all_filters( 'llmf_exportable_post_type' );
 
 $clean = $options->sanitize(
 	array(
@@ -223,6 +268,33 @@ assert_contains_text( '# kept in code', $clean['llms_custom_markdown'], 'Heading
 assert_contains_text( 'Docs | /docs | Key documentation', $clean['llms_essential_links'], 'Valid essential link is preserved.' );
 assert_not_contains_text( 'javascript:', $clean['llms_essential_links'], 'Unsafe essential link is rejected.' );
 
+add_filter(
+	'llmf_llms_description_max_length',
+	function ( $value ) {
+		return 0;
+	}
+);
+assert_true( strlen( $options->sanitize_llms_description( str_repeat( 'a', 600 ) ) ) === 500, 'Invalid description length filter falls back to the default.' );
+remove_all_filters( 'llmf_llms_description_max_length' );
+
+add_filter(
+	'llmf_llms_description_max_length',
+	function ( $value ) {
+		return 100000;
+	}
+);
+assert_true( strlen( $options->sanitize_llms_description( str_repeat( 'b', 2500 ) ) ) === 2000, 'Excessive description length filter is capped.' );
+remove_all_filters( 'llmf_llms_description_max_length' );
+
+add_filter(
+	'llmf_markdown_override_max_length',
+	function ( $value ) {
+		return 3;
+	}
+);
+assert_true( $options->sanitize_markdown_override( 'abcdef' ) === 'abc', 'Markdown override length filters still allow lower site-specific caps.' );
+remove_all_filters( 'llmf_markdown_override_max_length' );
+
 $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = array_merge( $options->defaults(), $clean );
 
 $llms = new Llms( $options );
@@ -240,6 +312,21 @@ $headers_text = implode( "\n", $headers );
 assert_contains_text( 'Link: <https://example.test/post/example-post/>; rel="canonical"', $headers_text, 'Markdown export sends a canonical Link header.' );
 assert_contains_text( 'X-Robots-Tag: noindex', $headers_text, 'Markdown export sends noindex by default.' );
 assert_not_contains_text( 'nofollow', $headers_text, 'Markdown export does not send nofollow.' );
+
+$fenced_meta_md = call_private(
+	$exporter,
+	'post_to_markdown',
+	array(
+		new WP_Post( array( 'ID' => 22, 'post_type' => 'post', 'post_name' => 'fenced', 'post_title' => 'Fence ``` Title' ) ),
+		'',
+		array(
+			'title'       => 'Fence ``` Title',
+			'description' => 'Description containing ``` inside JSON.',
+		),
+	)
+);
+assert_contains_text( "````json\n", $fenced_meta_md, 'Metadata JSON fence expands when metadata contains triple backticks.' );
+assert_contains_text( "\n````\n\n# Fence ``` Title", $fenced_meta_md, 'Expanded metadata fence closes before the Markdown H1.' );
 
 $blocks = array(
 	array(
@@ -283,7 +370,57 @@ assert_contains_text( '**More info**', $md, 'Details summary is preserved.' );
 
 $draft = new WP_Post( array( 'ID' => 30, 'post_type' => 'post', 'post_status' => 'draft' ) );
 $locked = new WP_Post( array( 'ID' => 31, 'post_type' => 'post', 'post_password' => 'secret' ) );
+$attachment = new WP_Post( array( 'ID' => 32, 'post_type' => 'attachment', 'post_name' => 'file' ) );
+$private_type = new WP_Post( array( 'ID' => 33, 'post_type' => 'private_type', 'post_name' => 'hidden' ) );
+$public_hidden = new WP_Post( array( 'ID' => 34, 'post_type' => 'public_hidden', 'post_name' => 'hidden-public' ) );
+$excluded = new WP_Post( array( 'ID' => 35, 'post_type' => 'post', 'post_name' => 'excluded', 'post_title' => 'Excluded' ) );
+$GLOBALS['llmf_test_posts'][35] = $excluded;
+$saved_options = $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ];
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = array_merge(
+	$saved_options,
+	array(
+		'excluded_posts' => array(
+			'post' => array( 35 ),
+		),
+	)
+);
 assert_true( ! $options->can_export_post( $draft, 'markdown' ), 'Draft posts are not exportable.' );
 assert_true( ! $options->can_export_post( $locked, 'markdown' ), 'Password-protected posts are not exportable.' );
+assert_true( ! $options->can_export_post( $attachment, 'markdown' ), 'Attachments are not exportable.' );
+assert_true( ! $options->can_export_post( $private_type, 'markdown' ), 'Non-public post types are not exportable.' );
+assert_true( ! $options->can_export_post( $public_hidden, 'markdown' ), 'Public but non-queryable post types are not exportable by default.' );
+assert_true( ! $options->can_export_post( $excluded, 'markdown' ), 'Excluded posts are not exportable.' );
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $saved_options;
+
+$GLOBALS['llmf_test_scheduled_events'] = array();
+$auto_post = new WP_Post( array( 'ID' => 36, 'post_type' => 'post', 'post_name' => 'auto', 'post_title' => 'Auto' ) );
+$llms->maybe_regenerate_on_save( 36, $auto_post, true );
+assert_true( isset( $GLOBALS['llmf_test_scheduled_events']['llmf_regenerate_llms_cache'] ), 'Automatic regeneration is scheduled instead of rebuilt immediately.' );
+$scheduled_at = $GLOBALS['llmf_test_scheduled_events']['llmf_regenerate_llms_cache'];
+$llms->maybe_regenerate_on_save( 36, $auto_post, true );
+assert_true( $GLOBALS['llmf_test_scheduled_events']['llmf_regenerate_llms_cache'] === $scheduled_at, 'Repeated automatic regeneration requests are coalesced.' );
+$llms->regenerate_from_schedule();
+$after_schedule = get_option( Options::OPTION_KEY, array() );
+assert_true( isset( $after_schedule['llms_cache'] ) && trim( (string) $after_schedule['llms_cache'] ) !== '', 'Scheduled regeneration writes llms.txt cache.' );
+assert_true( isset( $after_schedule['llms_cache_settings_hash'] ) && (string) $after_schedule['llms_cache_settings_hash'] !== '', 'Scheduled regeneration writes settings hash.' );
+
+$locked_options = get_option( Options::OPTION_KEY, array() );
+$locked_options['llms_cache'] = 'locked-cache';
+$locked_options['llms_cache_settings_hash'] = 'locked-hash';
+update_option( Options::OPTION_KEY, $locked_options, false );
+set_transient( 'llmf_llms_regen_lock', 1, 10 );
+$llms->regenerate( true );
+$after_locked_regen = get_option( Options::OPTION_KEY, array() );
+assert_true( $after_locked_regen['llms_cache'] === 'locked-cache', 'Manual regeneration respects an active regeneration lock.' );
+assert_true( (bool) get_transient( 'llmf_llms_regen_lock' ), 'Manual regeneration does not delete an active regeneration lock it did not acquire.' );
+delete_transient( 'llmf_llms_regen_lock' );
+
+$stale_options = get_option( Options::OPTION_KEY, array() );
+$stale_options['llms_cache_settings_hash'] = 'stale';
+update_option( Options::OPTION_KEY, $stale_options, false );
+$llms->regenerate( false );
+$after_stale_regen = get_option( Options::OPTION_KEY, array() );
+$expected_hash = call_private( $llms, 'settings_hash_from_options', array( $after_stale_regen ) );
+assert_true( $after_stale_regen['llms_cache_settings_hash'] === $expected_hash, 'Regeneration stores the current settings hash.' );
 
 echo 'OK: ' . (int) $GLOBALS['llmf_tests_run'] . " assertions\n";
