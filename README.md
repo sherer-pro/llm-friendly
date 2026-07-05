@@ -2,7 +2,7 @@
 
 LLM Friendly is a WordPress plugin that exposes:
 
-- `/llms.txt` — an LLM-friendly index of your site
+- `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
 Current version: **0.1.1**
@@ -12,12 +12,12 @@ The goal is to make your site easier to navigate and consume for LLMs, indexing 
 ## Features
 
 - Generates an `llms.txt` index with main links, an Essential section for key site resources, latest content, optional LLM descriptions, and an optional custom Markdown notes block.
-- Exposes `.md` endpoints for selected post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion, expanded JSON metadata, canonical `Link` headers, and per-post Markdown overrides through the “Markdown override (LLM Friendly)” editor metabox.
+- Exposes `.md` endpoints for selected public, publicly queryable post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion, expanded JSON metadata, canonical `Link` headers, and per-post Markdown overrides through the "Markdown override (LLM Friendly)" editor metabox.
 - Configurable base path for Markdown exports (e.g. `llm`) and per-post-type enable/disable toggles; changing the base path requires updating rewrite rules.
 - Manual or automatic regeneration of the cached `llms.txt`, complete with ETag/Last-Modified headers.
 - Optional `X-Robots-Tag: noindex` headers for both `llms.txt` and Markdown exports. `/llms.txt` is controlled by `llms_send_noindex`; `.md` endpoints are controlled by `md_send_noindex`; both are enabled by default.
 - Toggle excerpts in `llms.txt` via `llms_show_excerpt` to add one-line summaries under each item. The summary uses the per-post llms.txt description first, then SEO meta description, explicit excerpt, and a generated content summary.
-- Exclude specific items from both `llms.txt` and Markdown exports through the per-post-type exclusion picker in Settings → LLM Friendly.
+- Exclude specific items from both `llms.txt` and Markdown exports through the per-post-type exclusion picker in Settings -> LLM Friendly.
 - Outputs `<link rel="alternate" type="text/markdown">` tags on singular views for supported post types.
 - Optional site title/description/author overrides and a same-site sitemap URL for generated outputs.
 - AI crawler diagnostics for OAI-SearchBot, GPTBot, Googlebot/Search AI features, Google-Extended, and the configured sitemap URL. The plugin does not edit `robots.txt` automatically.
@@ -32,8 +32,8 @@ If requirements are not met, the plugin shows an admin warning and does not run.
 ## Installation
 
 1. Upload the plugin folder to `wp-content/plugins/llm-friendly/`
-2. Activate “LLM Friendly” in WordPress Admin → Plugins
-3. Open Settings → LLM Friendly and configure:
+2. Activate "LLM Friendly" in WordPress Admin -> Plugins
+3. Open Settings -> LLM Friendly and configure:
    - Enable llms.txt
    - Enable Markdown exports
    - Select post types
@@ -53,20 +53,20 @@ If requirements are not met, the plugin shows an admin warning and does not run.
   - `https://example.com/llm/post/hello-world.md`
   - `https://example.com/llm/page/about.md`
 - Enable `llms_show_excerpt` to include short descriptions in `llms.txt`:
-  - Settings → LLM Friendly → llms.txt → “Show excerpts in llms.txt”
+  - Settings -> LLM Friendly -> llms.txt -> "Show excerpts in llms.txt"
 - Control whether `/llms.txt` sends a noindex header:
-  - Settings → LLM Friendly → llms.txt → “Send X-Robots-Tag: noindex for /llms.txt”
+  - Settings -> LLM Friendly -> llms.txt -> "Send X-Robots-Tag: noindex for /llms.txt"
 - Enable `md_send_noindex` to keep Markdown exports out of search indices:
-  - Settings → LLM Friendly → General → “Send noindex header for Markdown exports”
+  - Settings -> LLM Friendly -> General -> "Send noindex header for Markdown exports"
 - Add curated resources to the `llms.txt` Essential section:
-  - Settings → LLM Friendly → llms.txt → “Essential links”
+  - Settings -> LLM Friendly -> llms.txt -> "Essential links"
   - Use one line per item: `Title | URL | Notes`; URLs may be absolute or site-relative. The Essential section also includes configured front page, posts page, and privacy policy links when available.
-- Use the “Markdown override (LLM Friendly)” editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor’s additional panels/metaboxes.
-- Use the “llms.txt description (overrides excerpt)” field in the same metabox to provide a one-line AI-facing summary for both `llms.txt` and Markdown metadata.
-- Use “Excluded items” in Settings → LLM Friendly → llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
-- Use “Author override” in Settings → LLM Friendly → Site meta overrides when Markdown metadata should attribute posts to a company or publication rather than individual WordPress authors.
+- Use the "Markdown override (LLM Friendly)" editor metabox to replace the generated Markdown with your own content or block markup; in Gutenberg it appears with the editor's additional panels/metaboxes.
+- Use the "llms.txt description (overrides excerpt)" field in the same metabox to provide a one-line AI-facing summary for both `llms.txt` and Markdown metadata.
+- Use "Excluded items" in Settings -> LLM Friendly -> llms.txt to search by title and exclude specific entries from both `llms.txt` and Markdown exports.
+- Use "Author override" in Settings -> LLM Friendly -> Site meta overrides when Markdown metadata should attribute posts to a company or publication rather than individual WordPress authors.
 - Use a site-relative or same-site absolute sitemap URL. External sitemap URLs are rejected by default unless a site owner opts in with the `llmf_allow_external_sitemap_url` filter.
-- To change the base path for exports (default `llm`), update “Base path” and re-save Permalinks if your server uses custom rewrites.
+- To change the base path for exports (default `llm`), update "Base path" and re-save Permalinks if your server uses custom rewrites.
 
 Note: if you are running Nginx in front of Apache (or have aggressive static rules), make sure `.md` and `/llms.txt` requests are routed to WordPress (not treated as static files).
 
@@ -74,9 +74,10 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 
 ## Security notes
 
-- Do not enable post types that should not be publicly accessible.
+- Post types must be public and publicly queryable by default. Attachments are never exportable, and custom post types with `publicly_queryable => false` must be explicitly opted in with `llmf_exportable_post_type`.
 - Password-protected content should not be exported.
 - Custom Markdown in `llms.txt` is capped at 20,000 characters, per-post Markdown overrides are capped at 200,000 characters, and per-post llms.txt descriptions are capped at 500 characters by default.
+- Length-related filters are bounded defensively: Markdown overrides cannot exceed 500,000 characters, llms.txt descriptions cannot exceed 2,000 characters, and exclusion lists cannot exceed 5,000 items per post type.
 - Heading markers are removed from the custom `llms.txt` notes block so user-provided notes cannot break the required `llms.txt` section order.
 - Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES.
 - Exclusion lists are validated server-side and capped at 500 items per post type by default.
@@ -84,6 +85,7 @@ If Markdown endpoints return 404 after changing the base path, flush permalinks 
 ## Developer filters
 
 - `llmf_can_export_post` can deny a post for `markdown`, `llms`, or `llms_search` contexts.
+- `llmf_exportable_post_type` can explicitly opt in a public edge-case post type that is safe to expose even though WordPress marks it as not publicly queryable.
 - `llmf_markdown_override_max_length` changes the per-post Markdown override length cap.
 - `llmf_llms_description_max_length` changes the per-post llms.txt description length cap.
 - `llmf_markdown_metadata` filters the JSON metadata array emitted at the top of each Markdown export.
