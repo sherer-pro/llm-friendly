@@ -259,11 +259,7 @@ final class Admin {
 	 * @return array<int,string> Selected post type keys.
 	 */
 	private function selected_post_types(): array {
-		$opt = $this->options->get();
-
-		return isset( $opt['post_types'] ) && is_array( $opt['post_types'] )
-			? $this->options->sanitize_post_types( $opt['post_types'] )
-			: array();
+		return $this->options->selected_post_types();
 	}
 
 	/**

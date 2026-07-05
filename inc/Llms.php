@@ -19,6 +19,16 @@ final class Llms {
 	private const LOCK_KEY = 'llmf_llms_regen_lock';
 
 	/**
+	 * Pending scheduled regeneration transient key.
+	 */
+	private const PENDING_KEY = 'llmf_llms_regen_pending';
+
+	/**
+	 * WP-Cron hook used to coalesce automatic regeneration.
+	 */
+	private const SCHEDULED_REGEN_HOOK = 'llmf_regenerate_llms_cache';
+
+	/**
 	 * @var Options
 	 */
 	private Options $options;
@@ -35,6 +45,7 @@ final class Llms {
 		add_action( 'added_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
 		add_action( 'updated_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
 		add_action( 'deleted_post_meta', array( $this, 'maybe_clear_cache_on_description_meta_change' ), 20, 4 );
+		add_action( self::SCHEDULED_REGEN_HOOK, array( $this, 'regenerate_from_schedule' ) );
 	}
 
 	/**
@@ -134,12 +145,11 @@ final class Llms {
 			return;
 		}
 
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
+		if ( ! $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
 			return;
 		}
 
-		$this->regenerate( true );
+		$this->schedule_regeneration();
 	}
 
 	/**
@@ -155,8 +165,7 @@ final class Llms {
 			return;
 		}
 
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
-		if ( ! $this->options->is_exportable_post_type( (string) $post->post_type ) || ! in_array( $post->post_type, $allowed, true ) ) {
+		if ( ! $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
 			return;
 		}
 
@@ -188,6 +197,47 @@ final class Llms {
 	}
 
 	/**
+	 * Schedule one near-future regeneration to coalesce rapid post changes.
+	 *
+	 * @return void
+	 */
+	private function schedule_regeneration(): void {
+		if ( get_transient( self::PENDING_KEY ) ) {
+			return;
+		}
+
+		set_transient( self::PENDING_KEY, 1, MINUTE_IN_SECONDS );
+
+		if ( function_exists( 'wp_next_scheduled' ) && function_exists( 'wp_schedule_single_event' ) ) {
+			if ( ! wp_next_scheduled( self::SCHEDULED_REGEN_HOOK ) ) {
+				$scheduled = wp_schedule_single_event( time() + 5, self::SCHEDULED_REGEN_HOOK );
+				if ( $scheduled ) {
+					return;
+				}
+
+				delete_transient( self::PENDING_KEY );
+				$this->regenerate( false );
+				return;
+			}
+
+			return;
+		}
+
+		delete_transient( self::PENDING_KEY );
+		$this->regenerate( false );
+	}
+
+	/**
+	 * Run a scheduled llms.txt regeneration.
+	 *
+	 * @return void
+	 */
+	public function regenerate_from_schedule(): void {
+		delete_transient( self::PENDING_KEY );
+		$this->regenerate( false );
+	}
+
+	/**
 	 * Force regeneration of cached llms.txt.
 	 *
 	 * @return void
@@ -195,18 +245,10 @@ final class Llms {
 	public function regenerate( bool $force = false ): void {
 		// Manual regeneration must work regardless of the selected regeneration mode.
 		// The mode controls only automatic regeneration on publish/update.
-		$lock_acquired = false;
-
-		if ( ! $force ) {
-			$locked = get_transient( self::LOCK_KEY );
-			if ( $locked ) {
-				return;
-			}
-			set_transient( self::LOCK_KEY, 1, 10 );
-			$lock_acquired = true;
-		} else {
-			delete_transient( self::LOCK_KEY );
+		if ( get_transient( self::LOCK_KEY ) ) {
+			return;
 		}
+		set_transient( self::LOCK_KEY, 1, 10 );
 
 		try {
 			$content = $this->build_llms_txt();
@@ -227,30 +269,14 @@ final class Llms {
 			$saved['llms_cache_ts']  = $ts;
 			$saved['llms_cache_rev'] = $rev;
 
-			$settings        = $this->options->get();
-			$settings_subset = array(
-				'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
-				'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
-				'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
-				'post_types'                => ( isset( $settings['post_types'] ) && is_array( $settings['post_types'] ) ) ? array_values( (array) $settings['post_types'] ) : array(),
-				'llms_recent_limit'         => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
-				'site_title_override'       => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
-				'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
-				'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
-				'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
-				'llms_essential_links'      => isset( $settings['llms_essential_links'] ) ? (string) $settings['llms_essential_links'] : '',
-				'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
-				'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
-			);
+			$settings = $this->options->get();
 
 			$saved['llms_cache_hash']          = sha1( (string) $content );
-			$saved['llms_cache_settings_hash'] = sha1( wp_json_encode( $settings_subset ) );
+			$saved['llms_cache_settings_hash'] = $this->settings_hash_from_options( $settings );
 
 			update_option( Options::OPTION_KEY, $saved, false );
 		} finally {
-			if ( $lock_acquired ) {
-				delete_transient( self::LOCK_KEY );
-			}
+			delete_transient( self::LOCK_KEY );
 		}
 	}
 
@@ -269,20 +295,24 @@ final class Llms {
 			exit;
 		}
 
-		$content = isset( $opt['llms_cache'] ) ? (string) $opt['llms_cache'] : '';
-		$ts      = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
+		$content               = isset( $opt['llms_cache'] ) ? (string) $opt['llms_cache'] : '';
+		$ts                    = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
+		$current_settings_hash = $this->settings_hash_from_options( $opt );
+		$stored_settings_hash  = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
 
-		if ( trim( $content ) === '' ) {
+		if ( trim( $content ) === '' || $stored_settings_hash === '' || ! hash_equals( $stored_settings_hash, $current_settings_hash ) ) {
 			if ( get_transient( self::LOCK_KEY ) ) {
 				Response::send_service_unavailable( 10 );
 			}
 
 			$this->regenerate( false );
-			$opt     = $this->options->get();
-			$content = isset( $opt['llms_cache'] ) ? (string) $opt['llms_cache'] : '';
-			$ts      = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
+			$opt                   = $this->options->get();
+			$content               = isset( $opt['llms_cache'] ) ? (string) $opt['llms_cache'] : '';
+			$ts                    = isset( $opt['llms_cache_ts'] ) ? (int) $opt['llms_cache_ts'] : 0;
+			$current_settings_hash = $this->settings_hash_from_options( $opt );
+			$stored_settings_hash  = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
 
-			if ( trim( $content ) === '' ) {
+			if ( trim( $content ) === '' || $stored_settings_hash === '' || ! hash_equals( $stored_settings_hash, $current_settings_hash ) ) {
 				Response::send_service_unavailable( 10 );
 			}
 		}
@@ -355,7 +385,7 @@ final class Llms {
 			$limit = 1;
 		}
 
-		$post_types = ( isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array( 'post' );
+		$post_types = $this->options->selected_post_types( $opt );
 
 		$blocks = array();
 
@@ -369,19 +399,19 @@ final class Llms {
 			$blocks[] = $custom;
 		}
 
-		$blocks[] = '## ' . 'Main links';
+		$blocks[] = '## ' . __( 'Main links', 'llm-friendly' );
 		$blocks[] = implode(
 			"\n",
 			array(
-				'- [' . $this->md_link_text( 'Home' ) . '](' . $home . '): ' . 'Website home page',
-				'- [' . $this->md_link_text( 'Sitemap' ) . '](' . $sitemap . '): ' . 'XML sitemap',
-				'- [' . $this->md_link_text( 'RSS' ) . '](' . $rss . '): ' . 'Latest updates feed',
+				'- [' . $this->md_link_text( __( 'Home', 'llm-friendly' ) ) . '](' . $home . '): ' . Markdown::plain_text_line( __( 'Website home page', 'llm-friendly' ) ),
+				'- [' . $this->md_link_text( __( 'Sitemap', 'llm-friendly' ) ) . '](' . $sitemap . '): ' . Markdown::plain_text_line( __( 'XML sitemap', 'llm-friendly' ) ),
+				'- [' . $this->md_link_text( __( 'RSS', 'llm-friendly' ) ) . '](' . $rss . '): ' . Markdown::plain_text_line( __( 'Latest updates feed', 'llm-friendly' ) ),
 			)
 		);
 
 		$essential_links = $this->get_essential_links( $md_enabled );
 		if ( ! empty( $essential_links ) ) {
-			$blocks[] = '## ' . 'Essential';
+			$blocks[] = '## ' . __( 'Essential', 'llm-friendly' );
 			$blocks[] = implode( "\n", $essential_links );
 		}
 
@@ -558,12 +588,10 @@ final class Llms {
 		$opt   = $this->options->get();
 
 		$special_pages = array(
-			'Front page content' => (int) get_option( 'page_on_front', 0 ),
-			'Posts page'         => (int) get_option( 'page_for_posts', 0 ),
-			'Privacy policy'     => (int) get_option( 'wp_page_for_privacy_policy', 0 ),
+			__( 'Front page content', 'llm-friendly' ) => (int) get_option( 'page_on_front', 0 ),
+			__( 'Posts page', 'llm-friendly' )         => (int) get_option( 'page_for_posts', 0 ),
+			__( 'Privacy policy', 'llm-friendly' )     => (int) get_option( 'wp_page_for_privacy_policy', 0 ),
 		);
-
-		$allowed = isset( $opt['post_types'] ) && is_array( $opt['post_types'] ) ? $this->options->sanitize_post_types( $opt['post_types'] ) : array();
 
 		foreach ( $special_pages as $label => $post_id ) {
 			if ( $post_id <= 0 || isset( $seen[ $post_id ] ) ) {
@@ -585,7 +613,7 @@ final class Llms {
 			$url       = $canonical;
 			$notes     = Markdown::plain_text_line( $label );
 
-			if ( $md_enabled && in_array( (string) $post->post_type, $allowed, true ) ) {
+			if ( $md_enabled && $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
 				$md_url = Markdown::url_destination( $this->options->markdown_url_for_post( $post ), array( 'http', 'https' ), false );
 				if ( $md_url !== '' ) {
 					$url   = $md_url;
@@ -615,7 +643,7 @@ final class Llms {
 			}
 
 			$title = Markdown::plain_text_line( $parts[0] );
-			$url   = $this->absolute_link_url( $parts[1] );
+			$url   = $this->options->absolute_http_url( $parts[1] );
 			$notes = isset( $parts[2] ) ? Markdown::plain_text_line( $parts[2] ) : '';
 
 			if ( $title !== '' && $url !== '' ) {
@@ -659,26 +687,33 @@ final class Llms {
 	}
 
 	/**
-	 * Normalize a configured link to an absolute HTTP(S) URL.
+	 * Build a stable hash for settings that affect cached llms.txt output.
 	 *
-	 * @param string $url Raw URL or site-relative path.
-	 * @return string Absolute URL or empty string.
+	 * @param array<string,mixed> $settings Plugin options.
+	 * @return string Settings hash.
 	 */
-	private function absolute_link_url( string $url ): string {
-		$url = Markdown::url_destination( $url, array( 'http', 'https' ), true );
-		if ( $url === '' ) {
-			return '';
+	private function settings_hash_from_options( array $settings ): string {
+		$subset = array(
+			'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
+			'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
+			'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+			'post_types'                => $this->options->selected_post_types( $settings ),
+			'llms_recent_limit'         => isset( $settings['llms_recent_limit'] ) ? (int) $settings['llms_recent_limit'] : 0,
+			'site_title_override'       => isset( $settings['site_title_override'] ) ? (string) $settings['site_title_override'] : '',
+			'site_description_override' => isset( $settings['site_description_override'] ) ? (string) $settings['site_description_override'] : '',
+			'sitemap_url'               => isset( $settings['sitemap_url'] ) ? (string) $settings['sitemap_url'] : '',
+			'llms_custom_markdown'      => isset( $settings['llms_custom_markdown'] ) ? (string) $settings['llms_custom_markdown'] : '',
+			'llms_essential_links'      => isset( $settings['llms_essential_links'] ) ? (string) $settings['llms_essential_links'] : '',
+			'llms_show_excerpt'         => ! empty( $settings['llms_show_excerpt'] ) ? 1 : 0,
+			'excluded_posts'            => isset( $settings['excluded_posts'] ) && is_array( $settings['excluded_posts'] ) ? $settings['excluded_posts'] : array(),
+		);
+
+		$encoded = wp_json_encode( $subset );
+		if ( is_string( $encoded ) && $encoded !== '' ) {
+			return sha1( $encoded );
 		}
 
-		if ( preg_match( '~^https?://~i', $url ) ) {
-			return $url;
-		}
-
-		if ( strpos( $url, '/' ) === 0 ) {
-			return Markdown::url_destination( home_url( $url ), array( 'http', 'https' ), false );
-		}
-
-		return Markdown::url_destination( home_url( '/' . ltrim( $url, '/' ) ), array( 'http', 'https' ), false );
+		return sha1( serialize( $subset ) );
 	}
 
 	/**

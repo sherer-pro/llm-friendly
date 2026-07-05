@@ -194,9 +194,7 @@ final class Exporter {
 			$body   = trim( $this->blocks_to_markdown( $blocks ) );
 		}
 		$out   = array();
-		$out[] = '```json';
-		$out[] = $meta_json ? $meta_json : '{}';
-		$out[] = '```';
+		$out[] = $this->code_fence( $meta_json ? $meta_json : '{}', 'json' );
 		$out[] = '';
 		$out[] = '# ' . $title;
 		$out[] = '';
@@ -617,7 +615,13 @@ final class Exporter {
 
 		if ( $url !== '' ) {
 			$provider = isset( $attrs['providerNameSlug'] ) ? Markdown::plain_text_line( $attrs['providerNameSlug'] ) : '';
-			$label    = $provider !== '' ? 'Embed: ' . $provider : 'Embedded content';
+			$label    = $provider !== ''
+				? sprintf(
+					/* translators: %s: Embed provider name. */
+					__( 'Embed: %s', 'llm-friendly' ),
+					$provider
+				)
+				: __( 'Embedded content', 'llm-friendly' );
 			$caption  = isset( $attrs['caption'] ) ? Markdown::plain_text_line( $this->html_inline_to_md( (string) $attrs['caption'] ) ) : '';
 
 			return '- [' . Markdown::link_text( $label ) . '](' . $url . ')' . ( $caption !== '' ? ': ' . $caption : '' );
@@ -677,10 +681,10 @@ final class Exporter {
 		}
 
 		// Remove potential DOCTYPE/ENTITY declarations so libxml does not process them.
-		$safe_html = preg_replace( '/<!DOCTYPE.*?>/is', '', (string) $html );
-		$safe_html = preg_replace( '/<!ENTITY.*?>/is', '', (string) $safe_html );
+		$safe_html = preg_replace( '/<!DOCTYPE\b[^>]*(?:\[[\s\S]*?\]\s*)?>/i', '', (string) $html );
+		$safe_html = preg_replace( '/<!ENTITY\b[^>]*>/i', '', (string) $safe_html );
 
-		libxml_use_internal_errors( true );
+		$previous_libxml_errors = libxml_use_internal_errors( true );
 		$doc = new \DOMDocument( '1.0', 'UTF-8' );
 
 		$safe_flags = LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD;
@@ -688,8 +692,12 @@ final class Exporter {
 			$safe_flags |= LIBXML_NONET;
 		}
 
-		$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $safe_html, $safe_flags | $flags );
-		libxml_clear_errors();
+		try {
+			$loaded = $doc->loadHTML( '<?xml encoding="utf-8" ?>' . $safe_html, $safe_flags | $flags );
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous_libxml_errors );
+		}
 
 		if ( ! $loaded ) {
 			return null;
@@ -1004,7 +1012,7 @@ final class Exporter {
 			}
 
 			$alt   = trim( (string) $img->getAttribute( 'alt' ) );
-			$label = $alt !== '' ? $alt : 'image';
+			$label = $alt !== '' ? $alt : __( 'image', 'llm-friendly' );
 
 			$out = '![' . $this->escape_md( $label ) . '](' . $src . ')';
 
@@ -1040,7 +1048,7 @@ final class Exporter {
 			return '';
 		}
 
-		$label = $alt !== '' ? $alt : ( $caption !== '' ? $caption : 'image' );
+		$label = $alt !== '' ? $alt : ( $caption !== '' ? $caption : __( 'image', 'llm-friendly' ) );
 		$md    = '![' . $this->escape_md( $label ) . '](' . $url . ')';
 
 		if ( $caption !== '' && $caption !== $alt ) {
