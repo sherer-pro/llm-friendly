@@ -118,6 +118,13 @@ function llmf_deactivate() {
  * @return void
  */
 function llmf_load_textdomain() {
+	$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+	$mofile = LLMF_DIR . 'languages/llm-friendly-' . $locale . '.mo';
+
+	if ( is_readable( $mofile ) ) {
+		load_textdomain( 'llm-friendly', $mofile );
+	}
+
 	load_plugin_textdomain(
 		'llm-friendly',
 		false,

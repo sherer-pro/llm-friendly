@@ -29,6 +29,11 @@ final class Llms {
 	private const SCHEDULED_REGEN_HOOK = 'llmf_regenerate_llms_cache';
 
 	/**
+	 * Maximum bytes returned by the admin preview.
+	 */
+	private const PREVIEW_MAX_LENGTH = 60000;
+
+	/**
 	 * @var Options
 	 */
 	private Options $options;
@@ -280,6 +285,35 @@ final class Llms {
 		}
 	}
 
+	/**
+	 * Build a read-only admin preview of llms.txt without touching the cache.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function preview(): array {
+		$opt     = $this->options->get();
+		$enabled = ! empty( $opt['enabled_llms_txt'] );
+		$content = $enabled ? $this->build_llms_txt() : '';
+		$full    = rtrim( Markdown::normalize_blocks( $content ) ) . ( $content !== '' ? "\n" : '' );
+		$preview = $full;
+		$truncated = false;
+
+		if ( strlen( $preview ) > self::PREVIEW_MAX_LENGTH ) {
+			$preview   = substr( $preview, 0, self::PREVIEW_MAX_LENGTH ) . "\n\n[Preview truncated]\n";
+			$truncated = true;
+		}
+
+		return array(
+			'enabled'     => $enabled,
+			'url'         => home_url( '/llms.txt' ),
+			'content'     => $preview,
+			'contentHash' => $full !== '' ? sha1( $full ) : '',
+			'generatedAt' => gmdate( 'c' ),
+			'cacheStatus' => $this->cache_status_from_options( $opt ),
+			'truncated'   => $truncated,
+		);
+	}
+
 
 	/**
 	 * Output llms.txt (cached when possible).
@@ -357,6 +391,32 @@ final class Llms {
 		);
 		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown body is sanitized while being built.
 		exit;
+	}
+
+	/**
+	 * Return a simple cache status label for admin UI.
+	 *
+	 * @param array<string,mixed> $opt Current options.
+	 * @return string Cache status.
+	 */
+	private function cache_status_from_options( array $opt ): string {
+		if ( empty( $opt['enabled_llms_txt'] ) ) {
+			return 'disabled';
+		}
+
+		$content = isset( $opt['llms_cache'] ) ? trim( (string) $opt['llms_cache'] ) : '';
+		$hash    = isset( $opt['llms_cache_settings_hash'] ) ? (string) $opt['llms_cache_settings_hash'] : '';
+
+		if ( $content === '' || $hash === '' ) {
+			return 'not_cached';
+		}
+
+		$current = $this->settings_hash_from_options( $opt );
+		if ( ! hash_equals( $hash, $current ) ) {
+			return 'needs_regeneration';
+		}
+
+		return 'cached';
 	}
 
 	/**
