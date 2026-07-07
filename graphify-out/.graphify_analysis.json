@@ -1,0 +1,462 @@
+{
+  "communities": {
+    "0": [
+      "inc_exporter",
+      "inc_llms",
+      "inc_llms_llms",
+      "inc_llms_llms_build_llms_txt",
+      "inc_llms_llms_clear_cache",
+      "inc_llms_llms_clear_cache_for_post",
+      "inc_llms_llms_get_essential_links",
+      "inc_llms_llms_get_recent_posts_by_type",
+      "inc_llms_llms_maybe_clear_cache_on_description_meta_change",
+      "inc_llms_llms_maybe_regenerate_for_post",
+      "inc_llms_llms_maybe_regenerate_on_delete",
+      "inc_llms_llms_maybe_regenerate_on_save",
+      "inc_llms_llms_maybe_regenerate_on_status_change",
+      "inc_llms_llms_md_link_text",
+      "inc_llms_llms_output",
+      "inc_llms_llms_post_type_label",
+      "inc_llms_llms_regenerate",
+      "inc_llms_llms_regenerate_from_schedule",
+      "inc_llms_llms_schedule_regeneration",
+      "inc_llms_llms_settings_hash_from_options",
+      "inc_markdown",
+      "inc_options",
+      "inc_options_options_ensure_defaults",
+      "inc_plugin_plugin_maybe_flush_rewrites",
+      "tests_run",
+      "tests_run_add_option",
+      "tests_run_assert_contains_text",
+      "tests_run_assert_not_contains_text",
+      "tests_run_assert_true",
+      "tests_run_call_private",
+      "tests_run_delete_transient",
+      "tests_run_esc_url_raw",
+      "tests_run_get_feed_link",
+      "tests_run_get_option",
+      "tests_run_get_page_uri",
+      "tests_run_get_post",
+      "tests_run_get_post_type_object",
+      "tests_run_get_the_author_meta",
+      "tests_run_get_the_date",
+      "tests_run_get_the_modified_date",
+      "tests_run_get_the_title",
+      "tests_run_get_transient",
+      "tests_run_parse_blocks",
+      "tests_run_post_type_exists",
+      "tests_run_remove_all_filters",
+      "tests_run_selected",
+      "tests_run_set_transient",
+      "tests_run_update_option",
+      "tests_run_wp_is_post_autosave",
+      "tests_run_wp_is_post_revision",
+      "tests_run_wp_next_scheduled",
+      "tests_run_wp_parse_url",
+      "tests_run_wp_post",
+      "tests_run_wp_post_construct",
+      "tests_run_wp_query",
+      "tests_run_wp_query_construct",
+      "tests_run_wp_schedule_single_event",
+      "tests_run_wp_trim_words"
+    ],
+    "1": [
+      "inc_exporter_exporter_construct",
+      "inc_options_options",
+      "inc_options_options_absolute_http_url",
+      "inc_options_options_author_name_for_post",
+      "inc_options_options_bounded_filter_int",
+      "inc_options_options_can_export_post",
+      "inc_options_options_default_port_for_scheme",
+      "inc_options_options_defaults",
+      "inc_options_options_excluded_post_ids",
+      "inc_options_options_explicit_excerpt_for_post",
+      "inc_options_options_exportable_post_types",
+      "inc_options_options_get",
+      "inc_options_options_is_exportable_post_type",
+      "inc_options_options_is_post_excluded",
+      "inc_options_options_is_public_export_candidate",
+      "inc_options_options_is_same_origin_url",
+      "inc_options_options_is_selected_post_type",
+      "inc_options_options_limit_markdown_length",
+      "inc_options_options_llms_description_for_post",
+      "inc_options_options_markdown_url_for_post",
+      "inc_options_options_post_path",
+      "inc_options_options_publisher_name",
+      "inc_options_options_rawurlencode_path",
+      "inc_options_options_sanitize",
+      "inc_options_options_sanitize_base_path",
+      "inc_options_options_sanitize_essential_links",
+      "inc_options_options_sanitize_excluded_posts",
+      "inc_options_options_sanitize_llms_custom_markdown",
+      "inc_options_options_sanitize_llms_description",
+      "inc_options_options_sanitize_markdown_block",
+      "inc_options_options_sanitize_markdown_override",
+      "inc_options_options_sanitize_post_types",
+      "inc_options_options_sanitize_sitemap_url",
+      "inc_options_options_sanitize_textline",
+      "inc_options_options_selected_post_types",
+      "inc_options_options_seo_description_for_post",
+      "inc_options_options_site_author_override",
+      "inc_options_options_site_description",
+      "inc_options_options_site_title",
+      "inc_options_options_sitemap_absolute_url",
+      "inc_options_options_strip_markdown_headings",
+      "inc_options_options_update",
+      "tests_run_apply_filters",
+      "tests_run_get_post_meta",
+      "tests_run_home_url",
+      "tests_run_post_password_required",
+      "tests_run_sanitize_key",
+      "tests_run_wp_kses_post"
+    ],
+    "2": [
+      "domdocument",
+      "inc_exporter_exporter",
+      "inc_exporter_exporter_block_html",
+      "inc_exporter_exporter_blocks_to_markdown",
+      "inc_exporter_exporter_build_image_markdown",
+      "inc_exporter_exporter_code_fence",
+      "inc_exporter_exporter_core_table_to_markdown",
+      "inc_exporter_exporter_details_block_to_md",
+      "inc_exporter_exporter_dom_blockquote_to_md",
+      "inc_exporter_exporter_dom_figure_to_md",
+      "inc_exporter_exporter_dom_from_html_fragment",
+      "inc_exporter_exporter_dom_inner_html",
+      "inc_exporter_exporter_dom_list_to_md",
+      "inc_exporter_exporter_dom_tr_to_row",
+      "inc_exporter_exporter_embed_block_to_md",
+      "inc_exporter_exporter_escape_md",
+      "inc_exporter_exporter_extract_image_data_from_block",
+      "inc_exporter_exporter_extract_image_data_from_html",
+      "inc_exporter_exporter_extract_images_from_gallery_html",
+      "inc_exporter_exporter_fallback_plain_table",
+      "inc_exporter_exporter_gallery_blocks_to_md",
+      "inc_exporter_exporter_get_markdown_override",
+      "inc_exporter_exporter_html_block_to_md",
+      "inc_exporter_exporter_html_inline_to_md",
+      "inc_exporter_exporter_inline_code",
+      "inc_exporter_exporter_list_blocks_to_md",
+      "inc_exporter_exporter_markdown_headers_for_post",
+      "inc_exporter_exporter_markdown_metadata_for_post",
+      "inc_exporter_exporter_md_table_cell",
+      "inc_exporter_exporter_metadata_hash",
+      "inc_exporter_exporter_normalize_newlines",
+      "inc_exporter_exporter_output_markdown",
+      "inc_exporter_exporter_post_modified_timestamp",
+      "inc_exporter_exporter_post_to_markdown",
+      "inc_exporter_exporter_prefix_quote",
+      "inc_exporter_exporter_send_not_found",
+      "inc_markdown_markdown",
+      "inc_markdown_markdown_link_text",
+      "inc_markdown_markdown_normalize_blocks",
+      "inc_markdown_markdown_normalize_newlines",
+      "inc_markdown_markdown_plain_text_line",
+      "inc_markdown_markdown_url_destination",
+      "tests_run_get_permalink",
+      "tests_run_wp_json_encode",
+      "tests_run_wp_strip_all_tags"
+    ],
+    "3": [
+      "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
+      "inc_admin",
+      "inc_admin_admin",
+      "inc_admin_admin_admin_init",
+      "inc_admin_admin_admin_menu",
+      "inc_admin_admin_ajax_search_posts",
+      "inc_admin_admin_enqueue_admin_assets",
+      "inc_admin_admin_excluded_items_for_type",
+      "inc_admin_admin_field_base_path",
+      "inc_admin_admin_field_crawler_diagnostics",
+      "inc_admin_admin_field_enabled_llms_txt",
+      "inc_admin_admin_field_enabled_markdown",
+      "inc_admin_admin_field_excluded_posts",
+      "inc_admin_admin_field_llms_custom_markdown",
+      "inc_admin_admin_field_llms_essential_links",
+      "inc_admin_admin_field_llms_noindex",
+      "inc_admin_admin_field_llms_recent_limit",
+      "inc_admin_admin_field_llms_regen_mode",
+      "inc_admin_admin_field_llms_show_excerpt",
+      "inc_admin_admin_field_md_noindex",
+      "inc_admin_admin_field_post_types",
+      "inc_admin_admin_field_site_author_override",
+      "inc_admin_admin_field_site_description_override",
+      "inc_admin_admin_field_site_title_override",
+      "inc_admin_admin_field_sitemap_url",
+      "inc_admin_admin_handle_regenerate_llms",
+      "inc_admin_admin_maybe_add_md_override_metabox",
+      "inc_admin_admin_post_picker_title",
+      "inc_admin_admin_render_excluded_item",
+      "inc_admin_admin_render_md_override_metabox",
+      "inc_admin_admin_render_option_checkbox",
+      "inc_admin_admin_render_page",
+      "inc_admin_admin_sanitize_options",
+      "inc_admin_admin_save_md_override_metabox",
+      "inc_admin_admin_selected_post_types",
+      "inc_admin_admin_text_length",
+      "inc_response_response_send_conditional_headers",
+      "tests_run_checked",
+      "tests_run_current_user_can",
+      "tests_run_esc_attr",
+      "tests_run_esc_html",
+      "tests_run_esc_textarea",
+      "tests_run_sanitize_text_field",
+      "tests_run_wp_unslash"
+    ],
+    "4": [
+      "inc_plugin",
+      "inc_plugin_plugin",
+      "inc_plugin_plugin_activate",
+      "inc_plugin_plugin_boot",
+      "inc_plugin_plugin_deactivate",
+      "inc_plugin_plugin_find_post_by_path",
+      "inc_plugin_plugin_init",
+      "inc_plugin_plugin_instance",
+      "inc_plugin_plugin_output_alternate_markdown_link",
+      "inc_plugin_plugin_register_editor_meta",
+      "inc_plugin_plugin_sanitize_llms_description_meta",
+      "inc_plugin_plugin_sanitize_md_override_meta",
+      "inc_plugin_plugin_send_404",
+      "inc_plugin_plugin_template_redirect",
+      "inc_rewrites",
+      "inc_rewrites_rewrites",
+      "inc_rewrites_rewrites_add_query_vars",
+      "inc_rewrites_rewrites_add_rules",
+      "inc_rewrites_rewrites_construct",
+      "tests_run_add_filter"
+    ],
+    "5": [
+      "agents",
+      "agents_ci_cd",
+      "agents_graphify",
+      "agents_зависимости",
+      "agents_команды",
+      "agents_локализация",
+      "agents_навигация",
+      "agents_окружение",
+      "agents_подводные_камни",
+      "agents_полезные_ссылки",
+      "agents_стиль"
+    ],
+    "6": [
+      "inc_admin_admin_construct",
+      "inc_llms_llms_construct",
+      "llm_friendly",
+      "llm_friendly_llmf_activate",
+      "llm_friendly_llmf_add_settings_link",
+      "llm_friendly_llmf_deactivate",
+      "llm_friendly_llmf_load_textdomain",
+      "llm_friendly_llmf_requirements_met",
+      "llm_friendly_llmf_requirements_notice",
+      "tests_run_add_action",
+      "tests_run_get_bloginfo"
+    ],
+    "7": [
+      "composer",
+      "composer_description",
+      "composer_license",
+      "composer_name",
+      "composer_require",
+      "composer_require_php",
+      "composer_scripts",
+      "composer_scripts_lint",
+      "composer_scripts_test",
+      "composer_type"
+    ],
+    "8": [
+      "inc_response",
+      "inc_response_response",
+      "inc_response_response_clean_header_name",
+      "inc_response_response_clean_header_value",
+      "inc_response_response_etag_from_string",
+      "inc_response_response_etag_matches",
+      "inc_response_response_header_lines",
+      "inc_response_response_send_service_unavailable"
+    ],
+    "9": [
+      "assets_llmf_admin"
+    ],
+    "10": [
+      "languages_llm_friendly_de_de_l10n"
+    ],
+    "11": [
+      "languages_llm_friendly_es_es_l10n"
+    ],
+    "12": [
+      "languages_llm_friendly_fr_fr_l10n"
+    ],
+    "13": [
+      "languages_llm_friendly_ru_ru_l10n"
+    ],
+    "14": [
+      "languages_llm_friendly_uk_l10n"
+    ],
+    "15": [
+      "languages_llm_friendly_uk_ua_l10n"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06654567453115548,
+    "1": 0.10726950354609929,
+    "2": 0.12525252525252525,
+    "3": 0.113107822410148,
+    "4": 0.12631578947368421,
+    "5": 0.18181818181818182,
+    "6": 0.21818181818181817,
+    "7": 0.2,
+    "8": 0.25,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0
+  },
+  "gods": [
+    {
+      "id": "inc_options_options",
+      "label": "Options",
+      "degree": 53
+    },
+    {
+      "id": "inc_exporter_exporter",
+      "label": "Exporter",
+      "degree": 40
+    },
+    {
+      "id": "inc_admin_admin",
+      "label": "Admin",
+      "degree": 36
+    },
+    {
+      "id": "tests_run_wp_post",
+      "label": "WP_Post",
+      "degree": 28
+    },
+    {
+      "id": "inc_markdown_markdown",
+      "label": "Markdown",
+      "degree": 26
+    },
+    {
+      "id": "inc_llms_llms",
+      "label": "Llms",
+      "degree": 22
+    },
+    {
+      "id": "tests_run_esc_html",
+      "label": "esc_html__()",
+      "degree": 22
+    },
+    {
+      "id": "inc_plugin_plugin",
+      "label": "Plugin",
+      "degree": 19
+    },
+    {
+      "id": "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
+      "label": "__()",
+      "degree": 18
+    },
+    {
+      "id": "tests_run_esc_attr",
+      "label": "esc_attr()",
+      "degree": 15
+    }
+  ],
+  "surprises": [
+    {
+      "source": "llmf_add_settings_link()",
+      "target": "esc_html__()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `llmf_add_settings_link()` unexpectedly reaches hub `esc_html__()`"
+    },
+    {
+      "source": "llmf_requirements_notice()",
+      "target": "esc_html__()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "llmf_activate()",
+      "target": "esc_html__()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "llmf_requirements_met()",
+      "target": "get_bloginfo()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "llmf_requirements_notice()",
+      "target": "get_bloginfo()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Options` connect `Options` to `run.php`, `Exporter`, `Plugin`, `llm-friendly.php`?",
+      "why": "High betweenness centrality (0.177) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Exporter` connect `Exporter` to `run.php`, `Options`, `Plugin`?",
+      "why": "High betweenness centrality (0.168) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Plugin` connect `Plugin` to `run.php`, `Options`, `Exporter`, `Admin`?",
+      "why": "High betweenness centrality (0.109) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 20 inferred relationships involving `Markdown` (e.g. with `.blocks_to_markdown()` and `.build_image_markdown()`) actually correct?",
+      "why": "`Markdown` has 20 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `Graphify`, `Навигация`, `Команды` to the rest of the system?",
+      "why": "17 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `run.php` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06654567453115548 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Options` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.10726950354609929 - nodes in this community are weakly interconnected."
+    }
+  ]
+}
