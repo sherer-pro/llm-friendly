@@ -461,7 +461,9 @@ final class Admin {
 	 * @return void
 	 */
 	private function render_setting_field( string $title, callable $callback, string $for = '' ): void {
-		echo '<div class="llmf-field">';
+		$class = $title === '' ? 'llmf-field llmf-field--full' : 'llmf-field';
+
+		echo '<div class="' . esc_attr( $class ) . '">';
 		if ( $title !== '' ) {
 			echo '<div class="llmf-field__meta">';
 			if ( $for !== '' ) {
@@ -911,12 +913,12 @@ final class Admin {
 		}
 		echo ' />';
 		echo '<span class="llmf-switch-field__track" aria-hidden="true"><span class="llmf-switch-field__thumb"></span></span>';
-		echo '<span class="llmf-switch-field__copy"><span class="llmf-switch-field__label">' . esc_html( $label ) . '</span></span>';
-		echo '</label>';
-
+		echo '<span class="llmf-switch-field__copy"><span class="llmf-switch-field__label">' . esc_html( $label ) . '</span>';
 		if ( $description !== '' ) {
-			$this->render_field_description( $key, $description );
+			echo '<span class="description llmf-switch-field__description" id="' . esc_attr( $desc_id ) . '">' . esc_html( $description ) . '</span>';
 		}
+		echo '</span>';
+		echo '</label>';
 	}
 
 	/**
