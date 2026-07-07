@@ -138,5 +138,10 @@
     "mtime": 1767010230.0,
     "ast_hash": "9ffae43cd1faf704bb4be916acafe18d",
     "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260707_082846_explain_the_architecture_of_this_project.md": {
+    "mtime": 1783412926.8099997,
+    "ast_hash": "037c71085d61932e9dfcbb53e09c890d",
+    "semantic_hash": ""
   }
 }

@@ -4,127 +4,6 @@
   "graph": {},
   "nodes": [
     {
-      "label": "AGENTS.md",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "agents.md",
-      "id": "agents",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "Graphify",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "graphify",
-      "id": "agents_graphify",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L15",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f",
-      "id": "agents_\u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041a\u043e\u043c\u0430\u043d\u0434\u044b",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L32",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043a\u043e\u043c\u0430\u043d\u0434\u044b",
-      "id": "agents_\u043a\u043e\u043c\u0430\u043d\u0434\u044b",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u0421\u0442\u0438\u043b\u044c",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L49",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u0441\u0442\u0438\u043b\u044c",
-      "id": "agents_\u0441\u0442\u0438\u043b\u044c",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u0435",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L62",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u0435",
-      "id": "agents_\u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u0435",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u0417\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L70",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438",
-      "id": "agents_\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "CI/CD",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L79",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "ci/cd",
-      "id": "agents_ci_cd",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L85",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f",
-      "id": "agents_\u043b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041f\u043e\u0434\u0432\u043e\u0434\u043d\u044b\u0435 \u043a\u0430\u043c\u043d\u0438",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L100",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043f\u043e\u0434\u0432\u043e\u0434\u043d\u044b\u0435 \u043a\u0430\u043c\u043d\u0438",
-      "id": "agents_\u043f\u043e\u0434\u0432\u043e\u0434\u043d\u044b\u0435_\u043a\u0430\u043c\u043d\u0438",
-      "community_name": "AGENTS.md"
-    },
-    {
-      "label": "\u041f\u043e\u043b\u0435\u0437\u043d\u044b\u0435 \u0441\u0441\u044b\u043b\u043a\u0438",
-      "file_type": "document",
-      "source_file": "AGENTS.md",
-      "source_location": "L111",
-      "_origin": "ast",
-      "community": 5,
-      "norm_label": "\u043f\u043e\u043b\u0435\u0437\u043d\u044b\u0435 \u0441\u0441\u044b\u043b\u043a\u0438",
-      "id": "agents_\u043f\u043e\u043b\u0435\u0437\u043d\u044b\u0435_\u0441\u0441\u044b\u043b\u043a\u0438",
-      "community_name": "AGENTS.md"
-    },
-    {
       "label": "llmf-admin.js",
       "file_type": "code",
       "source_file": "assets/llmf-admin.js",
@@ -132,8 +11,8 @@
       "_origin": "ast",
       "community": 9,
       "norm_label": "llmf-admin.js",
-      "id": "assets_llmf_admin",
-      "community_name": "llmf-admin.js"
+      "community_name": "llmf-admin.js",
+      "id": "assets_llmf_admin"
     },
     {
       "label": "composer.json",
@@ -143,8 +22,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "composer.json",
-      "id": "composer",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer"
     },
     {
       "label": "name",
@@ -154,8 +33,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "name",
-      "id": "composer_name",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_name"
     },
     {
       "label": "description",
@@ -165,8 +44,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "description",
-      "id": "composer_description",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_description"
     },
     {
       "label": "type",
@@ -176,8 +55,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "type",
-      "id": "composer_type",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_type"
     },
     {
       "label": "license",
@@ -187,8 +66,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "license",
-      "id": "composer_license",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_license"
     },
     {
       "label": "require",
@@ -198,8 +77,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "require",
-      "id": "composer_require",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_require"
     },
     {
       "label": "php",
@@ -209,8 +88,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "php",
-      "id": "composer_require_php",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_require_php"
     },
     {
       "label": "scripts",
@@ -220,8 +99,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "scripts",
-      "id": "composer_scripts",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_scripts"
     },
     {
       "label": "lint",
@@ -231,8 +110,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "lint",
-      "id": "composer_scripts_lint",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_scripts_lint"
     },
     {
       "label": "test",
@@ -242,8 +121,8 @@
       "_origin": "ast",
       "community": 7,
       "norm_label": "test",
-      "id": "composer_scripts_test",
-      "community_name": "composer.json"
+      "community_name": "composer.json",
+      "id": "composer_scripts_test"
     },
     {
       "label": "Admin.php",
@@ -253,8 +132,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "admin.php",
-      "id": "inc_admin",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin"
     },
     {
       "label": "Admin",
@@ -264,8 +143,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "admin",
-      "id": "inc_admin_admin",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin"
     },
     {
       "label": ".__construct()",
@@ -275,8 +154,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": ".__construct()",
-      "id": "inc_admin_admin_construct",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "inc_admin_admin_construct"
     },
     {
       "label": ".admin_menu()",
@@ -286,8 +165,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".admin_menu()",
-      "id": "inc_admin_admin_admin_menu",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_admin_menu"
     },
     {
       "label": ".admin_init()",
@@ -297,8 +176,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".admin_init()",
-      "id": "inc_admin_admin_admin_init",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_admin_init"
     },
     {
       "label": ".sanitize_options()",
@@ -308,8 +187,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".sanitize_options()",
-      "id": "inc_admin_admin_sanitize_options",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_sanitize_options"
     },
     {
       "label": ".selected_post_types()",
@@ -319,8 +198,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".selected_post_types()",
-      "id": "inc_admin_admin_selected_post_types",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_selected_post_types"
     },
     {
       "label": ".text_length()",
@@ -328,10 +207,10 @@
       "source_file": "inc/Admin.php",
       "source_location": "L271",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".text_length()",
-      "id": "inc_admin_admin_text_length",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_text_length"
     },
     {
       "label": ".post_picker_title()",
@@ -341,8 +220,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".post_picker_title()",
-      "id": "inc_admin_admin_post_picker_title",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_post_picker_title"
     },
     {
       "label": ".render_option_checkbox()",
@@ -352,8 +231,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".render_option_checkbox()",
-      "id": "inc_admin_admin_render_option_checkbox",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_render_option_checkbox"
     },
     {
       "label": ".excluded_items_for_type()",
@@ -363,8 +242,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".excluded_items_for_type()",
-      "id": "inc_admin_admin_excluded_items_for_type",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_excluded_items_for_type"
     },
     {
       "label": ".render_excluded_item()",
@@ -374,8 +253,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".render_excluded_item()",
-      "id": "inc_admin_admin_render_excluded_item",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_render_excluded_item"
     },
     {
       "label": ".enqueue_admin_assets()",
@@ -385,8 +264,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".enqueue_admin_assets()",
-      "id": "inc_admin_admin_enqueue_admin_assets",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_enqueue_admin_assets"
     },
     {
       "label": ".render_page()",
@@ -394,10 +273,10 @@
       "source_file": "inc/Admin.php",
       "source_location": "L437",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".render_page()",
-      "id": "inc_admin_admin_render_page",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_render_page"
     },
     {
       "label": ".ajax_search_posts()",
@@ -405,10 +284,10 @@
       "source_file": "inc/Admin.php",
       "source_location": "L481",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".ajax_search_posts()",
-      "id": "inc_admin_admin_ajax_search_posts",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_ajax_search_posts"
     },
     {
       "label": ".handle_regenerate_llms()",
@@ -416,10 +295,10 @@
       "source_file": "inc/Admin.php",
       "source_location": "L548",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".handle_regenerate_llms()",
-      "id": "inc_admin_admin_handle_regenerate_llms",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_handle_regenerate_llms"
     },
     {
       "label": ".field_enabled_markdown()",
@@ -429,8 +308,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_enabled_markdown()",
-      "id": "inc_admin_admin_field_enabled_markdown",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_enabled_markdown"
     },
     {
       "label": ".field_md_noindex()",
@@ -440,8 +319,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_md_noindex()",
-      "id": "inc_admin_admin_field_md_noindex",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_md_noindex"
     },
     {
       "label": ".field_base_path()",
@@ -451,8 +330,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_base_path()",
-      "id": "inc_admin_admin_field_base_path",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_base_path"
     },
     {
       "label": ".field_post_types()",
@@ -462,8 +341,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_post_types()",
-      "id": "inc_admin_admin_field_post_types",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_post_types"
     },
     {
       "label": ".field_enabled_llms_txt()",
@@ -473,8 +352,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_enabled_llms_txt()",
-      "id": "inc_admin_admin_field_enabled_llms_txt",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_enabled_llms_txt"
     },
     {
       "label": ".field_llms_noindex()",
@@ -484,8 +363,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_noindex()",
-      "id": "inc_admin_admin_field_llms_noindex",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_noindex"
     },
     {
       "label": ".field_llms_regen_mode()",
@@ -495,8 +374,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_regen_mode()",
-      "id": "inc_admin_admin_field_llms_regen_mode",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_regen_mode"
     },
     {
       "label": ".field_llms_recent_limit()",
@@ -506,8 +385,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_recent_limit()",
-      "id": "inc_admin_admin_field_llms_recent_limit",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_recent_limit"
     },
     {
       "label": ".field_llms_show_excerpt()",
@@ -517,8 +396,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_show_excerpt()",
-      "id": "inc_admin_admin_field_llms_show_excerpt",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_show_excerpt"
     },
     {
       "label": ".field_sitemap_url()",
@@ -528,8 +407,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_sitemap_url()",
-      "id": "inc_admin_admin_field_sitemap_url",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_sitemap_url"
     },
     {
       "label": ".field_llms_custom_markdown()",
@@ -539,8 +418,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_custom_markdown()",
-      "id": "inc_admin_admin_field_llms_custom_markdown",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_custom_markdown"
     },
     {
       "label": ".field_llms_essential_links()",
@@ -550,8 +429,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_llms_essential_links()",
-      "id": "inc_admin_admin_field_llms_essential_links",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_llms_essential_links"
     },
     {
       "label": ".field_crawler_diagnostics()",
@@ -561,8 +440,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_crawler_diagnostics()",
-      "id": "inc_admin_admin_field_crawler_diagnostics",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_crawler_diagnostics"
     },
     {
       "label": ".field_excluded_posts()",
@@ -572,8 +451,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_excluded_posts()",
-      "id": "inc_admin_admin_field_excluded_posts",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_excluded_posts"
     },
     {
       "label": ".field_site_title_override()",
@@ -583,8 +462,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_site_title_override()",
-      "id": "inc_admin_admin_field_site_title_override",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_site_title_override"
     },
     {
       "label": ".field_site_description_override()",
@@ -594,8 +473,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_site_description_override()",
-      "id": "inc_admin_admin_field_site_description_override",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_site_description_override"
     },
     {
       "label": ".field_site_author_override()",
@@ -605,8 +484,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".field_site_author_override()",
-      "id": "inc_admin_admin_field_site_author_override",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_field_site_author_override"
     },
     {
       "label": ".maybe_add_md_override_metabox()",
@@ -616,8 +495,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".maybe_add_md_override_metabox()",
-      "id": "inc_admin_admin_maybe_add_md_override_metabox",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_maybe_add_md_override_metabox"
     },
     {
       "label": ".render_md_override_metabox()",
@@ -627,8 +506,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": ".render_md_override_metabox()",
-      "id": "inc_admin_admin_render_md_override_metabox",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_render_md_override_metabox"
     },
     {
       "label": ".save_md_override_metabox()",
@@ -636,10 +515,10 @@
       "source_file": "inc/Admin.php",
       "source_location": "L940",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".save_md_override_metabox()",
-      "id": "inc_admin_admin_save_md_override_metabox",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_admin_admin_save_md_override_metabox"
     },
     {
       "label": "Exporter.php",
@@ -647,10 +526,10 @@
       "source_file": "inc/Exporter.php",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "exporter.php",
-      "id": "inc_exporter",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_exporter"
     },
     {
       "label": "Exporter",
@@ -660,8 +539,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "exporter",
-      "id": "inc_exporter_exporter",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter"
     },
     {
       "label": ".__construct()",
@@ -671,8 +550,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".__construct()",
-      "id": "inc_exporter_exporter_construct",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_exporter_exporter_construct"
     },
     {
       "label": ".output_markdown()",
@@ -682,8 +561,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".output_markdown()",
-      "id": "inc_exporter_exporter_output_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_output_markdown"
     },
     {
       "label": ".markdown_headers_for_post()",
@@ -693,8 +572,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".markdown_headers_for_post()",
-      "id": "inc_exporter_exporter_markdown_headers_for_post",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_markdown_headers_for_post"
     },
     {
       "label": ".send_not_found()",
@@ -704,8 +583,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".send_not_found()",
-      "id": "inc_exporter_exporter_send_not_found",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_send_not_found"
     },
     {
       "label": ".markdown_metadata_for_post()",
@@ -713,10 +592,10 @@
       "source_file": "inc/Exporter.php",
       "source_location": "L123",
       "_origin": "ast",
-      "community": 2,
+      "community": 0,
       "norm_label": ".markdown_metadata_for_post()",
-      "id": "inc_exporter_exporter_markdown_metadata_for_post",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_markdown_metadata_for_post"
     },
     {
       "label": ".metadata_hash()",
@@ -726,8 +605,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".metadata_hash()",
-      "id": "inc_exporter_exporter_metadata_hash",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_metadata_hash"
     },
     {
       "label": ".post_to_markdown()",
@@ -737,8 +616,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".post_to_markdown()",
-      "id": "inc_exporter_exporter_post_to_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_post_to_markdown"
     },
     {
       "label": ".get_markdown_override()",
@@ -748,8 +627,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".get_markdown_override()",
-      "id": "inc_exporter_exporter_get_markdown_override",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_get_markdown_override"
     },
     {
       "label": ".blocks_to_markdown()",
@@ -759,8 +638,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".blocks_to_markdown()",
-      "id": "inc_exporter_exporter_blocks_to_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_blocks_to_markdown"
     },
     {
       "label": ".html_inline_to_md()",
@@ -770,8 +649,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".html_inline_to_md()",
-      "id": "inc_exporter_exporter_html_inline_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_html_inline_to_md"
     },
     {
       "label": ".escape_md()",
@@ -781,8 +660,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".escape_md()",
-      "id": "inc_exporter_exporter_escape_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_escape_md"
     },
     {
       "label": ".normalize_newlines()",
@@ -792,8 +671,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".normalize_newlines()",
-      "id": "inc_exporter_exporter_normalize_newlines",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_normalize_newlines"
     },
     {
       "label": ".block_html()",
@@ -803,8 +682,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".block_html()",
-      "id": "inc_exporter_exporter_block_html",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_block_html"
     },
     {
       "label": ".code_fence()",
@@ -814,8 +693,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".code_fence()",
-      "id": "inc_exporter_exporter_code_fence",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_code_fence"
     },
     {
       "label": ".inline_code()",
@@ -825,8 +704,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".inline_code()",
-      "id": "inc_exporter_exporter_inline_code",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_inline_code"
     },
     {
       "label": ".embed_block_to_md()",
@@ -836,8 +715,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".embed_block_to_md()",
-      "id": "inc_exporter_exporter_embed_block_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_embed_block_to_md"
     },
     {
       "label": ".details_block_to_md()",
@@ -847,8 +726,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".details_block_to_md()",
-      "id": "inc_exporter_exporter_details_block_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_details_block_to_md"
     },
     {
       "label": ".dom_from_html_fragment()",
@@ -858,8 +737,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_from_html_fragment()",
-      "id": "inc_exporter_exporter_dom_from_html_fragment",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_from_html_fragment"
     },
     {
       "label": "DOMDocument",
@@ -869,8 +748,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "domdocument",
-      "id": "domdocument",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "domdocument"
     },
     {
       "label": ".list_blocks_to_md()",
@@ -880,8 +759,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".list_blocks_to_md()",
-      "id": "inc_exporter_exporter_list_blocks_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_list_blocks_to_md"
     },
     {
       "label": ".html_block_to_md()",
@@ -891,8 +770,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".html_block_to_md()",
-      "id": "inc_exporter_exporter_html_block_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_html_block_to_md"
     },
     {
       "label": ".prefix_quote()",
@@ -902,8 +781,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".prefix_quote()",
-      "id": "inc_exporter_exporter_prefix_quote",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_prefix_quote"
     },
     {
       "label": ".dom_inner_html()",
@@ -913,8 +792,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_inner_html()",
-      "id": "inc_exporter_exporter_dom_inner_html",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_inner_html"
     },
     {
       "label": ".dom_blockquote_to_md()",
@@ -924,8 +803,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_blockquote_to_md()",
-      "id": "inc_exporter_exporter_dom_blockquote_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_blockquote_to_md"
     },
     {
       "label": ".dom_figure_to_md()",
@@ -935,8 +814,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_figure_to_md()",
-      "id": "inc_exporter_exporter_dom_figure_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_figure_to_md"
     },
     {
       "label": ".build_image_markdown()",
@@ -946,8 +825,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".build_image_markdown()",
-      "id": "inc_exporter_exporter_build_image_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_build_image_markdown"
     },
     {
       "label": ".extract_image_data_from_block()",
@@ -957,8 +836,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".extract_image_data_from_block()",
-      "id": "inc_exporter_exporter_extract_image_data_from_block",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_extract_image_data_from_block"
     },
     {
       "label": ".extract_image_data_from_html()",
@@ -968,8 +847,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".extract_image_data_from_html()",
-      "id": "inc_exporter_exporter_extract_image_data_from_html",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_extract_image_data_from_html"
     },
     {
       "label": ".gallery_blocks_to_md()",
@@ -979,8 +858,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".gallery_blocks_to_md()",
-      "id": "inc_exporter_exporter_gallery_blocks_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_gallery_blocks_to_md"
     },
     {
       "label": ".extract_images_from_gallery_html()",
@@ -990,8 +869,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".extract_images_from_gallery_html()",
-      "id": "inc_exporter_exporter_extract_images_from_gallery_html",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_extract_images_from_gallery_html"
     },
     {
       "label": ".dom_list_to_md()",
@@ -1001,8 +880,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_list_to_md()",
-      "id": "inc_exporter_exporter_dom_list_to_md",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_list_to_md"
     },
     {
       "label": ".core_table_to_markdown()",
@@ -1012,8 +891,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".core_table_to_markdown()",
-      "id": "inc_exporter_exporter_core_table_to_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_core_table_to_markdown"
     },
     {
       "label": ".fallback_plain_table()",
@@ -1023,8 +902,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".fallback_plain_table()",
-      "id": "inc_exporter_exporter_fallback_plain_table",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_fallback_plain_table"
     },
     {
       "label": ".dom_tr_to_row()",
@@ -1034,8 +913,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".dom_tr_to_row()",
-      "id": "inc_exporter_exporter_dom_tr_to_row",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_dom_tr_to_row"
     },
     {
       "label": ".post_modified_timestamp()",
@@ -1045,8 +924,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".post_modified_timestamp()",
-      "id": "inc_exporter_exporter_post_modified_timestamp",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_post_modified_timestamp"
     },
     {
       "label": ".md_table_cell()",
@@ -1056,8 +935,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".md_table_cell()",
-      "id": "inc_exporter_exporter_md_table_cell",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_exporter_exporter_md_table_cell"
     },
     {
       "label": "Llms.php",
@@ -1065,10 +944,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "llms.php",
-      "id": "inc_llms",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms"
     },
     {
       "label": "Llms",
@@ -1076,10 +955,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "llms",
-      "id": "inc_llms_llms",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms"
     },
     {
       "label": ".__construct()",
@@ -1089,8 +968,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": ".__construct()",
-      "id": "inc_llms_llms_construct",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "inc_llms_llms_construct"
     },
     {
       "label": ".maybe_regenerate_on_save()",
@@ -1098,10 +977,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L60",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_regenerate_on_save()",
-      "id": "inc_llms_llms_maybe_regenerate_on_save",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_maybe_regenerate_on_save"
     },
     {
       "label": ".maybe_regenerate_on_status_change()",
@@ -1109,10 +988,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_regenerate_on_status_change()",
-      "id": "inc_llms_llms_maybe_regenerate_on_status_change",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_maybe_regenerate_on_status_change"
     },
     {
       "label": ".maybe_regenerate_on_delete()",
@@ -1120,10 +999,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L99",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_regenerate_on_delete()",
-      "id": "inc_llms_llms_maybe_regenerate_on_delete",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_maybe_regenerate_on_delete"
     },
     {
       "label": ".maybe_clear_cache_on_description_meta_change()",
@@ -1131,10 +1010,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L116",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_clear_cache_on_description_meta_change()",
-      "id": "inc_llms_llms_maybe_clear_cache_on_description_meta_change",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_maybe_clear_cache_on_description_meta_change"
     },
     {
       "label": ".maybe_regenerate_for_post()",
@@ -1142,10 +1021,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_regenerate_for_post()",
-      "id": "inc_llms_llms_maybe_regenerate_for_post",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_maybe_regenerate_for_post"
     },
     {
       "label": ".clear_cache_for_post()",
@@ -1153,10 +1032,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L161",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".clear_cache_for_post()",
-      "id": "inc_llms_llms_clear_cache_for_post",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_clear_cache_for_post"
     },
     {
       "label": ".clear_cache()",
@@ -1164,10 +1043,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".clear_cache()",
-      "id": "inc_llms_llms_clear_cache",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_clear_cache"
     },
     {
       "label": ".schedule_regeneration()",
@@ -1175,10 +1054,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L204",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".schedule_regeneration()",
-      "id": "inc_llms_llms_schedule_regeneration",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_schedule_regeneration"
     },
     {
       "label": ".regenerate_from_schedule()",
@@ -1186,10 +1065,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L235",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".regenerate_from_schedule()",
-      "id": "inc_llms_llms_regenerate_from_schedule",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_regenerate_from_schedule"
     },
     {
       "label": ".regenerate()",
@@ -1197,10 +1076,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L245",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".regenerate()",
-      "id": "inc_llms_llms_regenerate",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_regenerate"
     },
     {
       "label": ".output()",
@@ -1208,10 +1087,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L289",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".output()",
-      "id": "inc_llms_llms_output",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_output"
     },
     {
       "label": ".build_llms_txt()",
@@ -1221,8 +1100,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".build_llms_txt()",
-      "id": "inc_llms_llms_build_llms_txt",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_build_llms_txt"
     },
     {
       "label": ".get_recent_posts_by_type()",
@@ -1232,8 +1111,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".get_recent_posts_by_type()",
-      "id": "inc_llms_llms_get_recent_posts_by_type",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_get_recent_posts_by_type"
     },
     {
       "label": ".post_type_label()",
@@ -1243,8 +1122,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".post_type_label()",
-      "id": "inc_llms_llms_post_type_label",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_post_type_label"
     },
     {
       "label": ".get_essential_links()",
@@ -1254,8 +1133,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".get_essential_links()",
-      "id": "inc_llms_llms_get_essential_links",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_get_essential_links"
     },
     {
       "label": ".settings_hash_from_options()",
@@ -1263,10 +1142,10 @@
       "source_file": "inc/Llms.php",
       "source_location": "L695",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".settings_hash_from_options()",
-      "id": "inc_llms_llms_settings_hash_from_options",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_settings_hash_from_options"
     },
     {
       "label": ".md_link_text()",
@@ -1276,8 +1155,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".md_link_text()",
-      "id": "inc_llms_llms_md_link_text",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_llms_llms_md_link_text"
     },
     {
       "label": "Markdown.php",
@@ -1287,8 +1166,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "markdown.php",
-      "id": "inc_markdown",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_markdown"
     },
     {
       "label": "Markdown",
@@ -1298,8 +1177,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "markdown",
-      "id": "inc_markdown_markdown",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown"
     },
     {
       "label": ".normalize_newlines()",
@@ -1309,8 +1188,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".normalize_newlines()",
-      "id": "inc_markdown_markdown_normalize_newlines",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown_normalize_newlines"
     },
     {
       "label": ".plain_text_line()",
@@ -1318,10 +1197,10 @@
       "source_file": "inc/Markdown.php",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 2,
+      "community": 1,
       "norm_label": ".plain_text_line()",
-      "id": "inc_markdown_markdown_plain_text_line",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown_plain_text_line"
     },
     {
       "label": ".link_text()",
@@ -1331,8 +1210,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".link_text()",
-      "id": "inc_markdown_markdown_link_text",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown_link_text"
     },
     {
       "label": ".url_destination()",
@@ -1340,10 +1219,10 @@
       "source_file": "inc/Markdown.php",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 2,
+      "community": 1,
       "norm_label": ".url_destination()",
-      "id": "inc_markdown_markdown_url_destination",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown_url_destination"
     },
     {
       "label": ".normalize_blocks()",
@@ -1353,8 +1232,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": ".normalize_blocks()",
-      "id": "inc_markdown_markdown_normalize_blocks",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "inc_markdown_markdown_normalize_blocks"
     },
     {
       "label": "Options.php",
@@ -1364,8 +1243,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "options.php",
-      "id": "inc_options",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_options"
     },
     {
       "label": "Options",
@@ -1375,8 +1254,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "options",
-      "id": "inc_options_options",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options"
     },
     {
       "label": ".ensure_defaults()",
@@ -1386,8 +1265,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".ensure_defaults()",
-      "id": "inc_options_options_ensure_defaults",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_options_options_ensure_defaults"
     },
     {
       "label": ".get()",
@@ -1397,8 +1276,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".get()",
-      "id": "inc_options_options_get",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_get"
     },
     {
       "label": ".update()",
@@ -1408,8 +1287,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".update()",
-      "id": "inc_options_options_update",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_update"
     },
     {
       "label": ".sanitize()",
@@ -1419,8 +1298,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize()",
-      "id": "inc_options_options_sanitize",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize"
     },
     {
       "label": ".defaults()",
@@ -1430,8 +1309,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".defaults()",
-      "id": "inc_options_options_defaults",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_defaults"
     },
     {
       "label": ".is_exportable_post_type()",
@@ -1441,8 +1320,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".is_exportable_post_type()",
-      "id": "inc_options_options_is_exportable_post_type",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_is_exportable_post_type"
     },
     {
       "label": ".can_export_post()",
@@ -1452,8 +1331,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".can_export_post()",
-      "id": "inc_options_options_can_export_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_can_export_post"
     },
     {
       "label": ".exportable_post_types()",
@@ -1463,8 +1342,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".exportable_post_types()",
-      "id": "inc_options_options_exportable_post_types",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_exportable_post_types"
     },
     {
       "label": ".sanitize_post_types()",
@@ -1474,8 +1353,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_post_types()",
-      "id": "inc_options_options_sanitize_post_types",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_post_types"
     },
     {
       "label": ".selected_post_types()",
@@ -1485,8 +1364,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".selected_post_types()",
-      "id": "inc_options_options_selected_post_types",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_selected_post_types"
     },
     {
       "label": ".is_selected_post_type()",
@@ -1496,8 +1375,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".is_selected_post_type()",
-      "id": "inc_options_options_is_selected_post_type",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_is_selected_post_type"
     },
     {
       "label": ".sanitize_llms_custom_markdown()",
@@ -1505,10 +1384,10 @@
       "source_file": "inc/Options.php",
       "source_location": "L422",
       "_origin": "ast",
-      "community": 1,
+      "community": 8,
       "norm_label": ".sanitize_llms_custom_markdown()",
-      "id": "inc_options_options_sanitize_llms_custom_markdown",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_llms_custom_markdown"
     },
     {
       "label": ".sanitize_essential_links()",
@@ -1518,8 +1397,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_essential_links()",
-      "id": "inc_options_options_sanitize_essential_links",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_essential_links"
     },
     {
       "label": ".sanitize_markdown_override()",
@@ -1527,10 +1406,10 @@
       "source_file": "inc/Options.php",
       "source_location": "L482",
       "_origin": "ast",
-      "community": 1,
+      "community": 8,
       "norm_label": ".sanitize_markdown_override()",
-      "id": "inc_options_options_sanitize_markdown_override",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_markdown_override"
     },
     {
       "label": ".sanitize_llms_description()",
@@ -1540,8 +1419,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_llms_description()",
-      "id": "inc_options_options_sanitize_llms_description",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_llms_description"
     },
     {
       "label": ".sanitize_base_path()",
@@ -1551,8 +1430,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_base_path()",
-      "id": "inc_options_options_sanitize_base_path",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_base_path"
     },
     {
       "label": ".post_path()",
@@ -1562,8 +1441,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".post_path()",
-      "id": "inc_options_options_post_path",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_post_path"
     },
     {
       "label": ".markdown_url_for_post()",
@@ -1573,8 +1452,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".markdown_url_for_post()",
-      "id": "inc_options_options_markdown_url_for_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_markdown_url_for_post"
     },
     {
       "label": ".site_title()",
@@ -1584,8 +1463,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".site_title()",
-      "id": "inc_options_options_site_title",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_site_title"
     },
     {
       "label": ".site_description()",
@@ -1595,8 +1474,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".site_description()",
-      "id": "inc_options_options_site_description",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_site_description"
     },
     {
       "label": ".site_author_override()",
@@ -1606,8 +1485,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".site_author_override()",
-      "id": "inc_options_options_site_author_override",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_site_author_override"
     },
     {
       "label": ".author_name_for_post()",
@@ -1617,8 +1496,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".author_name_for_post()",
-      "id": "inc_options_options_author_name_for_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_author_name_for_post"
     },
     {
       "label": ".publisher_name()",
@@ -1628,8 +1507,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".publisher_name()",
-      "id": "inc_options_options_publisher_name",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_publisher_name"
     },
     {
       "label": ".llms_description_for_post()",
@@ -1639,8 +1518,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".llms_description_for_post()",
-      "id": "inc_options_options_llms_description_for_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_llms_description_for_post"
     },
     {
       "label": ".sanitize_sitemap_url()",
@@ -1650,8 +1529,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_sitemap_url()",
-      "id": "inc_options_options_sanitize_sitemap_url",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_sitemap_url"
     },
     {
       "label": ".absolute_http_url()",
@@ -1661,8 +1540,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".absolute_http_url()",
-      "id": "inc_options_options_absolute_http_url",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_absolute_http_url"
     },
     {
       "label": ".sanitize_markdown_block()",
@@ -1670,10 +1549,10 @@
       "source_file": "inc/Options.php",
       "source_location": "L762",
       "_origin": "ast",
-      "community": 1,
+      "community": 8,
       "norm_label": ".sanitize_markdown_block()",
-      "id": "inc_options_options_sanitize_markdown_block",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_markdown_block"
     },
     {
       "label": ".strip_markdown_headings()",
@@ -1683,8 +1562,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".strip_markdown_headings()",
-      "id": "inc_options_options_strip_markdown_headings",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_strip_markdown_headings"
     },
     {
       "label": ".seo_description_for_post()",
@@ -1694,8 +1573,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".seo_description_for_post()",
-      "id": "inc_options_options_seo_description_for_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_seo_description_for_post"
     },
     {
       "label": ".explicit_excerpt_for_post()",
@@ -1705,8 +1584,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".explicit_excerpt_for_post()",
-      "id": "inc_options_options_explicit_excerpt_for_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_explicit_excerpt_for_post"
     },
     {
       "label": ".sanitize_excluded_posts()",
@@ -1716,8 +1595,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_excluded_posts()",
-      "id": "inc_options_options_sanitize_excluded_posts",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_excluded_posts"
     },
     {
       "label": ".excluded_post_ids()",
@@ -1727,8 +1606,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".excluded_post_ids()",
-      "id": "inc_options_options_excluded_post_ids",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_excluded_post_ids"
     },
     {
       "label": ".is_post_excluded()",
@@ -1738,8 +1617,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".is_post_excluded()",
-      "id": "inc_options_options_is_post_excluded",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_is_post_excluded"
     },
     {
       "label": ".sitemap_absolute_url()",
@@ -1749,8 +1628,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sitemap_absolute_url()",
-      "id": "inc_options_options_sitemap_absolute_url",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sitemap_absolute_url"
     },
     {
       "label": ".is_public_export_candidate()",
@@ -1760,8 +1639,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".is_public_export_candidate()",
-      "id": "inc_options_options_is_public_export_candidate",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_is_public_export_candidate"
     },
     {
       "label": ".limit_markdown_length()",
@@ -1771,8 +1650,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".limit_markdown_length()",
-      "id": "inc_options_options_limit_markdown_length",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_limit_markdown_length"
     },
     {
       "label": ".bounded_filter_int()",
@@ -1782,8 +1661,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".bounded_filter_int()",
-      "id": "inc_options_options_bounded_filter_int",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_bounded_filter_int"
     },
     {
       "label": ".is_same_origin_url()",
@@ -1793,8 +1672,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".is_same_origin_url()",
-      "id": "inc_options_options_is_same_origin_url",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_is_same_origin_url"
     },
     {
       "label": ".default_port_for_scheme()",
@@ -1804,8 +1683,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".default_port_for_scheme()",
-      "id": "inc_options_options_default_port_for_scheme",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_default_port_for_scheme"
     },
     {
       "label": ".rawurlencode_path()",
@@ -1815,8 +1694,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".rawurlencode_path()",
-      "id": "inc_options_options_rawurlencode_path",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_rawurlencode_path"
     },
     {
       "label": ".sanitize_textline()",
@@ -1826,8 +1705,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": ".sanitize_textline()",
-      "id": "inc_options_options_sanitize_textline",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "inc_options_options_sanitize_textline"
     },
     {
       "label": "Plugin.php",
@@ -1837,8 +1716,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": "plugin.php",
-      "id": "inc_plugin",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin"
     },
     {
       "label": "Plugin",
@@ -1848,8 +1727,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": "plugin",
-      "id": "inc_plugin_plugin",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin"
     },
     {
       "label": ".instance()",
@@ -1859,8 +1738,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".instance()",
-      "id": "inc_plugin_plugin_instance",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_instance"
     },
     {
       "label": ".boot()",
@@ -1870,8 +1749,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".boot()",
-      "id": "inc_plugin_plugin_boot",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_boot"
     },
     {
       "label": ".activate()",
@@ -1881,8 +1760,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".activate()",
-      "id": "inc_plugin_plugin_activate",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_activate"
     },
     {
       "label": ".deactivate()",
@@ -1892,8 +1771,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".deactivate()",
-      "id": "inc_plugin_plugin_deactivate",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_deactivate"
     },
     {
       "label": ".maybe_flush_rewrites()",
@@ -1901,10 +1780,10 @@
       "source_file": "inc/Plugin.php",
       "source_location": "L111",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".maybe_flush_rewrites()",
-      "id": "inc_plugin_plugin_maybe_flush_rewrites",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "inc_plugin_plugin_maybe_flush_rewrites"
     },
     {
       "label": ".register_editor_meta()",
@@ -1914,8 +1793,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".register_editor_meta()",
-      "id": "inc_plugin_plugin_register_editor_meta",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_register_editor_meta"
     },
     {
       "label": ".sanitize_md_override_meta()",
@@ -1925,8 +1804,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".sanitize_md_override_meta()",
-      "id": "inc_plugin_plugin_sanitize_md_override_meta",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_sanitize_md_override_meta"
     },
     {
       "label": ".sanitize_llms_description_meta()",
@@ -1936,8 +1815,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".sanitize_llms_description_meta()",
-      "id": "inc_plugin_plugin_sanitize_llms_description_meta",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_sanitize_llms_description_meta"
     },
     {
       "label": ".init()",
@@ -1947,8 +1826,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".init()",
-      "id": "inc_plugin_plugin_init",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_init"
     },
     {
       "label": ".template_redirect()",
@@ -1958,8 +1837,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".template_redirect()",
-      "id": "inc_plugin_plugin_template_redirect",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_template_redirect"
     },
     {
       "label": ".send_404()",
@@ -1969,8 +1848,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".send_404()",
-      "id": "inc_plugin_plugin_send_404",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_send_404"
     },
     {
       "label": ".find_post_by_path()",
@@ -1980,8 +1859,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".find_post_by_path()",
-      "id": "inc_plugin_plugin_find_post_by_path",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_find_post_by_path"
     },
     {
       "label": ".output_alternate_markdown_link()",
@@ -1991,8 +1870,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".output_alternate_markdown_link()",
-      "id": "inc_plugin_plugin_output_alternate_markdown_link",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_plugin_plugin_output_alternate_markdown_link"
     },
     {
       "label": "Response.php",
@@ -2002,8 +1881,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": "response.php",
-      "id": "inc_response",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response"
     },
     {
       "label": "Response",
@@ -2013,8 +1892,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": "response",
-      "id": "inc_response_response",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response"
     },
     {
       "label": ".send_conditional_headers()",
@@ -2022,10 +1901,10 @@
       "source_file": "inc/Response.php",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": ".send_conditional_headers()",
-      "id": "inc_response_response_send_conditional_headers",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "inc_response_response_send_conditional_headers"
     },
     {
       "label": ".etag_from_string()",
@@ -2035,8 +1914,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".etag_from_string()",
-      "id": "inc_response_response_etag_from_string",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_etag_from_string"
     },
     {
       "label": ".send_service_unavailable()",
@@ -2046,8 +1925,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".send_service_unavailable()",
-      "id": "inc_response_response_send_service_unavailable",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_send_service_unavailable"
     },
     {
       "label": ".header_lines()",
@@ -2057,8 +1936,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".header_lines()",
-      "id": "inc_response_response_header_lines",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_header_lines"
     },
     {
       "label": ".clean_header_name()",
@@ -2068,8 +1947,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".clean_header_name()",
-      "id": "inc_response_response_clean_header_name",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_clean_header_name"
     },
     {
       "label": ".clean_header_value()",
@@ -2079,8 +1958,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".clean_header_value()",
-      "id": "inc_response_response_clean_header_value",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_clean_header_value"
     },
     {
       "label": ".etag_matches()",
@@ -2090,8 +1969,8 @@
       "_origin": "ast",
       "community": 8,
       "norm_label": ".etag_matches()",
-      "id": "inc_response_response_etag_matches",
-      "community_name": "Response"
+      "community_name": "Response",
+      "id": "inc_response_response_etag_matches"
     },
     {
       "label": "Rewrites.php",
@@ -2101,8 +1980,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": "rewrites.php",
-      "id": "inc_rewrites",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_rewrites"
     },
     {
       "label": "Rewrites",
@@ -2112,8 +1991,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": "rewrites",
-      "id": "inc_rewrites_rewrites",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_rewrites_rewrites"
     },
     {
       "label": ".__construct()",
@@ -2123,8 +2002,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".__construct()",
-      "id": "inc_rewrites_rewrites_construct",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_rewrites_rewrites_construct"
     },
     {
       "label": ".add_query_vars()",
@@ -2134,8 +2013,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".add_query_vars()",
-      "id": "inc_rewrites_rewrites_add_query_vars",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_rewrites_rewrites_add_query_vars"
     },
     {
       "label": ".add_rules()",
@@ -2145,8 +2024,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": ".add_rules()",
-      "id": "inc_rewrites_rewrites_add_rules",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "inc_rewrites_rewrites_add_rules"
     },
     {
       "label": "llm-friendly-de_DE.l10n.php",
@@ -2156,8 +2035,8 @@
       "_origin": "ast",
       "community": 10,
       "norm_label": "llm-friendly-de_de.l10n.php",
-      "id": "languages_llm_friendly_de_de_l10n",
-      "community_name": "llm-friendly-de_DE.l10n.php"
+      "community_name": "llm-friendly-de_DE.l10n.php",
+      "id": "languages_llm_friendly_de_de_l10n"
     },
     {
       "label": "llm-friendly-es_ES.l10n.php",
@@ -2167,8 +2046,8 @@
       "_origin": "ast",
       "community": 11,
       "norm_label": "llm-friendly-es_es.l10n.php",
-      "id": "languages_llm_friendly_es_es_l10n",
-      "community_name": "llm-friendly-es_ES.l10n.php"
+      "community_name": "llm-friendly-es_ES.l10n.php",
+      "id": "languages_llm_friendly_es_es_l10n"
     },
     {
       "label": "llm-friendly-fr_FR.l10n.php",
@@ -2178,8 +2057,8 @@
       "_origin": "ast",
       "community": 12,
       "norm_label": "llm-friendly-fr_fr.l10n.php",
-      "id": "languages_llm_friendly_fr_fr_l10n",
-      "community_name": "llm-friendly-fr_FR.l10n.php"
+      "community_name": "llm-friendly-fr_FR.l10n.php",
+      "id": "languages_llm_friendly_fr_fr_l10n"
     },
     {
       "label": "llm-friendly-ru_RU.l10n.php",
@@ -2189,8 +2068,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "llm-friendly-ru_ru.l10n.php",
-      "id": "languages_llm_friendly_ru_ru_l10n",
-      "community_name": "llm-friendly-ru_RU.l10n.php"
+      "community_name": "llm-friendly-ru_RU.l10n.php",
+      "id": "languages_llm_friendly_ru_ru_l10n"
     },
     {
       "label": "llm-friendly-uk.l10n.php",
@@ -2200,8 +2079,8 @@
       "_origin": "ast",
       "community": 14,
       "norm_label": "llm-friendly-uk.l10n.php",
-      "id": "languages_llm_friendly_uk_l10n",
-      "community_name": "llm-friendly-uk.l10n.php"
+      "community_name": "llm-friendly-uk.l10n.php",
+      "id": "languages_llm_friendly_uk_l10n"
     },
     {
       "label": "llm-friendly-uk_UA.l10n.php",
@@ -2211,8 +2090,8 @@
       "_origin": "ast",
       "community": 15,
       "norm_label": "llm-friendly-uk_ua.l10n.php",
-      "id": "languages_llm_friendly_uk_ua_l10n",
-      "community_name": "llm-friendly-uk_UA.l10n.php"
+      "community_name": "llm-friendly-uk_UA.l10n.php",
+      "id": "languages_llm_friendly_uk_ua_l10n"
     },
     {
       "label": "llm-friendly.php",
@@ -2222,8 +2101,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llm-friendly.php",
-      "id": "llm_friendly",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly"
     },
     {
       "label": "llmf_requirements_met()",
@@ -2233,8 +2112,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_requirements_met()",
-      "id": "llm_friendly_llmf_requirements_met",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_requirements_met"
     },
     {
       "label": "llmf_requirements_notice()",
@@ -2244,8 +2123,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_requirements_notice()",
-      "id": "llm_friendly_llmf_requirements_notice",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_requirements_notice"
     },
     {
       "label": "llmf_activate()",
@@ -2255,8 +2134,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_activate()",
-      "id": "llm_friendly_llmf_activate",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_activate"
     },
     {
       "label": "llmf_deactivate()",
@@ -2266,8 +2145,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_deactivate()",
-      "id": "llm_friendly_llmf_deactivate",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_deactivate"
     },
     {
       "label": "llmf_load_textdomain()",
@@ -2277,8 +2156,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_load_textdomain()",
-      "id": "llm_friendly_llmf_load_textdomain",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_load_textdomain"
     },
     {
       "label": "llmf_add_settings_link()",
@@ -2288,8 +2167,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "llmf_add_settings_link()",
-      "id": "llm_friendly_llmf_add_settings_link",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "llm_friendly_llmf_add_settings_link"
     },
     {
       "label": "run.php",
@@ -2299,8 +2178,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "run.php",
-      "id": "tests_run",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run"
     },
     {
       "label": "WP_Post",
@@ -2308,10 +2187,10 @@
       "source_file": "tests/run.php",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "wp_post",
-      "id": "tests_run_wp_post",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_post"
     },
     {
       "label": ".__construct()",
@@ -2319,10 +2198,10 @@
       "source_file": "tests/run.php",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": ".__construct()",
-      "id": "tests_run_wp_post_construct",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_post_construct"
     },
     {
       "label": "WP_Query",
@@ -2332,8 +2211,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "wp_query",
-      "id": "tests_run_wp_query",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_query"
     },
     {
       "label": ".__construct()",
@@ -2343,8 +2222,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": ".__construct()",
-      "id": "tests_run_wp_query_construct",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_query_construct"
     },
     {
       "label": "__()",
@@ -2354,8 +2233,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "__()",
-      "id": "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run"
     },
     {
       "label": "esc_html__()",
@@ -2365,8 +2244,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "esc_html__()",
-      "id": "tests_run_esc_html",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_esc_html"
     },
     {
       "label": "esc_attr()",
@@ -2376,8 +2255,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "esc_attr()",
-      "id": "tests_run_esc_attr",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_esc_attr"
     },
     {
       "label": "esc_textarea()",
@@ -2387,8 +2266,8 @@
       "_origin": "ast",
       "community": 3,
       "norm_label": "esc_textarea()",
-      "id": "tests_run_esc_textarea",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_esc_textarea"
     },
     {
       "label": "checked()",
@@ -2396,10 +2275,10 @@
       "source_file": "tests/run.php",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 3,
+      "community": 0,
       "norm_label": "checked()",
-      "id": "tests_run_checked",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_checked"
     },
     {
       "label": "selected()",
@@ -2409,8 +2288,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "selected()",
-      "id": "tests_run_selected",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_selected"
     },
     {
       "label": "add_action()",
@@ -2420,8 +2299,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "add_action()",
-      "id": "tests_run_add_action",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "tests_run_add_action"
     },
     {
       "label": "add_filter()",
@@ -2431,8 +2310,8 @@
       "_origin": "ast",
       "community": 4,
       "norm_label": "add_filter()",
-      "id": "tests_run_add_filter",
-      "community_name": "Plugin"
+      "community_name": "Plugin",
+      "id": "tests_run_add_filter"
     },
     {
       "label": "apply_filters()",
@@ -2442,8 +2321,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "apply_filters()",
-      "id": "tests_run_apply_filters",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_apply_filters"
     },
     {
       "label": "remove_all_filters()",
@@ -2453,8 +2332,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "remove_all_filters()",
-      "id": "tests_run_remove_all_filters",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_remove_all_filters"
     },
     {
       "label": "wp_unslash()",
@@ -2462,10 +2341,10 @@
       "source_file": "tests/run.php",
       "source_location": "L92",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": "wp_unslash()",
-      "id": "tests_run_wp_unslash",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_wp_unslash"
     },
     {
       "label": "wp_kses_post()",
@@ -2473,10 +2352,10 @@
       "source_file": "tests/run.php",
       "source_location": "L93",
       "_origin": "ast",
-      "community": 1,
+      "community": 8,
       "norm_label": "wp_kses_post()",
-      "id": "tests_run_wp_kses_post",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_wp_kses_post"
     },
     {
       "label": "wp_strip_all_tags()",
@@ -2484,10 +2363,10 @@
       "source_file": "tests/run.php",
       "source_location": "L94",
       "_origin": "ast",
-      "community": 2,
+      "community": 1,
       "norm_label": "wp_strip_all_tags()",
-      "id": "tests_run_wp_strip_all_tags",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "tests_run_wp_strip_all_tags"
     },
     {
       "label": "sanitize_text_field()",
@@ -2495,10 +2374,10 @@
       "source_file": "tests/run.php",
       "source_location": "L95",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": "sanitize_text_field()",
-      "id": "tests_run_sanitize_text_field",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_sanitize_text_field"
     },
     {
       "label": "sanitize_key()",
@@ -2508,8 +2387,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "sanitize_key()",
-      "id": "tests_run_sanitize_key",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_sanitize_key"
     },
     {
       "label": "current_user_can()",
@@ -2517,10 +2396,10 @@
       "source_file": "tests/run.php",
       "source_location": "L97",
       "_origin": "ast",
-      "community": 3,
+      "community": 8,
       "norm_label": "current_user_can()",
-      "id": "tests_run_current_user_can",
-      "community_name": "Admin"
+      "community_name": "Admin",
+      "id": "tests_run_current_user_can"
     },
     {
       "label": "wp_json_encode()",
@@ -2530,8 +2409,8 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "wp_json_encode()",
-      "id": "tests_run_wp_json_encode",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "tests_run_wp_json_encode"
     },
     {
       "label": "wp_trim_words()",
@@ -2541,8 +2420,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "wp_trim_words()",
-      "id": "tests_run_wp_trim_words",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_trim_words"
     },
     {
       "label": "esc_url_raw()",
@@ -2550,10 +2429,10 @@
       "source_file": "tests/run.php",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 0,
+      "community": 1,
       "norm_label": "esc_url_raw()",
-      "id": "tests_run_esc_url_raw",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_esc_url_raw"
     },
     {
       "label": "home_url()",
@@ -2563,8 +2442,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "home_url()",
-      "id": "tests_run_home_url",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_home_url"
     },
     {
       "label": "get_feed_link()",
@@ -2574,8 +2453,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_feed_link()",
-      "id": "tests_run_get_feed_link",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_feed_link"
     },
     {
       "label": "get_bloginfo()",
@@ -2585,8 +2464,8 @@
       "_origin": "ast",
       "community": 6,
       "norm_label": "get_bloginfo()",
-      "id": "tests_run_get_bloginfo",
-      "community_name": "llm-friendly.php"
+      "community_name": "llm-friendly.php",
+      "id": "tests_run_get_bloginfo"
     },
     {
       "label": "get_option()",
@@ -2596,8 +2475,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_option()",
-      "id": "tests_run_get_option",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_option"
     },
     {
       "label": "update_option()",
@@ -2605,10 +2484,10 @@
       "source_file": "tests/run.php",
       "source_location": "L135",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "update_option()",
-      "id": "tests_run_update_option",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_update_option"
     },
     {
       "label": "add_option()",
@@ -2618,8 +2497,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "add_option()",
-      "id": "tests_run_add_option",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_add_option"
     },
     {
       "label": "set_transient()",
@@ -2627,10 +2506,10 @@
       "source_file": "tests/run.php",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "set_transient()",
-      "id": "tests_run_set_transient",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_set_transient"
     },
     {
       "label": "get_transient()",
@@ -2638,10 +2517,10 @@
       "source_file": "tests/run.php",
       "source_location": "L144",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "get_transient()",
-      "id": "tests_run_get_transient",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_transient"
     },
     {
       "label": "delete_transient()",
@@ -2649,10 +2528,10 @@
       "source_file": "tests/run.php",
       "source_location": "L145",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "delete_transient()",
-      "id": "tests_run_delete_transient",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_delete_transient"
     },
     {
       "label": "wp_next_scheduled()",
@@ -2660,10 +2539,10 @@
       "source_file": "tests/run.php",
       "source_location": "L146",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "wp_next_scheduled()",
-      "id": "tests_run_wp_next_scheduled",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_next_scheduled"
     },
     {
       "label": "wp_schedule_single_event()",
@@ -2671,10 +2550,10 @@
       "source_file": "tests/run.php",
       "source_location": "L147",
       "_origin": "ast",
-      "community": 0,
+      "community": 5,
       "norm_label": "wp_schedule_single_event()",
-      "id": "tests_run_wp_schedule_single_event",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_schedule_single_event"
     },
     {
       "label": "post_type_exists()",
@@ -2684,8 +2563,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "post_type_exists()",
-      "id": "tests_run_post_type_exists",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_post_type_exists"
     },
     {
       "label": "get_post_type_object()",
@@ -2695,8 +2574,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_post_type_object()",
-      "id": "tests_run_get_post_type_object",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_post_type_object"
     },
     {
       "label": "get_post()",
@@ -2706,8 +2585,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_post()",
-      "id": "tests_run_get_post",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_post"
     },
     {
       "label": "get_the_title()",
@@ -2717,8 +2596,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_the_title()",
-      "id": "tests_run_get_the_title",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_the_title"
     },
     {
       "label": "get_permalink()",
@@ -2726,10 +2605,10 @@
       "source_file": "tests/run.php",
       "source_location": "L168",
       "_origin": "ast",
-      "community": 2,
+      "community": 0,
       "norm_label": "get_permalink()",
-      "id": "tests_run_get_permalink",
-      "community_name": "Exporter"
+      "community_name": "Exporter",
+      "id": "tests_run_get_permalink"
     },
     {
       "label": "get_the_date()",
@@ -2739,8 +2618,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_the_date()",
-      "id": "tests_run_get_the_date",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_the_date"
     },
     {
       "label": "get_the_modified_date()",
@@ -2750,8 +2629,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_the_modified_date()",
-      "id": "tests_run_get_the_modified_date",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_the_modified_date"
     },
     {
       "label": "get_the_author_meta()",
@@ -2761,8 +2640,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_the_author_meta()",
-      "id": "tests_run_get_the_author_meta",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_the_author_meta"
     },
     {
       "label": "get_page_uri()",
@@ -2772,8 +2651,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "get_page_uri()",
-      "id": "tests_run_get_page_uri",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_get_page_uri"
     },
     {
       "label": "post_password_required()",
@@ -2781,10 +2660,10 @@
       "source_file": "tests/run.php",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 1,
+      "community": 0,
       "norm_label": "post_password_required()",
-      "id": "tests_run_post_password_required",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_post_password_required"
     },
     {
       "label": "get_post_meta()",
@@ -2794,8 +2673,8 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "get_post_meta()",
-      "id": "tests_run_get_post_meta",
-      "community_name": "Options"
+      "community_name": "Options",
+      "id": "tests_run_get_post_meta"
     },
     {
       "label": "wp_parse_url()",
@@ -2803,10 +2682,10 @@
       "source_file": "tests/run.php",
       "source_location": "L183",
       "_origin": "ast",
-      "community": 0,
+      "community": 1,
       "norm_label": "wp_parse_url()",
-      "id": "tests_run_wp_parse_url",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_parse_url"
     },
     {
       "label": "wp_is_post_revision()",
@@ -2814,10 +2693,10 @@
       "source_file": "tests/run.php",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 0,
+      "community": 8,
       "norm_label": "wp_is_post_revision()",
-      "id": "tests_run_wp_is_post_revision",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_is_post_revision"
     },
     {
       "label": "wp_is_post_autosave()",
@@ -2825,10 +2704,10 @@
       "source_file": "tests/run.php",
       "source_location": "L185",
       "_origin": "ast",
-      "community": 0,
+      "community": 8,
       "norm_label": "wp_is_post_autosave()",
-      "id": "tests_run_wp_is_post_autosave",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_wp_is_post_autosave"
     },
     {
       "label": "parse_blocks()",
@@ -2838,8 +2717,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "parse_blocks()",
-      "id": "tests_run_parse_blocks",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_parse_blocks"
     },
     {
       "label": "assert_true()",
@@ -2849,8 +2728,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "assert_true()",
-      "id": "tests_run_assert_true",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_assert_true"
     },
     {
       "label": "assert_contains_text()",
@@ -2860,8 +2739,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "assert_contains_text()",
-      "id": "tests_run_assert_contains_text",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_assert_contains_text"
     },
     {
       "label": "assert_not_contains_text()",
@@ -2871,8 +2750,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "assert_not_contains_text()",
-      "id": "tests_run_assert_not_contains_text",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_assert_not_contains_text"
     },
     {
       "label": "call_private()",
@@ -2882,111 +2761,11 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "call_private()",
-      "id": "tests_run_call_private",
-      "community_name": "run.php"
+      "community_name": "run.php",
+      "id": "tests_run_call_private"
     }
   ],
   "links": [
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L79",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_ci_cd"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_graphify"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L70",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L32",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043a\u043e\u043c\u0430\u043d\u0434\u044b"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L85",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L15",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L62",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u0435"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L100",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043f\u043e\u0434\u0432\u043e\u0434\u043d\u044b\u0435_\u043a\u0430\u043c\u043d\u0438"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L111",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u043f\u043e\u043b\u0435\u0437\u043d\u044b\u0435_\u0441\u0441\u044b\u043b\u043a\u0438"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AGENTS.md",
-      "source_location": "L49",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "agents",
-      "target": "agents_\u0441\u0442\u0438\u043b\u044c"
-    },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
@@ -9968,5 +9747,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e53bafadaf3355c141d613546b74d9450fd49036"
+  "built_at_commit": "5164d1cad9c40c50937b9910ec1eeae8cb4ab3f5"
 }
