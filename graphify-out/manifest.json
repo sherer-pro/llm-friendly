@@ -35,9 +35,9 @@
     "semantic_hash": "86f5417228fbbbd23878638c7aafc2ac"
   },
   "inc/Options.php": {
-    "mtime": 1783240440.7406037,
-    "ast_hash": "f731b053cd72ba4e7b381da24e42062c",
-    "semantic_hash": "f731b053cd72ba4e7b381da24e42062c"
+    "mtime": 1783431003.7369132,
+    "ast_hash": "9b0cedf6c96c7a0f8dff679bf8c036dc",
+    "semantic_hash": ""
   },
   "inc/Plugin.php": {
     "mtime": 1783240169.4131944,
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1783429337.1528392,
-    "ast_hash": "b0c1ddbf5e5a6b44ea553e2ba8fa5053",
+    "mtime": 1783431036.5030277,
+    "ast_hash": "35cc116151730aad2944aca360c850ac",
     "semantic_hash": ""
   },
   "AGENTS.md": {
