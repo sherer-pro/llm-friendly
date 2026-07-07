@@ -394,6 +394,7 @@
 }
 
 .llmf-segmented__option {
+	cursor: pointer;
 	display: grid;
 	position: relative;
 }
@@ -410,6 +411,7 @@
 	background: #fff;
 	border: 1px solid var(--llmf-border-strong);
 	box-sizing: border-box;
+	cursor: pointer;
 	display: flex;
 	font-weight: 600;
 	height: 100%;
@@ -788,6 +790,22 @@
 	padding: 12px 14px;
 	position: sticky;
 	z-index: 50;
+}
+
+.llmf-save-bar.is-saving {
+	background: #1d3d5c;
+}
+
+.llmf-save-bar.is-success {
+	background: #1f6f43;
+}
+
+.llmf-save-bar.is-success .llmf-save-bar__actions {
+	display: none;
+}
+
+.llmf-save-bar.is-error {
+	background: #8a2424;
 }
 
 .llmf-save-bar[hidden] {

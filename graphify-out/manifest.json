@@ -5,8 +5,8 @@
     "semantic_hash": "1c1cfc3e4c7b6359be51ac4ef41ee6a7"
   },
   "assets/llmf-admin.js": {
-    "mtime": 1783429127.811009,
-    "ast_hash": "6e9c9d249a54a11b1b5b1b178335532a",
+    "mtime": 1783432243.374889,
+    "ast_hash": "b7d4c9aa6b0c9c7e0f10b912996bb19d",
     "semantic_hash": ""
   },
   "composer.json": {
@@ -15,8 +15,8 @@
     "semantic_hash": "8b67d8a8b853e8d4361a7c47913ae00e"
   },
   "inc/Admin.php": {
-    "mtime": 1783431681.3961895,
-    "ast_hash": "6f9094b78991fd7939cce11727379b69",
+    "mtime": 1783432187.8556728,
+    "ast_hash": "650a5fedc997009a80099eeb4e4d38c1",
     "semantic_hash": ""
   },
   "inc/Exporter.php": {
@@ -55,33 +55,33 @@
     "semantic_hash": "13c8126086b4e03baed179bd5fc4a93e"
   },
   "languages/llm-friendly-de_DE.l10n.php": {
-    "mtime": 1783430566.27954,
-    "ast_hash": "de8034110c85b0fbcd00f0c1597bfccc",
+    "mtime": 1783432412.7263498,
+    "ast_hash": "37d892b91884515cb4d52310d89b2ee6",
     "semantic_hash": ""
   },
   "languages/llm-friendly-es_ES.l10n.php": {
-    "mtime": 1783430566.28054,
-    "ast_hash": "84887c00696808f7d25d0e540f805f6d",
+    "mtime": 1783432412.7274375,
+    "ast_hash": "f4ad28530b2102861515da545844ca6d",
     "semantic_hash": ""
   },
   "languages/llm-friendly-fr_FR.l10n.php": {
-    "mtime": 1783430566.28154,
-    "ast_hash": "d607a9d8e43e3d13503aad355db097e3",
+    "mtime": 1783432412.728482,
+    "ast_hash": "74d495767a6a8832cc5f05b2277fc330",
     "semantic_hash": ""
   },
   "languages/llm-friendly-ru_RU.l10n.php": {
-    "mtime": 1783430566.28354,
-    "ast_hash": "9e936d9cb6db52f083231195b76dd438",
+    "mtime": 1783432412.7295115,
+    "ast_hash": "869760b47062d62fb57247e3d91e4642",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk.l10n.php": {
-    "mtime": 1783430566.2845404,
-    "ast_hash": "4e22388cdcd4c2adb6b2bec735329ff8",
+    "mtime": 1783432412.7314086,
+    "ast_hash": "e8f4aee3275fc6503f0de3e256bdf641",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk_UA.l10n.php": {
-    "mtime": 1783430566.2855463,
-    "ast_hash": "2d3afe04ff6bf93f54e7f69754355b23",
+    "mtime": 1783432412.7334244,
+    "ast_hash": "9d888c31c205f137cf93eb078f175731",
     "semantic_hash": ""
   },
   "llm-friendly.php": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1783431718.1851058,
-    "ast_hash": "98fa7df9ff82074d42ee952cf9ddc581",
+    "mtime": 1783432459.3145645,
+    "ast_hash": "dc185de7e4d959ade3ecc14e41ee4c4f",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -137,11 +137,6 @@
   "assets-svn/screenshot-2.png": {
     "mtime": 1767010230.0,
     "ast_hash": "9ffae43cd1faf704bb4be916acafe18d",
-    "semantic_hash": ""
-  },
-  "graphify-out/memory/query_20260707_082846_explain_the_architecture_of_this_project.md": {
-    "mtime": 1783412926.8099997,
-    "ast_hash": "037c71085d61932e9dfcbb53e09c890d",
     "semantic_hash": ""
   }
 }

@@ -44,6 +44,7 @@ final class Admin {
 			add_action('admin_post_llmf_regenerate_llms', array($this, 'handle_regenerate_llms'));
 			add_action('wp_ajax_llmf_search_posts', array($this, 'ajax_search_posts'));
 			add_action('wp_ajax_llmf_preview_llms', array($this, 'ajax_preview_llms'));
+			add_action('wp_ajax_llmf_save_settings', array($this, 'ajax_save_settings'));
 		}
 	}
 
@@ -1061,6 +1062,9 @@ final class Admin {
 					'cacheNeedsRegen'   => __( 'Needs regeneration', 'llm-friendly' ),
 					'cacheDisabled'     => __( 'Disabled', 'llm-friendly' ),
 					'unsavedChanges'    => __( 'Unsaved changes', 'llm-friendly' ),
+					'savingSettings'    => __( 'Saving settings...', 'llm-friendly' ),
+					'settingsSaved'     => __( 'Settings saved.', 'llm-friendly' ),
+					'settingsSaveError' => __( 'Settings could not be saved. Please try again.', 'llm-friendly' ),
 					'exclusionsChanged' => __( 'Exclusions changed. Save settings to apply.', 'llm-friendly' ),
 					'clearTypeAction'   => __( 'Clear this type', 'llm-friendly' ),
 				),
@@ -1207,6 +1211,33 @@ final class Admin {
 		check_ajax_referer( 'llmf_preview_llms', 'nonce' );
 
 		wp_send_json_success( $this->llms->preview() );
+	}
+
+	/**
+	 * AJAX save handler for the main settings form.
+	 *
+	 * @return void
+	 */
+	public function ajax_save_settings() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access denied.', 'llm-friendly' ) ), 403 );
+		}
+
+		check_ajax_referer( 'llmf-options', '_wpnonce' );
+
+		if ( ! isset( $_POST[ Options::OPTION_KEY ] ) || ! is_array( $_POST[ Options::OPTION_KEY ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Settings payload is missing.', 'llm-friendly' ) ), 400 );
+		}
+
+		$input = wp_unslash( $_POST[ Options::OPTION_KEY ] );
+		$saved = $this->options->update( is_array( $input ) ? $input : array() );
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Settings saved.', 'llm-friendly' ),
+				'options' => $saved,
+			)
+		);
 	}
 
 	/**
