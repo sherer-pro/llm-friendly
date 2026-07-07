@@ -469,6 +469,9 @@ assert_not_contains_text( 'form-table', $admin_html, 'Modern settings page does 
 assert_contains_text( 'for="llmf-base-path"', $admin_html, 'Settings API label_for is wired for the base path field.' );
 assert_contains_text( 'id="llmf-base-path"', $admin_html, 'Base path field has a stable id.' );
 assert_contains_text( 'aria-describedby="llmf-base-path-description"', $admin_html, 'Base path field references its description.' );
+assert_contains_text( 'class="llmf-field llmf-field--full"', $admin_html, 'Self-labeled switch fields span the full panel width.' );
+assert_contains_text( 'aria-describedby="llmf-enabled-markdown-description"', $admin_html, 'Switch fields keep accessible description references.' );
+assert_contains_text( 'class="description llmf-switch-field__description" id="llmf-enabled-markdown-description"', $admin_html, 'Switch descriptions render inside the switch copy column.' );
 assert_contains_text( 'name="llmf_options[base_path]"', $admin_html, 'Existing option name is preserved for base path.' );
 assert_contains_text( 'name="llmf_options[post_types][]"', $admin_html, 'Existing option name is preserved for post types.' );
 assert_contains_text( 'name="llmf_options[llms_regen_mode]"', $admin_html, 'Existing option name is preserved for regeneration mode.' );
