@@ -271,7 +271,7 @@ function get_post_type_object( $post_type ) {
 	}
 	$obj               = new stdClass();
 	$obj->public       = $post_type !== 'private_type';
-	$obj->publicly_queryable = ! in_array( $post_type, array( 'private_type', 'public_hidden' ), true );
+	$obj->publicly_queryable = ! in_array( $post_type, array( 'page', 'private_type', 'public_hidden' ), true );
 	$obj->hierarchical = $post_type === 'page';
 	$obj->labels       = (object) array( 'name' => $post_type === 'page' ? 'Pages' : 'Posts' );
 	return $obj;
@@ -385,6 +385,7 @@ assert_true( $options->sanitize_sitemap_url( "/sitemap.xml\r\nBad: yes" ) === '/
 assert_true( $options->absolute_http_url( '/docs' ) === 'https://example.test/docs', 'Site-relative URLs are normalized to absolute HTTP URLs.' );
 
 assert_true( $options->is_exportable_post_type( 'post' ), 'Public queryable posts are exportable.' );
+assert_true( $options->is_exportable_post_type( 'page' ), 'Built-in pages are exportable even though they are not publicly queryable.' );
 assert_true( ! $options->is_exportable_post_type( 'attachment' ), 'Attachments are never exportable.' );
 assert_true( ! $options->is_exportable_post_type( 'private_type' ), 'Non-public post types are not exportable.' );
 assert_true( ! $options->is_exportable_post_type( 'public_hidden' ), 'Public but non-queryable post types are not exportable by default.' );
@@ -473,6 +474,7 @@ assert_contains_text( 'name="llmf_options[post_types][]"', $admin_html, 'Existin
 assert_contains_text( 'name="llmf_options[llms_regen_mode]"', $admin_html, 'Existing option name is preserved for regeneration mode.' );
 assert_contains_text( 'class="llmf-segmented"', $admin_html, 'Regeneration mode uses a segmented native radio control.' );
 assert_contains_text( 'class="llmf-post-type-grid"', $admin_html, 'Post types are rendered as selectable cards.' );
+assert_contains_text( 'value="page"', $admin_html, 'Built-in pages are available in the content scope picker.' );
 assert_contains_text( 'id="llmf-search-post-results"', $admin_html, 'Exclusion search has a controlled results region.' );
 assert_contains_text( 'aria-autocomplete="list"', $admin_html, 'Exclusion search advertises list autocomplete.' );
 assert_contains_text( 'aria-expanded="false"', $admin_html, 'Exclusion search starts collapsed for assistive tech.' );

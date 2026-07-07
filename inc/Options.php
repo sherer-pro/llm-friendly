@@ -290,7 +290,7 @@ final class Options {
 			return false;
 		}
 
-		$eligible = ! empty( $obj->public ) && ! empty( $obj->publicly_queryable );
+		$eligible = ! empty( $obj->public ) && ( ! empty( $obj->publicly_queryable ) || $post_type === 'page' );
 
 		/**
 		 * Filter whether a post type is eligible for public LLM Friendly exports.
