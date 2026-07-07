@@ -383,16 +383,18 @@
 }
 
 .llmf-segmented {
+	align-items: stretch;
 	border: 0;
 	display: inline-grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	margin: 0;
-	max-width: 480px;
+	max-width: 620px;
 	padding: 0;
 	width: 100%;
 }
 
 .llmf-segmented__option {
+	display: grid;
 	position: relative;
 }
 
@@ -404,11 +406,16 @@
 }
 
 .llmf-segmented__option span {
+	align-items: center;
 	background: #fff;
 	border: 1px solid var(--llmf-border-strong);
-	display: block;
+	box-sizing: border-box;
+	display: flex;
 	font-weight: 600;
+	height: 100%;
+	justify-content: center;
 	line-height: 1.35;
+	min-height: 52px;
 	padding: 9px 12px;
 	text-align: center;
 }
