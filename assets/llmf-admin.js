@@ -72,10 +72,19 @@
 
 	const form = qs('#llmf-settings-form');
 	const saveBar = qs('[data-llmf-save-bar]');
+	const saveBarMessage = saveBar ? qs('.llmf-save-bar__message', saveBar) : null;
 	const previewDirty = qs('[data-llmf-preview-dirty]');
+	const exclusionsDirty = qs('[data-llmf-exclusions-dirty]');
 	let initialSnapshot = '';
 	let isDirty = false;
 	let isSubmitting = false;
+	let saveFeedbackTimer = null;
+	const saveButtons = form ? qsa('#llmf-save-settings, #llmf-save-settings-sticky', form) : [];
+	const saveButtonLabels = new Map();
+
+	saveButtons.forEach((button) => {
+		saveButtonLabels.set(button, button.textContent);
+	});
 
 	const serializeForm = (targetForm) => {
 		if (!targetForm) {
@@ -99,6 +108,50 @@
 			.join('&');
 	};
 
+	const resetSaveButtons = () => {
+		saveButtons.forEach((button) => {
+			button.disabled = false;
+			button.textContent = saveButtonLabels.get(button) || button.textContent;
+		});
+	};
+
+	const setSaveButtonsSaving = () => {
+		saveButtons.forEach((button) => {
+			button.disabled = true;
+			button.textContent = t('savingSettings', 'Saving settings...');
+		});
+	};
+
+	const setSaveBarState = (state, message) => {
+		if (!saveBar) {
+			return;
+		}
+
+		saveBar.classList.remove('is-saving', 'is-success', 'is-error');
+		if (state) {
+			saveBar.classList.add(`is-${state}`);
+		}
+		if (saveBarMessage) {
+			saveBarMessage.textContent = message;
+		}
+	};
+
+	const clearSaveFeedbackTimer = () => {
+		if (saveFeedbackTimer) {
+			window.clearTimeout(saveFeedbackTimer);
+			saveFeedbackTimer = null;
+		}
+	};
+
+	const hideDirtyMessages = () => {
+		if (previewDirty) {
+			previewDirty.hidden = true;
+		}
+		if (exclusionsDirty) {
+			exclusionsDirty.hidden = true;
+		}
+	};
+
 	const updateDirtyState = () => {
 		if (!form || !initialSnapshot) {
 			return;
@@ -108,6 +161,10 @@
 
 		if (saveBar) {
 			saveBar.hidden = !isDirty;
+			if (isDirty) {
+				clearSaveFeedbackTimer();
+				setSaveBarState('', t('unsavedChanges', 'Unsaved changes'));
+			}
 		}
 		if (previewDirty) {
 			previewDirty.hidden = !isDirty;
@@ -125,8 +182,74 @@
 		initialSnapshot = serializeForm(form);
 		form.addEventListener('input', updateDirtyState);
 		form.addEventListener('change', updateDirtyState);
-		form.addEventListener('submit', () => {
+		form.addEventListener('submit', (event) => {
+			if (!ajaxUrl || !window.fetch || !window.FormData) {
+				isSubmitting = true;
+				return;
+			}
+
+			event.preventDefault();
+
+			if (isSubmitting) {
+				return;
+			}
+
 			isSubmitting = true;
+			clearSaveFeedbackTimer();
+			setSaveButtonsSaving();
+			if (saveBar) {
+				saveBar.hidden = false;
+				setSaveBarState('saving', t('savingSettings', 'Saving settings...'));
+			}
+
+			const payload = new FormData(form);
+			payload.set('action', 'llmf_save_settings');
+
+			fetch(ajaxUrl, {
+				method: 'POST',
+				credentials: 'same-origin',
+				body: payload,
+			})
+				.then((response) => {
+					return response.json()
+						.catch(() => null)
+						.then((data) => {
+							if (!response.ok || !data || !data.success) {
+								const message = data && data.data && data.data.message ? data.data.message : t('settingsSaveError', 'Settings could not be saved. Please try again.');
+								throw new Error(message);
+							}
+							return data;
+						});
+				})
+				.then((data) => {
+					const message = data && data.data && data.data.message ? data.data.message : t('settingsSaved', 'Settings saved.');
+					initialSnapshot = serializeForm(form);
+					isDirty = false;
+					hideDirtyMessages();
+					if (saveBar) {
+						saveBar.hidden = false;
+						setSaveBarState('success', message);
+						saveFeedbackTimer = window.setTimeout(() => {
+							if (!isDirty && !isSubmitting && saveBar) {
+								saveBar.hidden = true;
+								setSaveBarState('', t('unsavedChanges', 'Unsaved changes'));
+							}
+						}, 1600);
+					}
+					announce(message);
+				})
+				.catch((error) => {
+					const message = error && error.message ? error.message : t('settingsSaveError', 'Settings could not be saved. Please try again.');
+					if (saveBar) {
+						saveBar.hidden = false;
+						setSaveBarState('error', message);
+					}
+					announce(message);
+				})
+				.finally(() => {
+					isSubmitting = false;
+					resetSaveButtons();
+				});
 		});
 		window.addEventListener('beforeunload', (event) => {
 			if (!isDirty || isSubmitting) {

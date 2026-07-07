@@ -107,7 +107,13 @@ function remove_all_filters( $hook = null ) {
 	unset( $GLOBALS['llmf_test_filters'][ $hook ] );
 	return true;
 }
-function wp_unslash( $value ) { return is_string( $value ) ? stripslashes( $value ) : $value; }
+function wp_unslash( $value ) {
+	if ( is_array( $value ) ) {
+		return array_map( 'wp_unslash', $value );
+	}
+
+	return is_string( $value ) ? stripslashes( $value ) : $value;
+}
 function wp_kses_post( $value ) { return (string) $value; }
 function wp_kses( $value, $allowed_html = array() ) { return (string) $value; }
 function wp_strip_all_tags( $text, $remove_breaks = false ) { return strip_tags( (string) $text ); }
@@ -540,6 +546,69 @@ list( $json, $status ) = capture_json_response(
 $_REQUEST = array();
 assert_true( $status === 200 && $json['success'] === true, 'Preview AJAX returns a successful JSON response.' );
 assert_true( isset( $json['data']['enabled'], $json['data']['url'], $json['data']['content'], $json['data']['contentHash'], $json['data']['generatedAt'], $json['data']['cacheStatus'], $json['data']['truncated'] ), 'Preview AJAX success shape is stable.' );
+
+$_POST    = array( Options::OPTION_KEY => array( 'base_path' => 'async' ) );
+$_REQUEST = array( '_wpnonce' => 'bad-nonce' );
+list( $json, $status ) = capture_json_response(
+	function () use ( $admin ) {
+		$admin->ajax_save_settings();
+	}
+);
+assert_true( $status === 403 && $json['success'] === false, 'Save AJAX rejects invalid nonces.' );
+
+$GLOBALS['llmf_test_current_user_can'] = false;
+$_POST    = array( Options::OPTION_KEY => array( 'base_path' => 'async' ) );
+$_REQUEST = array( '_wpnonce' => 'test-nonce' );
+list( $json, $status ) = capture_json_response(
+	function () use ( $admin ) {
+		$admin->ajax_save_settings();
+	}
+);
+$GLOBALS['llmf_test_current_user_can'] = true;
+assert_true( $status === 403 && $json['success'] === false, 'Save AJAX rejects insufficient capabilities.' );
+
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $options->defaults();
+unset( $GLOBALS['llmf_test_options']['transient_llmf_flush_rewrite_rules'] );
+$_POST = array(
+	Options::OPTION_KEY => array(
+		'enabled_llms_txt'      => '1',
+		'base_path'             => ' /Async Docs/ ',
+		'post_types'            => array( 'page', 'attachment', 'post', 'page' ),
+		'llms_send_noindex'     => '1',
+		'md_send_noindex'       => '1',
+		'llms_regen_mode'       => 'manual',
+		'llms_recent_limit'     => '500',
+		'sitemap_url'           => 'https://evil.test/sitemap.xml',
+		'llms_custom_markdown'  => '# Saved heading',
+		'llms_essential_links'  => 'Docs | /docs | Notes',
+		'llms_show_excerpt'     => '1',
+		'excluded_posts'        => array(
+			'page'       => array( '10', '10', '999' ),
+			'attachment' => array( '10' ),
+		),
+	),
+);
+$_REQUEST = array( '_wpnonce' => 'test-nonce' );
+list( $json, $status ) = capture_json_response(
+	function () use ( $admin ) {
+		$admin->ajax_save_settings();
+	}
+);
+$_POST    = array();
+$_REQUEST = array();
+$saved    = get_option( Options::OPTION_KEY, array() );
+assert_true( $status === 200 && $json['success'] === true, 'Save AJAX returns a successful JSON response.' );
+assert_true( isset( $json['data']['message'], $json['data']['options'] ) && is_array( $json['data']['options'] ), 'Save AJAX success shape is stable.' );
+assert_true( isset( $saved['base_path'] ) && $saved['base_path'] === 'async-docs', 'Save AJAX applies base path sanitization.' );
+assert_true( isset( $saved['enabled_markdown'] ) && $saved['enabled_markdown'] === 0, 'Save AJAX stores unchecked booleans as disabled.' );
+assert_true( isset( $saved['enabled_llms_txt'] ) && $saved['enabled_llms_txt'] === 1, 'Save AJAX stores checked booleans as enabled.' );
+assert_true( isset( $saved['post_types'] ) && $saved['post_types'] === array( 'page', 'post' ), 'Save AJAX sanitizes selected post types.' );
+assert_true( isset( $saved['excluded_posts']['page'] ) && $saved['excluded_posts']['page'] === array( 10 ), 'Save AJAX sanitizes exclusions.' );
+assert_true( isset( $saved['llms_recent_limit'] ) && $saved['llms_recent_limit'] === 200, 'Save AJAX reuses numeric bounds sanitization.' );
+assert_true( isset( $saved['sitemap_url'] ) && $saved['sitemap_url'] === '/sitemap.xml', 'Save AJAX reuses sitemap sanitization.' );
+assert_true( (bool) get_transient( 'llmf_flush_rewrite_rules' ), 'Save AJAX sets rewrite flush transient for endpoint changes.' );
+
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = array_merge( $options->defaults(), $clean );
 
 $txt  = call_private( $llms, 'build_llms_txt' );
 assert_true( strpos( $txt, '# Test Site' ) === 0, 'llms.txt starts with an H1 site title.' );
