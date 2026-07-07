@@ -1,67 +1,87 @@
 {
   "communities": {
     "0": [
-      "inc_exporter",
-      "inc_llms",
-      "inc_llms_llms",
-      "inc_llms_llms_build_llms_txt",
-      "inc_llms_llms_clear_cache",
-      "inc_llms_llms_clear_cache_for_post",
-      "inc_llms_llms_get_essential_links",
-      "inc_llms_llms_get_recent_posts_by_type",
-      "inc_llms_llms_maybe_clear_cache_on_description_meta_change",
-      "inc_llms_llms_maybe_regenerate_for_post",
-      "inc_llms_llms_maybe_regenerate_on_delete",
-      "inc_llms_llms_maybe_regenerate_on_save",
-      "inc_llms_llms_maybe_regenerate_on_status_change",
-      "inc_llms_llms_md_link_text",
-      "inc_llms_llms_output",
-      "inc_llms_llms_post_type_label",
-      "inc_llms_llms_regenerate",
-      "inc_llms_llms_regenerate_from_schedule",
-      "inc_llms_llms_schedule_regeneration",
-      "inc_llms_llms_settings_hash_from_options",
-      "inc_markdown",
-      "inc_options",
-      "inc_options_options_ensure_defaults",
-      "inc_plugin_plugin_maybe_flush_rewrites",
-      "tests_run",
-      "tests_run_add_option",
-      "tests_run_assert_contains_text",
-      "tests_run_assert_not_contains_text",
-      "tests_run_assert_true",
-      "tests_run_call_private",
-      "tests_run_delete_transient",
-      "tests_run_esc_url_raw",
-      "tests_run_get_feed_link",
-      "tests_run_get_option",
-      "tests_run_get_page_uri",
-      "tests_run_get_post",
-      "tests_run_get_post_type_object",
-      "tests_run_get_the_author_meta",
-      "tests_run_get_the_date",
-      "tests_run_get_the_modified_date",
-      "tests_run_get_the_title",
-      "tests_run_get_transient",
-      "tests_run_parse_blocks",
-      "tests_run_post_type_exists",
-      "tests_run_remove_all_filters",
-      "tests_run_selected",
-      "tests_run_set_transient",
-      "tests_run_update_option",
-      "tests_run_wp_is_post_autosave",
-      "tests_run_wp_is_post_revision",
-      "tests_run_wp_next_scheduled",
-      "tests_run_wp_parse_url",
-      "tests_run_wp_post",
-      "tests_run_wp_post_construct",
-      "tests_run_wp_query",
-      "tests_run_wp_query_construct",
-      "tests_run_wp_schedule_single_event",
-      "tests_run_wp_trim_words"
+      "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
+      "inc_admin",
+      "inc_admin_admin",
+      "inc_admin_admin_admin_menu",
+      "inc_admin_admin_cache_status_from_options",
+      "inc_admin_admin_cache_status_label",
+      "inc_admin_admin_cache_status_tone",
+      "inc_admin_admin_enqueue_admin_assets",
+      "inc_admin_admin_excluded_items_for_type",
+      "inc_admin_admin_excluded_total",
+      "inc_admin_admin_field_base_path",
+      "inc_admin_admin_field_crawler_diagnostics",
+      "inc_admin_admin_field_enabled_llms_txt",
+      "inc_admin_admin_field_enabled_markdown",
+      "inc_admin_admin_field_excluded_posts",
+      "inc_admin_admin_field_llms_custom_markdown",
+      "inc_admin_admin_field_llms_essential_links",
+      "inc_admin_admin_field_llms_noindex",
+      "inc_admin_admin_field_llms_recent_limit",
+      "inc_admin_admin_field_llms_regen_mode",
+      "inc_admin_admin_field_llms_show_excerpt",
+      "inc_admin_admin_field_md_noindex",
+      "inc_admin_admin_field_post_types",
+      "inc_admin_admin_field_site_author_override",
+      "inc_admin_admin_field_site_description_override",
+      "inc_admin_admin_field_site_title_override",
+      "inc_admin_admin_field_sitemap_url",
+      "inc_admin_admin_handle_regenerate_llms",
+      "inc_admin_admin_llms_settings_hash_from_options",
+      "inc_admin_admin_llms_url",
+      "inc_admin_admin_markdown_url_pattern",
+      "inc_admin_admin_maybe_add_md_override_metabox",
+      "inc_admin_admin_option_description_id",
+      "inc_admin_admin_option_field_id",
+      "inc_admin_admin_post_picker_title",
+      "inc_admin_admin_render_app_header",
+      "inc_admin_admin_render_app_nav",
+      "inc_admin_admin_render_badge",
+      "inc_admin_admin_render_copy_button",
+      "inc_admin_admin_render_crawlers_panel",
+      "inc_admin_admin_render_excluded_item",
+      "inc_admin_admin_render_exclusions_panel",
+      "inc_admin_admin_render_field_description",
+      "inc_admin_admin_render_llms_panel",
+      "inc_admin_admin_render_maintenance_panel",
+      "inc_admin_admin_render_markdown_panel",
+      "inc_admin_admin_render_md_override_metabox",
+      "inc_admin_admin_render_metadata_panel",
+      "inc_admin_admin_render_option_checkbox",
+      "inc_admin_admin_render_overview_panel",
+      "inc_admin_admin_render_page",
+      "inc_admin_admin_render_panel_close",
+      "inc_admin_admin_render_panel_open",
+      "inc_admin_admin_render_preview_panel",
+      "inc_admin_admin_render_scope_panel",
+      "inc_admin_admin_render_setting_field",
+      "inc_admin_admin_render_status_card",
+      "inc_admin_admin_sanitize_options",
+      "inc_admin_admin_selected_post_types",
+      "inc_admin_admin_settings_nav_items",
+      "llm_friendly_llmf_add_settings_link",
+      "tests_run_admin_url",
+      "tests_run_checked",
+      "tests_run_esc_attr",
+      "tests_run_esc_html",
+      "tests_run_esc_textarea",
+      "tests_run_esc_url",
+      "tests_run_home_url",
+      "tests_run_n",
+      "tests_run_settings_fields",
+      "tests_run_wp_create_nonce",
+      "tests_run_wp_nonce_field"
     ],
     "1": [
-      "inc_exporter_exporter_construct",
+      "inc_exporter",
+      "inc_exporter_exporter_get_markdown_override",
+      "inc_llms",
+      "inc_llms_llms_maybe_regenerate_for_post",
+      "inc_llms_llms_maybe_regenerate_on_delete",
+      "inc_llms_llms_maybe_regenerate_on_status_change",
+      "inc_options",
       "inc_options_options",
       "inc_options_options_absolute_http_url",
       "inc_options_options_author_name_for_post",
@@ -69,6 +89,7 @@
       "inc_options_options_can_export_post",
       "inc_options_options_default_port_for_scheme",
       "inc_options_options_defaults",
+      "inc_options_options_ensure_defaults",
       "inc_options_options_excluded_post_ids",
       "inc_options_options_explicit_excerpt_for_post",
       "inc_options_options_exportable_post_types",
@@ -104,19 +125,78 @@
       "inc_options_options_strip_markdown_headings",
       "inc_options_options_update",
       "tests_run_apply_filters",
+      "tests_run_get_bloginfo",
       "tests_run_get_post_meta",
-      "tests_run_home_url",
-      "tests_run_post_password_required",
       "tests_run_sanitize_key",
-      "tests_run_wp_kses_post"
+      "tests_run_wp_kses_post",
+      "tests_run_wp_parse_url",
+      "tests_run_wp_post",
+      "tests_run_wp_post_construct",
+      "tests_run_wp_trim_words"
     ],
     "2": [
+      "inc_admin_admin_admin_init",
+      "inc_admin_admin_ajax_preview_llms",
+      "inc_admin_admin_ajax_save_settings",
+      "inc_admin_admin_ajax_search_posts",
+      "inc_admin_admin_save_md_override_metabox",
+      "inc_admin_admin_text_length",
+      "inc_llms_llms_maybe_regenerate_on_save",
+      "inc_response",
+      "inc_response_response",
+      "inc_response_response_clean_header_name",
+      "inc_response_response_clean_header_value",
+      "inc_response_response_etag_from_string",
+      "inc_response_response_etag_matches",
+      "inc_response_response_header_lines",
+      "inc_response_response_send_conditional_headers",
+      "inc_response_response_send_service_unavailable",
+      "runtimeexception",
+      "tests_run",
+      "tests_run_add_option",
+      "tests_run_add_settings_field",
+      "tests_run_add_settings_section",
+      "tests_run_assert_contains_text",
+      "tests_run_assert_not_contains_text",
+      "tests_run_assert_occurrences",
+      "tests_run_assert_true",
+      "tests_run_call_private",
+      "tests_run_capture_json_response",
+      "tests_run_check_ajax_referer",
+      "tests_run_current_user_can",
+      "tests_run_do_settings_fields",
+      "tests_run_get_feed_link",
+      "tests_run_get_page_uri",
+      "tests_run_get_post_type_object",
+      "tests_run_get_post_types",
+      "tests_run_get_the_author_meta",
+      "tests_run_llmf_test_json_response",
+      "tests_run_llmf_test_json_response_construct",
+      "tests_run_post_password_required",
+      "tests_run_post_type_exists",
+      "tests_run_register_setting",
+      "tests_run_remove_all_filters",
+      "tests_run_sanitize_text_field",
+      "tests_run_selected",
+      "tests_run_submit_button",
+      "tests_run_wp_is_post_autosave",
+      "tests_run_wp_is_post_revision",
+      "tests_run_wp_kses",
+      "tests_run_wp_query",
+      "tests_run_wp_query_construct",
+      "tests_run_wp_send_json_error",
+      "tests_run_wp_send_json_success",
+      "tests_run_wp_unslash",
+      "tests_run_wp_verify_nonce"
+    ],
+    "3": [
       "domdocument",
       "inc_exporter_exporter",
       "inc_exporter_exporter_block_html",
       "inc_exporter_exporter_blocks_to_markdown",
       "inc_exporter_exporter_build_image_markdown",
       "inc_exporter_exporter_code_fence",
+      "inc_exporter_exporter_construct",
       "inc_exporter_exporter_core_table_to_markdown",
       "inc_exporter_exporter_details_block_to_md",
       "inc_exporter_exporter_dom_blockquote_to_md",
@@ -132,13 +212,11 @@
       "inc_exporter_exporter_extract_images_from_gallery_html",
       "inc_exporter_exporter_fallback_plain_table",
       "inc_exporter_exporter_gallery_blocks_to_md",
-      "inc_exporter_exporter_get_markdown_override",
       "inc_exporter_exporter_html_block_to_md",
       "inc_exporter_exporter_html_inline_to_md",
       "inc_exporter_exporter_inline_code",
       "inc_exporter_exporter_list_blocks_to_md",
       "inc_exporter_exporter_markdown_headers_for_post",
-      "inc_exporter_exporter_markdown_metadata_for_post",
       "inc_exporter_exporter_md_table_cell",
       "inc_exporter_exporter_metadata_hash",
       "inc_exporter_exporter_normalize_newlines",
@@ -147,63 +225,76 @@
       "inc_exporter_exporter_post_to_markdown",
       "inc_exporter_exporter_prefix_quote",
       "inc_exporter_exporter_send_not_found",
+      "inc_markdown",
       "inc_markdown_markdown",
       "inc_markdown_markdown_link_text",
       "inc_markdown_markdown_normalize_blocks",
       "inc_markdown_markdown_normalize_newlines",
       "inc_markdown_markdown_plain_text_line",
       "inc_markdown_markdown_url_destination",
-      "tests_run_get_permalink",
+      "tests_run_esc_url_raw",
+      "tests_run_parse_blocks",
       "tests_run_wp_json_encode",
       "tests_run_wp_strip_all_tags"
     ],
-    "3": [
-      "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
-      "inc_admin",
-      "inc_admin_admin",
-      "inc_admin_admin_admin_init",
-      "inc_admin_admin_admin_menu",
-      "inc_admin_admin_ajax_search_posts",
-      "inc_admin_admin_enqueue_admin_assets",
-      "inc_admin_admin_excluded_items_for_type",
-      "inc_admin_admin_field_base_path",
-      "inc_admin_admin_field_crawler_diagnostics",
-      "inc_admin_admin_field_enabled_llms_txt",
-      "inc_admin_admin_field_enabled_markdown",
-      "inc_admin_admin_field_excluded_posts",
-      "inc_admin_admin_field_llms_custom_markdown",
-      "inc_admin_admin_field_llms_essential_links",
-      "inc_admin_admin_field_llms_noindex",
-      "inc_admin_admin_field_llms_recent_limit",
-      "inc_admin_admin_field_llms_regen_mode",
-      "inc_admin_admin_field_llms_show_excerpt",
-      "inc_admin_admin_field_md_noindex",
-      "inc_admin_admin_field_post_types",
-      "inc_admin_admin_field_site_author_override",
-      "inc_admin_admin_field_site_description_override",
-      "inc_admin_admin_field_site_title_override",
-      "inc_admin_admin_field_sitemap_url",
-      "inc_admin_admin_handle_regenerate_llms",
-      "inc_admin_admin_maybe_add_md_override_metabox",
-      "inc_admin_admin_post_picker_title",
-      "inc_admin_admin_render_excluded_item",
-      "inc_admin_admin_render_md_override_metabox",
-      "inc_admin_admin_render_option_checkbox",
-      "inc_admin_admin_render_page",
-      "inc_admin_admin_sanitize_options",
-      "inc_admin_admin_save_md_override_metabox",
-      "inc_admin_admin_selected_post_types",
-      "inc_admin_admin_text_length",
-      "inc_response_response_send_conditional_headers",
-      "tests_run_checked",
-      "tests_run_current_user_can",
-      "tests_run_esc_attr",
-      "tests_run_esc_html",
-      "tests_run_esc_textarea",
-      "tests_run_sanitize_text_field",
-      "tests_run_wp_unslash"
-    ],
     "4": [
+      "inc_exporter_exporter_markdown_metadata_for_post",
+      "inc_llms_llms",
+      "inc_llms_llms_build_llms_txt",
+      "inc_llms_llms_cache_status_from_options",
+      "inc_llms_llms_clear_cache",
+      "inc_llms_llms_clear_cache_for_post",
+      "inc_llms_llms_get_essential_links",
+      "inc_llms_llms_get_recent_posts_by_type",
+      "inc_llms_llms_maybe_clear_cache_on_description_meta_change",
+      "inc_llms_llms_md_link_text",
+      "inc_llms_llms_output",
+      "inc_llms_llms_post_type_label",
+      "inc_llms_llms_preview",
+      "inc_llms_llms_regenerate",
+      "inc_llms_llms_regenerate_from_schedule",
+      "inc_llms_llms_schedule_regeneration",
+      "inc_llms_llms_settings_hash_from_options",
+      "inc_plugin_plugin_maybe_flush_rewrites",
+      "tests_run_delete_transient",
+      "tests_run_get_option",
+      "tests_run_get_permalink",
+      "tests_run_get_post",
+      "tests_run_get_the_date",
+      "tests_run_get_the_modified_date",
+      "tests_run_get_the_title",
+      "tests_run_get_transient",
+      "tests_run_set_transient",
+      "tests_run_update_option",
+      "tests_run_wp_next_scheduled",
+      "tests_run_wp_schedule_single_event"
+    ],
+    "5": [
+      "inc_admin_admin_construct",
+      "inc_llms_llms_construct",
+      "llm_friendly",
+      "llm_friendly_llmf_activate",
+      "llm_friendly_llmf_deactivate",
+      "llm_friendly_llmf_load_textdomain",
+      "llm_friendly_llmf_requirements_met",
+      "llm_friendly_llmf_requirements_notice",
+      "llmf_allow_external_sitemap_url",
+      "llmf_can_export_post",
+      "llmf_exportable_post_type",
+      "llmf_markdown_metadata",
+      "llms_send_noindex",
+      "llms_show_excerpt",
+      "llms_txt_endpoint",
+      "llms_txt_index",
+      "markdown_exports",
+      "md_send_noindex",
+      "php_runtime",
+      "readme",
+      "tests_run_add_action",
+      "tests_run_is_admin",
+      "wordpress_core"
+    ],
+    "6": [
       "inc_plugin",
       "inc_plugin_plugin",
       "inc_plugin_plugin_activate",
@@ -225,32 +316,6 @@
       "inc_rewrites_rewrites_construct",
       "tests_run_add_filter"
     ],
-    "5": [
-      "agents",
-      "agents_ci_cd",
-      "agents_graphify",
-      "agents_зависимости",
-      "agents_команды",
-      "agents_локализация",
-      "agents_навигация",
-      "agents_окружение",
-      "agents_подводные_камни",
-      "agents_полезные_ссылки",
-      "agents_стиль"
-    ],
-    "6": [
-      "inc_admin_admin_construct",
-      "inc_llms_llms_construct",
-      "llm_friendly",
-      "llm_friendly_llmf_activate",
-      "llm_friendly_llmf_add_settings_link",
-      "llm_friendly_llmf_deactivate",
-      "llm_friendly_llmf_load_textdomain",
-      "llm_friendly_llmf_requirements_met",
-      "llm_friendly_llmf_requirements_notice",
-      "tests_run_add_action",
-      "tests_run_get_bloginfo"
-    ],
     "7": [
       "composer",
       "composer_description",
@@ -264,56 +329,50 @@
       "composer_type"
     ],
     "8": [
-      "inc_response",
-      "inc_response_response",
-      "inc_response_response_clean_header_name",
-      "inc_response_response_clean_header_value",
-      "inc_response_response_etag_from_string",
-      "inc_response_response_etag_matches",
-      "inc_response_response_header_lines",
-      "inc_response_response_send_service_unavailable"
-    ],
-    "9": [
       "assets_llmf_admin"
     ],
-    "10": [
+    "9": [
       "languages_llm_friendly_de_de_l10n"
     ],
-    "11": [
+    "10": [
       "languages_llm_friendly_es_es_l10n"
     ],
-    "12": [
+    "11": [
       "languages_llm_friendly_fr_fr_l10n"
     ],
-    "13": [
+    "12": [
       "languages_llm_friendly_ru_ru_l10n"
     ],
-    "14": [
+    "13": [
       "languages_llm_friendly_uk_l10n"
     ],
-    "15": [
+    "14": [
       "languages_llm_friendly_uk_ua_l10n"
     ]
   },
   "cohesion": {
-    "0": 0.06654567453115548,
-    "1": 0.10726950354609929,
-    "2": 0.12525252525252525,
-    "3": 0.113107822410148,
-    "4": 0.12631578947368421,
-    "5": 0.18181818181818182,
-    "6": 0.21818181818181817,
+    "0": 0.08998435054773082,
+    "1": 0.08590441621294616,
+    "2": 0.057329462989840346,
+    "3": 0.11594202898550725,
+    "4": 0.135632183908046,
+    "5": 0.09881422924901186,
+    "6": 0.12631578947368421,
     "7": 0.2,
-    "8": 0.25,
+    "8": 1.0,
     "9": 1.0,
     "10": 1.0,
     "11": 1.0,
     "12": 1.0,
     "13": 1.0,
-    "14": 1.0,
-    "15": 1.0
+    "14": 1.0
   },
   "gods": [
+    {
+      "id": "inc_admin_admin",
+      "label": "Admin",
+      "degree": 67
+    },
     {
       "id": "inc_options_options",
       "label": "Options",
@@ -325,9 +384,9 @@
       "degree": 40
     },
     {
-      "id": "inc_admin_admin",
-      "label": "Admin",
-      "degree": 36
+      "id": "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
+      "label": "__()",
+      "degree": 40
     },
     {
       "id": "tests_run_wp_post",
@@ -337,17 +396,17 @@
     {
       "id": "inc_markdown_markdown",
       "label": "Markdown",
-      "degree": 26
+      "degree": 27
     },
     {
       "id": "inc_llms_llms",
       "label": "Llms",
-      "degree": 22
+      "degree": 24
     },
     {
       "id": "tests_run_esc_html",
       "label": "esc_html__()",
-      "degree": 22
+      "degree": 20
     },
     {
       "id": "inc_plugin_plugin",
@@ -355,19 +414,25 @@
       "degree": 19
     },
     {
-      "id": "d_devprojects_wordpress_llm_friendly_all_llm_friendly_git_tests_run",
-      "label": "__()",
-      "degree": 18
-    },
-    {
-      "id": "tests_run_esc_attr",
-      "label": "esc_attr()",
-      "degree": 15
+      "id": "tests_run_sanitize_key",
+      "label": "sanitize_key()",
+      "degree": 16
     }
   ],
   "surprises": [
     {
-      "source": "llmf_add_settings_link()",
+      "source": "llmf_requirements_met()",
+      "target": "get_bloginfo()",
+      "source_files": [
+        "llm-friendly.php",
+        "tests/run.php"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "llmf_requirements_notice()",
       "target": "esc_html__()",
       "source_files": [
         "llm-friendly.php",
@@ -375,11 +440,11 @@
       ],
       "confidence": "INFERRED",
       "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `llmf_add_settings_link()` unexpectedly reaches hub `esc_html__()`"
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
     },
     {
       "source": "llmf_requirements_notice()",
-      "target": "esc_html__()",
+      "target": "get_bloginfo()",
       "source_files": [
         "llm-friendly.php",
         "tests/run.php"
@@ -400,63 +465,52 @@
       "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "llmf_requirements_met()",
-      "target": "get_bloginfo()",
+      "source": "Markdown Exports",
+      "target": "llmf_allow_external_sitemap_url",
       "source_files": [
-        "llm-friendly.php",
-        "tests/run.php"
+        "README.md",
+        "readme.txt"
       ],
       "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
-    },
-    {
-      "source": "llmf_requirements_notice()",
-      "target": "get_bloginfo()",
-      "source_files": [
-        "llm-friendly.php",
-        "tests/run.php"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `llmf_allow_external_sitemap_url` unexpectedly reaches hub `Markdown Exports`"
     }
   ],
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `Options` connect `Options` to `run.php`, `Exporter`, `Plugin`, `llm-friendly.php`?",
-      "why": "High betweenness centrality (0.177) - this node is a cross-community bridge."
+      "question": "Why does `Admin` connect `Admin Interface Components` to `Admin AJAX and Settings`, `Plugin Lifecycle and Setup`, `Plugin Core Functionality`?",
+      "why": "High betweenness centrality (0.181) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `Exporter` connect `Exporter` to `run.php`, `Options`, `Plugin`?",
-      "why": "High betweenness centrality (0.168) - this node is a cross-community bridge."
+      "question": "Why does `Exporter` connect `Markdown Conversion Logic` to `Post and Options Management`, `Admin AJAX and Settings`, `LLM Content Generation`, `Plugin Core Functionality`?",
+      "why": "High betweenness centrality (0.143) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `Plugin` connect `Plugin` to `run.php`, `Options`, `Exporter`, `Admin`?",
-      "why": "High betweenness centrality (0.109) - this node is a cross-community bridge."
+      "question": "Why does `Options` connect `Post and Options Management` to `Markdown Conversion Logic`, `LLM Content Generation`, `Plugin Lifecycle and Setup`, `Plugin Core Functionality`?",
+      "why": "High betweenness centrality (0.133) - this node is a cross-community bridge."
     },
     {
       "type": "verify_inferred",
-      "question": "Are the 20 inferred relationships involving `Markdown` (e.g. with `.blocks_to_markdown()` and `.build_image_markdown()`) actually correct?",
-      "why": "`Markdown` has 20 INFERRED edges - model-reasoned connections that need verification."
+      "question": "Are the 39 inferred relationships involving `__()` (e.g. with `.admin_init()` and `.ajax_preview_llms()`) actually correct?",
+      "why": "`__()` has 39 INFERRED edges - model-reasoned connections that need verification."
     },
     {
       "type": "isolated_nodes",
-      "question": "What connects `Graphify`, `Навигация`, `Команды` to the rest of the system?",
+      "question": "What connects `name`, `description`, `type` to the rest of the system?",
       "why": "17 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `run.php` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.06654567453115548 - nodes in this community are weakly interconnected."
+      "question": "Should `Admin Interface Components` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08998435054773082 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Options` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.10726950354609929 - nodes in this community are weakly interconnected."
+      "question": "Should `Post and Options Management` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08590441621294616 - nodes in this community are weakly interconnected."
     }
   ]
 }

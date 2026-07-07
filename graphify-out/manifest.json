@@ -1,13 +1,8 @@
 {
-  "assets-svn/blueprints/blueprint.json": {
-    "mtime": 1782589311.9272738,
-    "ast_hash": "1c1cfc3e4c7b6359be51ac4ef41ee6a7",
-    "semantic_hash": "1c1cfc3e4c7b6359be51ac4ef41ee6a7"
-  },
   "assets/llmf-admin.js": {
     "mtime": 1783432243.374889,
     "ast_hash": "b7d4c9aa6b0c9c7e0f10b912996bb19d",
-    "semantic_hash": ""
+    "semantic_hash": "b7d4c9aa6b0c9c7e0f10b912996bb19d"
   },
   "composer.json": {
     "mtime": 1783179824.2182264,
@@ -17,7 +12,7 @@
   "inc/Admin.php": {
     "mtime": 1783432187.8556728,
     "ast_hash": "650a5fedc997009a80099eeb4e4d38c1",
-    "semantic_hash": ""
+    "semantic_hash": "650a5fedc997009a80099eeb4e4d38c1"
   },
   "inc/Exporter.php": {
     "mtime": 1783254611.3152819,
@@ -27,7 +22,7 @@
   "inc/Llms.php": {
     "mtime": 1783428589.5478706,
     "ast_hash": "2e550db445fe5b74b56b6ab0c18d3783",
-    "semantic_hash": ""
+    "semantic_hash": "2e550db445fe5b74b56b6ab0c18d3783"
   },
   "inc/Markdown.php": {
     "mtime": 1783240431.5668292,
@@ -37,7 +32,7 @@
   "inc/Options.php": {
     "mtime": 1783431003.7369132,
     "ast_hash": "9b0cedf6c96c7a0f8dff679bf8c036dc",
-    "semantic_hash": ""
+    "semantic_hash": "9b0cedf6c96c7a0f8dff679bf8c036dc"
   },
   "inc/Plugin.php": {
     "mtime": 1783240169.4131944,
@@ -57,86 +52,41 @@
   "languages/llm-friendly-de_DE.l10n.php": {
     "mtime": 1783432412.7263498,
     "ast_hash": "37d892b91884515cb4d52310d89b2ee6",
-    "semantic_hash": ""
+    "semantic_hash": "37d892b91884515cb4d52310d89b2ee6"
   },
   "languages/llm-friendly-es_ES.l10n.php": {
     "mtime": 1783432412.7274375,
     "ast_hash": "f4ad28530b2102861515da545844ca6d",
-    "semantic_hash": ""
+    "semantic_hash": "f4ad28530b2102861515da545844ca6d"
   },
   "languages/llm-friendly-fr_FR.l10n.php": {
     "mtime": 1783432412.728482,
     "ast_hash": "74d495767a6a8832cc5f05b2277fc330",
-    "semantic_hash": ""
+    "semantic_hash": "74d495767a6a8832cc5f05b2277fc330"
   },
   "languages/llm-friendly-ru_RU.l10n.php": {
     "mtime": 1783432412.7295115,
     "ast_hash": "869760b47062d62fb57247e3d91e4642",
-    "semantic_hash": ""
+    "semantic_hash": "869760b47062d62fb57247e3d91e4642"
   },
   "languages/llm-friendly-uk.l10n.php": {
     "mtime": 1783432412.7314086,
     "ast_hash": "e8f4aee3275fc6503f0de3e256bdf641",
-    "semantic_hash": ""
+    "semantic_hash": "e8f4aee3275fc6503f0de3e256bdf641"
   },
   "languages/llm-friendly-uk_UA.l10n.php": {
     "mtime": 1783432412.7334244,
     "ast_hash": "9d888c31c205f137cf93eb078f175731",
-    "semantic_hash": ""
+    "semantic_hash": "9d888c31c205f137cf93eb078f175731"
   },
   "llm-friendly.php": {
     "mtime": 1783424664.6741757,
     "ast_hash": "bee5ec62ba15f518d0397f22e37e6790",
-    "semantic_hash": ""
+    "semantic_hash": "bee5ec62ba15f518d0397f22e37e6790"
   },
   "tests/run.php": {
     "mtime": 1783432459.3145645,
     "ast_hash": "dc185de7e4d959ade3ecc14e41ee4c4f",
-    "semantic_hash": ""
-  },
-  "AGENTS.md": {
-    "mtime": 1783370701.806933,
-    "ast_hash": "c95f533f5cb386d3985f8627a323a33d",
-    "semantic_hash": ""
-  },
-  "README.md": {
-    "mtime": 1783254706.4286766,
-    "ast_hash": "033b7c1c2e91ca8f0d677104b1b95e2c",
-    "semantic_hash": ""
-  },
-  "TESTING.md": {
-    "mtime": 1783183512.744498,
-    "ast_hash": "3354c51578a119bbb88b7bda5b0a141a",
-    "semantic_hash": ""
-  },
-  "readme.txt": {
-    "mtime": 1783254743.0169804,
-    "ast_hash": "b69eb0048b8423d927ece7db2f637568",
-    "semantic_hash": ""
-  },
-  "assets-svn/banner-1544x500.png": {
-    "mtime": 1766813684.0,
-    "ast_hash": "ebaa67269414fcfe4512cb68088fbd54",
-    "semantic_hash": ""
-  },
-  "assets-svn/banner-772x250.png": {
-    "mtime": 1766813684.0,
-    "ast_hash": "138531b5ebfabaf87be7053b6aa13f21",
-    "semantic_hash": ""
-  },
-  "assets-svn/icon.svg": {
-    "mtime": 1766808328.0,
-    "ast_hash": "092cf8bb8d43cdf6f7a39792cbd26110",
-    "semantic_hash": ""
-  },
-  "assets-svn/screenshot-1.png": {
-    "mtime": 1767010230.0,
-    "ast_hash": "9737354e6e1cbca04dec586728da9586",
-    "semantic_hash": ""
-  },
-  "assets-svn/screenshot-2.png": {
-    "mtime": 1767010230.0,
-    "ast_hash": "9ffae43cd1faf704bb4be916acafe18d",
-    "semantic_hash": ""
+    "semantic_hash": "dc185de7e4d959ade3ecc14e41ee4c4f"
   }
 }
