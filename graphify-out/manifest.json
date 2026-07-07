@@ -15,8 +15,8 @@
     "semantic_hash": "8b67d8a8b853e8d4361a7c47913ae00e"
   },
   "inc/Admin.php": {
-    "mtime": 1783429462.5554292,
-    "ast_hash": "84a8287a18e796775a947a10421e86a8",
+    "mtime": 1783431681.3961895,
+    "ast_hash": "6f9094b78991fd7939cce11727379b69",
     "semantic_hash": ""
   },
   "inc/Exporter.php": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1783431036.5030277,
-    "ast_hash": "35cc116151730aad2944aca360c850ac",
+    "mtime": 1783431718.1851058,
+    "ast_hash": "98fa7df9ff82074d42ee952cf9ddc581",
     "semantic_hash": ""
   },
   "AGENTS.md": {
