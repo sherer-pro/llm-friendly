@@ -5,9 +5,9 @@
     "semantic_hash": "1c1cfc3e4c7b6359be51ac4ef41ee6a7"
   },
   "assets/llmf-admin.js": {
-    "mtime": 1782688530.2634676,
-    "ast_hash": "c427a331834caf58a823f9a8a6b2700f",
-    "semantic_hash": "c427a331834caf58a823f9a8a6b2700f"
+    "mtime": 1783429127.811009,
+    "ast_hash": "6e9c9d249a54a11b1b5b1b178335532a",
+    "semantic_hash": ""
   },
   "composer.json": {
     "mtime": 1783179824.2182264,
@@ -15,9 +15,9 @@
     "semantic_hash": "8b67d8a8b853e8d4361a7c47913ae00e"
   },
   "inc/Admin.php": {
-    "mtime": 1783240175.1963186,
-    "ast_hash": "4270e3688e8e4aa69faecec02d234316",
-    "semantic_hash": "4270e3688e8e4aa69faecec02d234316"
+    "mtime": 1783429462.5554292,
+    "ast_hash": "84a8287a18e796775a947a10421e86a8",
+    "semantic_hash": ""
   },
   "inc/Exporter.php": {
     "mtime": 1783254611.3152819,
@@ -25,9 +25,9 @@
     "semantic_hash": "f75e3d76b10103bf9e1f17a38ebee301"
   },
   "inc/Llms.php": {
-    "mtime": 1783240366.113613,
-    "ast_hash": "c9bae8b03819a878e9ccc1944f848392",
-    "semantic_hash": "c9bae8b03819a878e9ccc1944f848392"
+    "mtime": 1783428589.5478706,
+    "ast_hash": "2e550db445fe5b74b56b6ab0c18d3783",
+    "semantic_hash": ""
   },
   "inc/Markdown.php": {
     "mtime": 1783240431.5668292,
@@ -55,44 +55,44 @@
     "semantic_hash": "13c8126086b4e03baed179bd5fc4a93e"
   },
   "languages/llm-friendly-de_DE.l10n.php": {
-    "mtime": 1782689752.0384965,
-    "ast_hash": "baa4b2c3d352688fdd3420dba9671f4c",
-    "semantic_hash": "baa4b2c3d352688fdd3420dba9671f4c"
+    "mtime": 1783430566.27954,
+    "ast_hash": "de8034110c85b0fbcd00f0c1597bfccc",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-es_ES.l10n.php": {
-    "mtime": 1782689752.0394964,
-    "ast_hash": "3363d0c5e2f1af9c3d6618b14e5d101b",
-    "semantic_hash": "3363d0c5e2f1af9c3d6618b14e5d101b"
+    "mtime": 1783430566.28054,
+    "ast_hash": "84887c00696808f7d25d0e540f805f6d",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-fr_FR.l10n.php": {
-    "mtime": 1782689752.0394964,
-    "ast_hash": "ac72570b47dedc6156624d057df56e32",
-    "semantic_hash": "ac72570b47dedc6156624d057df56e32"
+    "mtime": 1783430566.28154,
+    "ast_hash": "d607a9d8e43e3d13503aad355db097e3",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-ru_RU.l10n.php": {
-    "mtime": 1782689752.0404966,
-    "ast_hash": "d3b74ec4701279042196a5fc72c91e8c",
-    "semantic_hash": "d3b74ec4701279042196a5fc72c91e8c"
+    "mtime": 1783430566.28354,
+    "ast_hash": "9e936d9cb6db52f083231195b76dd438",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-uk.l10n.php": {
-    "mtime": 1782689752.0416195,
-    "ast_hash": "302298c0fa53760596350361121ad7b2",
-    "semantic_hash": "302298c0fa53760596350361121ad7b2"
+    "mtime": 1783430566.2845404,
+    "ast_hash": "4e22388cdcd4c2adb6b2bec735329ff8",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-uk_UA.l10n.php": {
-    "mtime": 1782689752.0426235,
-    "ast_hash": "c4d1d23169a0475f4e73fec803361abc",
-    "semantic_hash": "c4d1d23169a0475f4e73fec803361abc"
+    "mtime": 1783430566.2855463,
+    "ast_hash": "2d3afe04ff6bf93f54e7f69754355b23",
+    "semantic_hash": ""
   },
   "llm-friendly.php": {
-    "mtime": 1782589877.4573648,
-    "ast_hash": "1e21e0ac6c6000a06e479f4e9c35e8f3",
-    "semantic_hash": "1e21e0ac6c6000a06e479f4e9c35e8f3"
+    "mtime": 1783424664.6741757,
+    "ast_hash": "bee5ec62ba15f518d0397f22e37e6790",
+    "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1783254603.3991697,
-    "ast_hash": "d7fd754d26832ca81a4e0238e7850794",
-    "semantic_hash": "d7fd754d26832ca81a4e0238e7850794"
+    "mtime": 1783429337.1528392,
+    "ast_hash": "b0c1ddbf5e5a6b44ea553e2ba8fa5053",
+    "semantic_hash": ""
   },
   "AGENTS.md": {
     "mtime": 1783370701.806933,
