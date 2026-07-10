@@ -1475,9 +1475,13 @@ final class Admin {
 	 * @return void
 	 */
 	public function field_crawler_diagnostics() {
-		$opt     = $this->options->get();
-		$sitemap = $this->options->sitemap_absolute_url();
-		$robots  = home_url( '/robots.txt' );
+		$opt                  = $this->options->get();
+		$sitemap              = $this->options->sitemap_absolute_url();
+		$robots               = home_url( '/robots.txt' );
+		$openai_crawlers_docs = 'https://platform.openai.com/docs/bots';
+		$google_ai_docs       = 'https://developers.google.com/search/docs/appearance/ai-features';
+		$google_crawlers_docs = 'https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers';
+		$google_robots_docs   = 'https://developers.google.com/search/docs/crawling-indexing/robots/create-robots-txt';
 
 		echo '<div class="llmf-crawler-diagnostics">';
 		echo '<div class="llmf-diagnostic-grid">';
@@ -1513,12 +1517,62 @@ final class Admin {
 		echo '</div>';
 
 		echo '</div>';
-		echo '<ul class="llmf-crawler-diagnostics__list">';
-		echo '<li>' . esc_html__( 'Allow OAI-SearchBot when you want pages to appear in ChatGPT search answers.', 'llm-friendly' ) . '</li>';
-		echo '<li>' . esc_html__( 'Decide on GPTBot separately; it is used for OpenAI model training rather than ChatGPT search inclusion.', 'llm-friendly' ) . '</li>';
-		echo '<li>' . esc_html__( 'For Google AI Overviews and AI Mode, Googlebot crawl and normal Search index eligibility remain the key controls.', 'llm-friendly' ) . '</li>';
-		echo '<li>' . esc_html__( 'Use Google-Extended separately if you need to limit training or grounding in some Google AI systems outside Search.', 'llm-friendly' ) . '</li>';
-		echo '</ul>';
+
+		$guidance = array(
+			array(
+				'title'         => __( 'OAI-SearchBot: ChatGPT Search', 'llm-friendly' ),
+				'description'   => __( 'Allow OAI-SearchBot when you want eligible pages to appear in ChatGPT search answers. This is independent from GPTBot training policy.', 'llm-friendly' ),
+				'example_label' => __( 'Example: allow ChatGPT Search', 'llm-friendly' ),
+				'example'       => "User-agent: OAI-SearchBot\nAllow: /",
+				'docs'          => $openai_crawlers_docs,
+				'docs_label'    => __( 'OpenAI crawler documentation', 'llm-friendly' ),
+			),
+			array(
+				'title'         => __( 'GPTBot: OpenAI training', 'llm-friendly' ),
+				'description'   => __( 'Use GPTBot separately when deciding whether crawled content may be used to train OpenAI generative AI foundation models.', 'llm-friendly' ),
+				'example_label' => __( 'Example: block OpenAI training', 'llm-friendly' ),
+				'example'       => "User-agent: GPTBot\nDisallow: /",
+				'docs'          => $openai_crawlers_docs,
+				'docs_label'    => __( 'OpenAI crawler documentation', 'llm-friendly' ),
+			),
+			array(
+				'title'         => __( 'Googlebot: Search and AI features', 'llm-friendly' ),
+				'description'   => __( 'For Google AI Overviews and AI Mode, keep normal Google Search crawling, indexing, and snippet eligibility in mind; there is no separate robots.txt token for those Search features.', 'llm-friendly' ),
+				'example_label' => __( 'Example: allow Google Search crawling', 'llm-friendly' ),
+				'example'       => "User-agent: Googlebot\nAllow: /\n\nSitemap: " . $sitemap,
+				'docs'          => $google_ai_docs,
+				'docs_label'    => __( 'Google AI feature guidance', 'llm-friendly' ),
+			),
+			array(
+				'title'         => __( 'Google-Extended: Gemini training and grounding', 'llm-friendly' ),
+				'description'   => __( 'Use Google-Extended to limit training future Gemini models and grounding in some Google AI systems outside Search. Google says this token does not affect Search inclusion or ranking.', 'llm-friendly' ),
+				'example_label' => __( 'Example: block Google-Extended', 'llm-friendly' ),
+				'example'       => "User-agent: Google-Extended\nDisallow: /",
+				'docs'          => $google_crawlers_docs . '#google-extended',
+				'docs_label'    => __( 'Google-Extended documentation', 'llm-friendly' ),
+			),
+		);
+
+		echo '<div class="llmf-crawler-guide">';
+		echo '<div class="llmf-crawler-guide__header">';
+		echo '<h3>' . esc_html__( 'Crawler policy examples', 'llm-friendly' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Use these snippets as starting points for manual robots.txt edits. Combine them with your own private paths, CDN rules, and legal/content policy.', 'llm-friendly' ) . '</p>';
+		echo '</div>';
+		echo '<div class="llmf-crawler-guide__grid">';
+		foreach ( $guidance as $item ) {
+			echo '<article class="llmf-crawler-guide__item">';
+			echo '<h4>' . esc_html( $item['title'] ) . '</h4>';
+			echo '<p>' . esc_html( $item['description'] ) . '</p>';
+			echo '<div class="llmf-crawler-guide__links">';
+			echo '<a href="' . esc_url( $item['docs'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $item['docs_label'] ) . '</a>';
+			echo '<a href="' . esc_url( $google_robots_docs ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'robots.txt syntax guide', 'llm-friendly' ) . '</a>';
+			echo '</div>';
+			echo '<p class="llmf-crawler-guide__example-label">' . esc_html( $item['example_label'] ) . '</p>';
+			echo '<pre class="llmf-crawler-guide__example"><code>' . esc_html( $item['example'] ) . '</code></pre>';
+			echo '</article>';
+		}
+		echo '</div>';
+		echo '</div>';
 		echo '<p class="description">' . esc_html__( 'Recommended robots.txt policy depends on your content strategy; this plugin only surfaces the decision points.', 'llm-friendly' ) . '</p>';
 		echo '</div>';
 	}
