@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: LLM Friendly 0.1.1\n"
+"Project-Id-Version: LLM Friendly 0.1.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/llm-friendly-git\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-29T02:20:13+03:00\n"
-"PO-Revision-Date: 2026-06-29 02:33+0300\n"
+"PO-Revision-Date: 2026-07-10 18:31+0300\n"
 "Language: uk_UA\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 2.0.7\n"
@@ -32,14 +32,11 @@ msgstr "Увімкнути експорт у Markdown"
 msgid "Send \"noindex\" header for Markdown exports"
 msgstr "Надсилати заголовок «noindex» для експорту в Markdown"
 
-#: inc/Admin.php:110
-#: inc/Admin.php:741
+#: inc/Admin.php:110 inc/Admin.php:741
 msgid "Base path for Markdown exports"
 msgstr "Базовий шлях для експорту в Markdown"
 
-#: inc/Admin.php:119
-#: inc/Admin.php:761
-#: inc/Admin.php:1326
+#: inc/Admin.php:119 inc/Admin.php:761 inc/Admin.php:1326
 msgid "Post types to include"
 msgstr "Типи записів для включення"
 
@@ -47,10 +44,7 @@ msgstr "Типи записів для включення"
 msgid "Excluded items"
 msgstr "Виключені елементи"
 
-#: inc/Admin.php:142
-#: inc/Admin.php:348
-#: inc/Admin.php:661
-#: inc/Admin.php:788
+#: inc/Admin.php:142 inc/Admin.php:348 inc/Admin.php:661 inc/Admin.php:788
 msgid "llms.txt"
 msgstr "llms.txt"
 
@@ -62,14 +56,11 @@ msgstr "Увімкнути llms.txt"
 msgid "Send \"noindex\" header for llms.txt"
 msgstr "Надсилати заголовок «noindex» для llms.txt"
 
-#: inc/Admin.php:167
-#: inc/Admin.php:793
-#: inc/Admin.php:1387
+#: inc/Admin.php:167 inc/Admin.php:793 inc/Admin.php:1387
 msgid "Regeneration mode"
 msgstr "Режим перегенерації"
 
-#: inc/Admin.php:176
-#: inc/Admin.php:794
+#: inc/Admin.php:176 inc/Admin.php:794
 msgid "Items per post type"
 msgstr "Елементів на тип запису"
 
@@ -77,8 +68,7 @@ msgstr "Елементів на тип запису"
 msgid "Show excerpt"
 msgstr "Показувати уривок"
 
-#: inc/Admin.php:194
-#: inc/Admin.php:796
+#: inc/Admin.php:194 inc/Admin.php:796
 msgid "Sitemap URL"
 msgstr "URL карти сайту"
 
@@ -90,23 +80,19 @@ msgstr "Користувацький блок Markdown"
 msgid "Site meta overrides"
 msgstr "Перевизначення метаданих сайту"
 
-#: inc/Admin.php:228
-#: inc/Admin.php:839
+#: inc/Admin.php:228 inc/Admin.php:839
 msgid "Site title override"
 msgstr "Перевизначення назви сайту"
 
-#: inc/Admin.php:237
-#: inc/Admin.php:840
+#: inc/Admin.php:237 inc/Admin.php:840
 msgid "Site description override"
 msgstr "Перевизначення опису сайту"
 
-#: inc/Admin.php:246
-#: inc/Admin.php:841
+#: inc/Admin.php:246 inc/Admin.php:841
 msgid "Author override"
 msgstr "Перевизначення автора"
 
-#: inc/Admin.php:1038
-#: inc/Admin.php:1590
+#: inc/Admin.php:1038 inc/Admin.php:1644
 msgid "Start typing from 2 characters…"
 msgstr "Почніть вводити від 2 символів…"
 
@@ -126,8 +112,7 @@ msgstr "За цим запитом нічого не знайдено."
 msgid "Add to exclusions"
 msgstr "Додати до виключень"
 
-#: inc/Admin.php:1051
-#: inc/Admin.php:1601
+#: inc/Admin.php:1051 inc/Admin.php:1655
 msgid "No items are excluded yet."
 msgstr "Поки нічого не виключено."
 
@@ -139,13 +124,11 @@ msgstr "Пошук не вдався, спробуйте ще раз."
 msgid "llms.txt was regenerated."
 msgstr "llms.txt було згенеровано заново."
 
-#: inc/Admin.php:1112
-#: inc/Admin.php:1118
+#: inc/Admin.php:1112 inc/Admin.php:1118
 msgid "Save changes"
 msgstr "Зберегти зміни"
 
-#: inc/Admin.php:351
-#: inc/Admin.php:868
+#: inc/Admin.php:351 inc/Admin.php:868
 msgid "Maintenance"
 msgstr "Обслуговування"
 
@@ -157,10 +140,7 @@ msgstr "Перегенерувати llms.txt зараз"
 msgid "Rebuilds cached llms.txt immediately."
 msgstr "Негайно перебудовує кешований llms.txt."
 
-#: inc/Admin.php:1142
-#: inc/Admin.php:1208
-#: inc/Admin.php:1223
-#: inc/Admin.php:1250
+#: inc/Admin.php:1142 inc/Admin.php:1208 inc/Admin.php:1223 inc/Admin.php:1250
 msgid "Access denied."
 msgstr "Доступ заборонено."
 
@@ -194,8 +174,7 @@ msgstr "Віддавати /llms.txt"
 msgid "Auto (on publish/update)"
 msgstr "Авто (під час публікації/оновлення)"
 
-#: inc/Admin.php:691
-#: inc/Admin.php:1394
+#: inc/Admin.php:691 inc/Admin.php:1394
 msgid "Manual only"
 msgstr "Лише вручну"
 
@@ -211,57 +190,55 @@ msgstr "Скільки останніх елементів показувати 
 msgid "Add excerpt (if available) under each item in llms.txt"
 msgstr "Додавати уривок (якщо є) під кожним елементом у llms.txt"
 
-#: inc/Admin.php:1539
+#: inc/Admin.php:1593
 msgid "Select at least one post type above to manage exclusions."
 msgstr "Виберіть принаймні один тип запису вище, щоб керувати виключеннями."
 
-#: inc/Admin.php:1588
+#: inc/Admin.php:1642
 msgid "Search by title"
 msgstr "Пошук за заголовком"
 
-#: inc/Admin.php:1593
+#: inc/Admin.php:1647
 msgid "Type at least two characters to search. Results appear in the dropdown instantly."
 msgstr "Введіть щонайменше два символи для пошуку. Результати одразу з’являться у випадаючому списку."
 
-#: inc/Admin.php:1597
+#: inc/Admin.php:1651
 msgid "Currently excluded"
 msgstr "Наразі виключено"
 
-#: inc/Admin.php:1633
+#: inc/Admin.php:1687
 msgid "If empty, uses WordPress setting: Site Title."
 msgstr "Якщо порожньо, використовується налаштування WordPress: «Назва сайту»."
 
-#: inc/Admin.php:1647
+#: inc/Admin.php:1701
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr "Якщо порожньо, використовується налаштування WordPress: «Короткий опис»."
 
-#: inc/Admin.php:1661
+#: inc/Admin.php:1715
 msgid "If empty, Markdown metadata uses the post author display name."
 msgstr "Якщо порожньо, метадані Markdown використовують відображуване ім’я автора запису."
 
-#: inc/Admin.php:1686
+#: inc/Admin.php:1740
 msgid "Markdown override (LLM Friendly)"
 msgstr "Перевизначення Markdown (LLM Friendly)"
 
-#: inc/Admin.php:1720
+#: inc/Admin.php:1774
 msgid "If filled, this text will replace the post content in the Markdown export."
 msgstr "Якщо заповнено, цей текст замінить вміст запису в Markdown-експорті."
 
-#: inc/Admin.php:1722
+#: inc/Admin.php:1776
 msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
 msgstr "Залиште порожнім, щоб експортувати вміст запису. Можна вставити чистий Markdown або розмітку блоків Gutenberg (<!-- wp: ... -->)."
 
-#: inc/Admin.php:1724
+#: inc/Admin.php:1778
 msgid "llms.txt description (overrides excerpt)"
 msgstr "Опис llms.txt (перевизначає уривок)"
 
-#: inc/Admin.php:1726
+#: inc/Admin.php:1780
 msgid "Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary."
 msgstr "Необов’язковий однорядковий опис для llms.txt і метаданих Markdown. Залиште порожнім, щоб використовувати SEO-метаопис, уривок або згенерований опис."
 
-#: inc/Exporter.php:113
-#: inc/Llms.php:328
-#: inc/Plugin.php:278
+#: inc/Exporter.php:113 inc/Llms.php:328 inc/Plugin.php:278
 msgid "Not Found"
 msgstr "Не знайдено"
 
@@ -338,14 +315,11 @@ msgstr "LLM Friendly вимкнено через невиконані вимог
 msgid "Same-site absolute URL or site-relative path. Default: /sitemap.xml"
 msgstr "Абсолютний URL того ж сайту або шлях відносно сайту. За замовчуванням: /sitemap.xml"
 
-#: inc/Admin.php:212
-#: inc/Admin.php:798
+#: inc/Admin.php:212 inc/Admin.php:798
 msgid "Essential links"
 msgstr "Важливі посилання"
 
-#: inc/Admin.php:255
-#: inc/Admin.php:350
-#: inc/Admin.php:853
+#: inc/Admin.php:255 inc/Admin.php:350 inc/Admin.php:853
 msgid "AI crawler diagnostics"
 msgstr "Діагностика AI-краулерів"
 
@@ -365,23 +339,7 @@ msgstr "Надсилати X-Robots-Tag: noindex для /llms.txt"
 msgid "Optional curated links for the llms.txt Essential section. One per line: Title | URL | Notes. URLs may be absolute or site-relative."
 msgstr "Необов’язкові добірні посилання для розділу Essential у llms.txt. По одному на рядок: Назва | URL | Примітки. URL можуть бути абсолютними або відносними до сайту."
 
-#: inc/Admin.php:1517
-msgid "Allow OAI-SearchBot when you want pages to appear in ChatGPT search answers."
-msgstr "Дозвольте OAI-SearchBot, якщо хочете, щоб сторінки з’являлися у відповідях пошуку ChatGPT."
-
-#: inc/Admin.php:1518
-msgid "Decide on GPTBot separately; it is used for OpenAI model training rather than ChatGPT search inclusion."
-msgstr "Рішення щодо GPTBot ухвалюйте окремо: він використовується для навчання моделей OpenAI, а не для потрапляння в пошук ChatGPT."
-
-#: inc/Admin.php:1519
-msgid "For Google AI Overviews and AI Mode, Googlebot crawl and normal Search index eligibility remain the key controls."
-msgstr "Для Google AI Overviews і AI Mode ключовими залишаються обхід Googlebot і звичайна придатність до індексації в Пошуку."
-
-#: inc/Admin.php:1520
-msgid "Use Google-Extended separately if you need to limit training or grounding in some Google AI systems outside Search."
-msgstr "Використовуйте Google-Extended окремо, якщо потрібно обмежити навчання або grounding у деяких AI-системах Google поза Пошуком."
-
-#: inc/Admin.php:1522
+#: inc/Admin.php:1576
 msgid "Recommended robots.txt policy depends on your content strategy; this plugin only surfaces the decision points."
 msgstr "Рекомендована політика robots.txt залежить від вашої контент-стратегії; плагін лише показує точки ухвалення рішень."
 
@@ -395,8 +353,7 @@ msgstr "Вбудований вміст: %s"
 msgid "Embedded content"
 msgstr "Вбудований вміст"
 
-#: inc/Exporter.php:1015
-#: inc/Exporter.php:1051
+#: inc/Exporter.php:1015 inc/Exporter.php:1051
 msgid "image"
 msgstr "зображення"
 
@@ -412,9 +369,7 @@ msgstr "Головна"
 msgid "Website home page"
 msgstr "Головна сторінка сайту"
 
-#: inc/Admin.php:709
-#: inc/Admin.php:1500
-#: inc/Llms.php:467
+#: inc/Admin.php:709 inc/Admin.php:1504 inc/Llms.php:467
 msgid "Sitemap"
 msgstr "Карта сайту"
 
@@ -452,15 +407,12 @@ msgstr "Політика конфіденційності"
 msgid "%1$s. Canonical URL: %2$s"
 msgstr "%1$s. Канонічний URL: %2$s"
 
-#: inc/Admin.php:127
-#: inc/Admin.php:347
-#: inc/Admin.php:773
+#: inc/Admin.php:127 inc/Admin.php:347 inc/Admin.php:773
 msgid "Exclusions"
 msgstr "Виключення"
 
 #. translators: %s: Item title.
-#: inc/Admin.php:983
-#: inc/Admin.php:1045
+#: inc/Admin.php:983 inc/Admin.php:1045
 #, php-format
 msgid "Remove \"%s\" from exclusions"
 msgstr "Вилучити «%s» з виключень"
@@ -511,30 +463,23 @@ msgstr "Використовує уривки записів або згенер
 msgid "Optional Markdown inserted into llms.txt between the site meta and the content sections. Heading markers are removed so this block cannot break the llms.txt section order."
 msgstr "Необов’язковий Markdown, що вставляється в llms.txt між метаданими сайту та розділами контенту. Маркери заголовків вилучаються, щоб блок не порушував порядок розділів llms.txt."
 
-#: inc/Admin.php:1544
+#: inc/Admin.php:1598
 msgid "Find items by title in real time, add them to the exclusion list, and remove them with one click. Excluded items are omitted from llms.txt and Markdown exports."
 msgstr "Шукайте елементи за заголовком у реальному часі, додавайте їх до списку виключень і вилучайте одним кліком. Виключені елементи не потрапляють до llms.txt та експорту Markdown."
 
-#: inc/Admin.php:344
-#: inc/Admin.php:648
+#: inc/Admin.php:344 inc/Admin.php:648
 msgid "Overview"
 msgstr "Огляд"
 
-#: inc/Admin.php:345
-#: inc/Admin.php:654
-#: inc/Admin.php:736
-#: inc/Admin.php:1493
+#: inc/Admin.php:345 inc/Admin.php:654 inc/Admin.php:736 inc/Admin.php:1497
 msgid "Markdown exports"
 msgstr "Експорт Markdown"
 
-#: inc/Admin.php:346
-#: inc/Admin.php:668
-#: inc/Admin.php:758
+#: inc/Admin.php:346 inc/Admin.php:668 inc/Admin.php:758
 msgid "Content scope"
 msgstr "Область контенту"
 
-#: inc/Admin.php:349
-#: inc/Admin.php:836
+#: inc/Admin.php:349 inc/Admin.php:836
 msgid "Site metadata"
 msgstr "Метадані сайту"
 
@@ -546,8 +491,7 @@ msgstr "Налаштування доступу для LLM"
 msgid "Control Markdown exports, llms.txt, AI crawler guidance, and exclusions from one place."
 msgstr "Керуйте експортом Markdown, llms.txt, рекомендаціями для AI-краулерів і виключеннями в одному місці."
 
-#: inc/Admin.php:404
-#: inc/Admin.php:818
+#: inc/Admin.php:404 inc/Admin.php:818
 msgid "Open llms.txt"
 msgstr "Відкрити llms.txt"
 
@@ -563,27 +507,20 @@ msgstr "Скопіювати шаблон Markdown"
 msgid "LLM Friendly settings sections"
 msgstr "Розділи налаштувань LLM Friendly"
 
-#: inc/Admin.php:558
-#: inc/Admin.php:1060
+#: inc/Admin.php:558 inc/Admin.php:1060
 msgid "Cached"
 msgstr "Кешовано"
 
-#: inc/Admin.php:561
-#: inc/Admin.php:655
-#: inc/Admin.php:657
-#: inc/Admin.php:662
-#: inc/Admin.php:664
-#: inc/Admin.php:1063
+#: inc/Admin.php:561 inc/Admin.php:655 inc/Admin.php:657 inc/Admin.php:662
+#: inc/Admin.php:664 inc/Admin.php:1063
 msgid "Disabled"
 msgstr "Вимкнено"
 
-#: inc/Admin.php:564
-#: inc/Admin.php:1062
+#: inc/Admin.php:564 inc/Admin.php:1062
 msgid "Needs regeneration"
 msgstr "Потребує регенерації"
 
-#: inc/Admin.php:567
-#: inc/Admin.php:1061
+#: inc/Admin.php:567 inc/Admin.php:1061
 msgid "Not cached"
 msgstr "Не кешовано"
 
@@ -591,9 +528,7 @@ msgstr "Не кешовано"
 msgid "Current saved state for public AI-readable endpoints and export coverage."
 msgstr "Поточний збережений стан публічних AI-читабельних endpointів і охоплення експорту."
 
-#: inc/Admin.php:655
-#: inc/Admin.php:657
-#: inc/Admin.php:664
+#: inc/Admin.php:655 inc/Admin.php:657 inc/Admin.php:664
 msgid "Enabled"
 msgstr "Увімкнено"
 
@@ -611,8 +546,7 @@ msgstr[1] "%d типи записів"
 msgstr[2] "%d типів записів"
 
 #. translators: %d: Number of excluded items.
-#: inc/Admin.php:676
-#: inc/Admin.php:1579
+#: inc/Admin.php:676 inc/Admin.php:1633
 #, php-format
 msgid "%d excluded item"
 msgid_plural "%d excluded items"
@@ -668,16 +602,11 @@ msgstr "Авто"
 msgid "Noindex headers"
 msgstr "Заголовки noindex"
 
-#: inc/Admin.php:698
-#: inc/Admin.php:712
-#: inc/Admin.php:1501
+#: inc/Admin.php:698 inc/Admin.php:712 inc/Admin.php:1505
 msgid "Configured"
 msgstr "Налаштовано"
 
-#: inc/Admin.php:698
-#: inc/Admin.php:705
-#: inc/Admin.php:1487
-#: inc/Admin.php:1494
+#: inc/Admin.php:698 inc/Admin.php:705 inc/Admin.php:1491 inc/Admin.php:1498
 msgid "Indexable"
 msgstr "Можна індексувати"
 
@@ -687,19 +616,15 @@ msgstr "Можна індексувати"
 msgid "Markdown: %1$s. llms.txt: %2$s."
 msgstr "Markdown: %1$s. llms.txt: %2$s."
 
-#: inc/Admin.php:702
-#: inc/Admin.php:703
+#: inc/Admin.php:702 inc/Admin.php:703
 msgid "noindex"
 msgstr "noindex"
 
-#: inc/Admin.php:702
-#: inc/Admin.php:703
+#: inc/Admin.php:702 inc/Admin.php:703
 msgid "indexable"
 msgstr "можна індексувати"
 
-#: inc/Admin.php:705
-#: inc/Admin.php:1487
-#: inc/Admin.php:1494
+#: inc/Admin.php:705 inc/Admin.php:1491 inc/Admin.php:1498
 msgid "Noindex"
 msgstr "Noindex"
 
@@ -807,18 +732,15 @@ msgstr "llms.txt вимкнено у збережених налаштуванн
 msgid "Preview was truncated for display."
 msgstr "Попередній перегляд скорочено для відображення."
 
-#: inc/Admin.php:1064
-#: inc/Admin.php:1115
+#: inc/Admin.php:1064 inc/Admin.php:1115
 msgid "Unsaved changes"
 msgstr "Незбережені зміни"
 
-#: inc/Admin.php:1068
-#: inc/Admin.php:1550
+#: inc/Admin.php:1068 inc/Admin.php:1604
 msgid "Exclusions changed. Save settings to apply."
 msgstr "Виключення змінено. Збережіть налаштування, щоб застосувати їх."
 
-#: inc/Admin.php:1069
-#: inc/Admin.php:1584
+#: inc/Admin.php:1069 inc/Admin.php:1638
 msgid "Clear this type"
 msgstr "Очистити цей тип"
 
@@ -830,35 +752,35 @@ msgstr "Скасувати зміни"
 msgid "Included"
 msgstr "Увімкнено"
 
-#: inc/Admin.php:1486
+#: inc/Admin.php:1490
 msgid "Search visibility"
 msgstr "Видимість у пошуку"
 
-#: inc/Admin.php:1489
+#: inc/Admin.php:1493
 msgid "The llms.txt noindex header controls whether search engines should index the file itself."
 msgstr "Заголовок noindex для llms.txt визначає, чи мають пошукові системи індексувати сам файл."
 
-#: inc/Admin.php:1496
+#: inc/Admin.php:1500
 msgid "Markdown endpoint headers are separate from normal WordPress post visibility."
 msgstr "Заголовки Markdown-endpointів відокремлені від звичайної видимості записів WordPress."
 
-#: inc/Admin.php:1504
+#: inc/Admin.php:1508
 msgid "Open sitemap"
 msgstr "Відкрити sitemap"
 
-#: inc/Admin.php:1508
+#: inc/Admin.php:1512
 msgid "robots.txt"
 msgstr "robots.txt"
 
-#: inc/Admin.php:1509
+#: inc/Admin.php:1513
 msgid "Manual policy"
 msgstr "Ручна політика"
 
-#: inc/Admin.php:1511
+#: inc/Admin.php:1515
 msgid "LLM Friendly does not edit robots.txt automatically."
 msgstr "LLM Friendly не редагує robots.txt автоматично."
 
-#: inc/Admin.php:1512
+#: inc/Admin.php:1516
 msgid "Open robots.txt"
 msgstr "Відкрити robots.txt"
 
@@ -866,8 +788,7 @@ msgstr "Відкрити robots.txt"
 msgid "Saving settings..."
 msgstr "Збереження налаштувань..."
 
-#: inc/Admin.php:1066
-#: inc/Admin.php:1237
+#: inc/Admin.php:1066 inc/Admin.php:1237
 msgid "Settings saved."
 msgstr "Налаштування збережено."
 
@@ -878,3 +799,75 @@ msgstr "Не вдалося зберегти налаштування. Спро�
 #: inc/Admin.php:1229
 msgid "Settings payload is missing."
 msgstr "Дані налаштувань відсутні."
+
+#: inc/Admin.php:1523
+msgid "OAI-SearchBot: ChatGPT Search"
+msgstr "OAI-SearchBot: пошук ChatGPT"
+
+#: inc/Admin.php:1524
+msgid "Allow OAI-SearchBot when you want eligible pages to appear in ChatGPT search answers. This is independent from GPTBot training policy."
+msgstr "Дозвольте OAI-SearchBot, якщо хочете, щоб придатні сторінки з'являлися у відповідях пошуку ChatGPT. Це не залежить від політики навчання GPTBot."
+
+#: inc/Admin.php:1525
+msgid "Example: allow ChatGPT Search"
+msgstr "Приклад: дозволити пошук ChatGPT"
+
+#: inc/Admin.php:1528 inc/Admin.php:1536
+msgid "OpenAI crawler documentation"
+msgstr "Документація щодо краулерів OpenAI"
+
+#: inc/Admin.php:1531
+msgid "GPTBot: OpenAI training"
+msgstr "GPTBot: навчання OpenAI"
+
+#: inc/Admin.php:1532
+msgid "Use GPTBot separately when deciding whether crawled content may be used to train OpenAI generative AI foundation models."
+msgstr "Налаштовуйте GPTBot окремо, коли вирішуєте, чи можна використовувати просканований контент для навчання базових генеративних AI-моделей OpenAI."
+
+#: inc/Admin.php:1533
+msgid "Example: block OpenAI training"
+msgstr "Приклад: заблокувати навчання OpenAI"
+
+#: inc/Admin.php:1539
+msgid "Googlebot: Search and AI features"
+msgstr "Googlebot: пошук і AI-функції"
+
+#: inc/Admin.php:1540
+msgid "For Google AI Overviews and AI Mode, keep normal Google Search crawling, indexing, and snippet eligibility in mind; there is no separate robots.txt token for those Search features."
+msgstr "Для Google AI Overviews і AI Mode враховуйте звичайне сканування Google Search, індексацію та придатність сніпетів; окремого токена robots.txt для цих пошукових функцій немає."
+
+#: inc/Admin.php:1541
+msgid "Example: allow Google Search crawling"
+msgstr "Приклад: дозволити сканування Google Search"
+
+#: inc/Admin.php:1544
+msgid "Google AI feature guidance"
+msgstr "Рекомендації щодо AI-функцій Google"
+
+#: inc/Admin.php:1547
+msgid "Google-Extended: Gemini training and grounding"
+msgstr "Google-Extended: навчання та grounding Gemini"
+
+#: inc/Admin.php:1548
+msgid "Use Google-Extended to limit training future Gemini models and grounding in some Google AI systems outside Search. Google says this token does not affect Search inclusion or ranking."
+msgstr "Використовуйте Google-Extended, щоб обмежити навчання майбутніх моделей Gemini та grounding у деяких AI-системах Google поза Пошуком. Google зазначає, що цей токен не впливає на потрапляння в Пошук або ранжування."
+
+#: inc/Admin.php:1549
+msgid "Example: block Google-Extended"
+msgstr "Приклад: заблокувати Google-Extended"
+
+#: inc/Admin.php:1552
+msgid "Google-Extended documentation"
+msgstr "Документація Google-Extended"
+
+#: inc/Admin.php:1558
+msgid "Crawler policy examples"
+msgstr "Приклади політики для краулерів"
+
+#: inc/Admin.php:1559
+msgid "Use these snippets as starting points for manual robots.txt edits. Combine them with your own private paths, CDN rules, and legal/content policy."
+msgstr "Використовуйте ці фрагменти як стартову точку для ручного редагування robots.txt. Поєднуйте їх із власними приватними шляхами, правилами CDN та юридичною/контентною політикою."
+
+#: inc/Admin.php:1568
+msgid "robots.txt syntax guide"
+msgstr "Посібник із синтаксису robots.txt"

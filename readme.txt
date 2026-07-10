@@ -4,38 +4,59 @@ Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Expose llms.txt and Markdown versions of posts/pages to make your site easier for LLMs to navigate and consume.
+Create a clean /llms.txt and Markdown exports for WordPress content, with controls for AI crawlers, metadata, excerpts, exclusions, and cache regeneration.
 
 == Description ==
 
-LLM Friendly adds two capabilities to your WordPress site:
+LLM Friendly gives your WordPress site predictable, machine-readable entry points for AI assistants, search/indexing bots, internal knowledge tools, and readers who prefer plain text.
 
-1) /llms.txt
-An LLM-friendly index of the website with main links, an Essential section for key site resources, and a list of latest items per post type. You can show AI-facing one-line descriptions and exclude individual entries from the feed via Settings -> LLM Friendly.
+Instead of asking crawlers to infer your site structure from HTML alone, the plugin publishes a focused `/llms.txt` index and optional Markdown versions of selected public content. You stay in control of what is exposed, how dense the index should be, which endpoints should be noindexed, and which posts or pages should be excluded.
 
-2) Markdown exports
-For selected public, publicly queryable post types, the plugin exposes .md endpoints under:
-{base}/{post_type}/{path}.md
-Entries include a JSON metadata block with title, URL, dates, language, description, author, and publisher. They can override their Markdown body and one-line LLM description via the "Markdown override (LLM Friendly)" editor metabox.
+= What the plugin creates =
 
-This is useful for LLMs, indexing bots, and users who prefer plain text.
-You can opt in to descriptions in llms.txt via `llms_show_excerpt`. `/llms.txt` and Markdown exports send `X-Robots-Tag: noindex` by default through separate `llms_send_noindex` and `md_send_noindex` settings, so Markdown-only endpoints do not compete with canonical HTML pages.
-If the automatic Markdown conversion does not fit a post, use the "Markdown override (LLM Friendly)" editor metabox to provide a custom Markdown or block-based replacement. In Gutenberg it appears with the editor's additional panels/metaboxes.
+1. `/llms.txt`
+
+The generated llms.txt file includes the site title and description, main links, sitemap and RSS references, an Essential section for important pages or curated resources, and recent items grouped by selected post type. Items can link to Markdown exports when Markdown is enabled, or to canonical HTML URLs when it is not.
+
+2. Markdown exports
+
+For selected public, publicly queryable post types, the plugin exposes `.md` endpoints under:
+
+`/{base}/{post_type}/{path}.md`
+
+Each Markdown export includes a JSON metadata block with title, URL, published and modified dates, language, description, author, and publisher, followed by a Markdown conversion of the post content. Singular views also receive alternate Markdown links, so compatible tools can discover the plain-text version.
+
+= Why site owners use it =
+
+* Give AI tools a concise map of your most useful public content.
+* Offer Markdown versions of posts, pages, and safe public custom post types without changing the canonical HTML experience.
+* Keep Markdown endpoints out of search results by default with separate noindex controls for `/llms.txt` and `.md` exports.
+* Add short AI-facing descriptions from a per-post field, SEO meta description, excerpt, or generated content summary.
+* Exclude individual items from both `/llms.txt` and Markdown exports without changing their WordPress visibility.
+* Preview generated llms.txt content before relying on the public endpoint.
+* Review practical AI crawler policy guidance for OAI-SearchBot, GPTBot, Googlebot/Search AI features, and Google-Extended.
 
 = Key features =
 
-* llms.txt endpoint with cached generation, an Essential section for configured special pages and curated links, optional AI-facing descriptions, a configurable custom Markdown notes block, and a per-post exclusion list.
-* Markdown exports for selected public, publicly queryable post types with Gutenberg-to-Markdown conversion, expanded JSON metadata, canonical Link headers, per-post Markdown overrides, and a per-post exclusion list shared with llms.txt.
-* Configurable base path for exports (e.g. "llm") and per-post-type enable/disable toggles; changing the base path requires flushing rewrites.
-* Manual or automatic regeneration of the cached llms.txt with ETag/Last-Modified headers.
-* Optional X-Robots-Tag: noindex for both /llms.txt and Markdown exports; /llms.txt is controlled by `llms_send_noindex`, and Markdown exports are controlled by `md_send_noindex`.
-* Toggle descriptions in llms.txt via `llms_show_excerpt` to add one-line summaries under each item.
-* Optional site title/description/author overrides plus a same-site sitemap URL field for generated outputs.
-* AI crawler diagnostics for OAI-SearchBot, GPTBot, Googlebot/Search AI features, Google-Extended, and the configured sitemap URL. The plugin does not edit robots.txt automatically.
+* llms.txt endpoint with cached generation, ETag/Last-Modified support, main links, sitemap/RSS references, an Essential section, selected post-type sections, optional item descriptions, and an optional custom Markdown notes block.
+* Markdown exports for selected public, publicly queryable post types with Gutenberg/HTML-to-Markdown conversion, JSON metadata, canonical Link headers, alternate Markdown discovery links, and transient-based body caching.
+* Overview dashboard with endpoint status, cache status, noindex status, sitemap URL, and quick copy buttons for `/llms.txt` and the Markdown URL pattern.
+* Configurable Markdown base path, for example `/llm/post/example.md`, with post type controls for posts, pages, and safe public custom post types.
+* Per-post-type exclusion picker with live title search, selected-item lists, clear buttons, and server-side validation.
+* Separate noindex header controls for `/llms.txt` and Markdown exports.
+* Auto or manual llms.txt regeneration; manual rebuilds are available from the Maintenance panel.
+* Live llms.txt preview that uses saved settings and does not update the public cache.
+* Optional excerpts/descriptions in llms.txt. Description priority is: per-post LLM description, SEO meta description, explicit excerpt, then a generated content summary.
+* Per-post "Markdown override (LLM Friendly)" metabox for custom Markdown or Gutenberg block markup, plus a one-line llms.txt description field.
+* Optional site title, site description, and author overrides for generated metadata.
+* Same-site sitemap URL validation. External sitemap URLs are rejected unless a developer explicitly allows them with a filter.
+* AI crawler diagnostics with policy examples and documentation links for OAI-SearchBot, GPTBot, Googlebot/Search AI features, and Google-Extended. The plugin does not edit robots.txt automatically.
+* Hardened public export boundaries: attachments, drafts, private content, password-protected posts, and non-public/non-queryable post types are excluded by default.
+* KSES sanitization for users without `unfiltered_html`, length caps for custom Markdown fields, and developer filters for edge cases.
 
 = Requirements =
 
@@ -106,5 +127,7 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 
 == Screenshots ==
 
-1. Settings page (General)
-2. Settings page (llms.txt, Site Meta overrides, AI crawler diagnostics, Maintenance)
+1. Settings overview dashboard with endpoint status, cache status, noindex status, sitemap URL, and copy actions.
+2. Markdown export controls, base path pattern, and selected content types.
+3. Per-post-type exclusions with live title search and selected excluded items.
+4. Generated llms.txt preview with cache metadata and site metadata override controls.

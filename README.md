@@ -5,7 +5,7 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.1.1**
+Current version: **0.1.2**
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 

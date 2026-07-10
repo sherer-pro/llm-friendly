@@ -57,7 +57,7 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 - CSS uses `.llmf-...` class prefixes and small WordPress-admin compatible rules.
 - No `.editorconfig`, PHPCS, PHP-CS-Fixer, Prettier, ESLint, or pre-commit hooks are configured. Preserve surrounding style manually.
 - No hard line-length rule is enforced. Real source contains long admin `echo` lines; keep new lines readable and avoid rewrapping unrelated code.
-- Commit history is mostly short English imperative messages (`Improve...`, `Harden...`, `Update...`, `Fix...`) with occasional Conventional Commits (`docs:`, `fix:`, `chore:`). Prefer `type: summary` for automation-generated docs/fix/chore commits, unless matching an existing release message like `Version 0.1.1`.
+- Commit history is mostly short English imperative messages (`Improve...`, `Harden...`, `Update...`, `Fix...`) with occasional Conventional Commits (`docs:`, `fix:`, `chore:`). Prefer `type: summary` for automation-generated docs/fix/chore commits, unless matching an existing release message like `Version 0.1.2`.
 
 ## Окружение
 

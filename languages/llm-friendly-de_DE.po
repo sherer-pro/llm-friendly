@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: LLM Friendly 0.1.1\n"
+"Project-Id-Version: LLM Friendly 0.1.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/llm-friendly-git\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-29T02:20:13+03:00\n"
-"PO-Revision-Date: 2026-06-29 02:30+0300\n"
+"PO-Revision-Date: 2026-07-10 18:30+0300\n"
 "Language: de_DE\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 2.0.7\n"
@@ -32,14 +32,11 @@ msgstr "Markdown-Exporte aktivieren"
 msgid "Send \"noindex\" header for Markdown exports"
 msgstr "„noindex“-Header für Markdown-Exporte senden"
 
-#: inc/Admin.php:110
-#: inc/Admin.php:741
+#: inc/Admin.php:110 inc/Admin.php:741
 msgid "Base path for Markdown exports"
 msgstr "Basispfad für Markdown-Exporte"
 
-#: inc/Admin.php:119
-#: inc/Admin.php:761
-#: inc/Admin.php:1326
+#: inc/Admin.php:119 inc/Admin.php:761 inc/Admin.php:1326
 msgid "Post types to include"
 msgstr "Einzuschließende Beitragstypen"
 
@@ -47,10 +44,7 @@ msgstr "Einzuschließende Beitragstypen"
 msgid "Excluded items"
 msgstr "Ausgeschlossene Elemente"
 
-#: inc/Admin.php:142
-#: inc/Admin.php:348
-#: inc/Admin.php:661
-#: inc/Admin.php:788
+#: inc/Admin.php:142 inc/Admin.php:348 inc/Admin.php:661 inc/Admin.php:788
 msgid "llms.txt"
 msgstr "llms.txt"
 
@@ -62,14 +56,11 @@ msgstr "llms.txt aktivieren"
 msgid "Send \"noindex\" header for llms.txt"
 msgstr "„noindex“-Header für llms.txt senden"
 
-#: inc/Admin.php:167
-#: inc/Admin.php:793
-#: inc/Admin.php:1387
+#: inc/Admin.php:167 inc/Admin.php:793 inc/Admin.php:1387
 msgid "Regeneration mode"
 msgstr "Regenerierungsmodus"
 
-#: inc/Admin.php:176
-#: inc/Admin.php:794
+#: inc/Admin.php:176 inc/Admin.php:794
 msgid "Items per post type"
 msgstr "Einträge pro Beitragstyp"
 
@@ -77,8 +68,7 @@ msgstr "Einträge pro Beitragstyp"
 msgid "Show excerpt"
 msgstr "Auszug anzeigen"
 
-#: inc/Admin.php:194
-#: inc/Admin.php:796
+#: inc/Admin.php:194 inc/Admin.php:796
 msgid "Sitemap URL"
 msgstr "Sitemap-URL"
 
@@ -90,23 +80,19 @@ msgstr "Benutzerdefinierter Markdown-Block"
 msgid "Site meta overrides"
 msgstr "Website-Metadaten überschreiben"
 
-#: inc/Admin.php:228
-#: inc/Admin.php:839
+#: inc/Admin.php:228 inc/Admin.php:839
 msgid "Site title override"
 msgstr "Website-Titel überschreiben"
 
-#: inc/Admin.php:237
-#: inc/Admin.php:840
+#: inc/Admin.php:237 inc/Admin.php:840
 msgid "Site description override"
 msgstr "Website-Beschreibung überschreiben"
 
-#: inc/Admin.php:246
-#: inc/Admin.php:841
+#: inc/Admin.php:246 inc/Admin.php:841
 msgid "Author override"
 msgstr "Autor überschreiben"
 
-#: inc/Admin.php:1038
-#: inc/Admin.php:1590
+#: inc/Admin.php:1038 inc/Admin.php:1644
 msgid "Start typing from 2 characters…"
 msgstr "Ab 2 Zeichen tippen…"
 
@@ -126,8 +112,7 @@ msgstr "Für diese Anfrage wurde nichts gefunden."
 msgid "Add to exclusions"
 msgstr "Zu Ausschlüssen hinzufügen"
 
-#: inc/Admin.php:1051
-#: inc/Admin.php:1601
+#: inc/Admin.php:1051 inc/Admin.php:1655
 msgid "No items are excluded yet."
 msgstr "Noch sind keine Elemente ausgeschlossen."
 
@@ -139,13 +124,11 @@ msgstr "Suche fehlgeschlagen, bitte erneut versuchen."
 msgid "llms.txt was regenerated."
 msgstr "llms.txt wurde neu erzeugt."
 
-#: inc/Admin.php:1112
-#: inc/Admin.php:1118
+#: inc/Admin.php:1112 inc/Admin.php:1118
 msgid "Save changes"
 msgstr "Änderungen speichern"
 
-#: inc/Admin.php:351
-#: inc/Admin.php:868
+#: inc/Admin.php:351 inc/Admin.php:868
 msgid "Maintenance"
 msgstr "Wartung"
 
@@ -157,10 +140,7 @@ msgstr "llms.txt jetzt neu erzeugen"
 msgid "Rebuilds cached llms.txt immediately."
 msgstr "Erstellt den zwischengespeicherten llms.txt sofort neu."
 
-#: inc/Admin.php:1142
-#: inc/Admin.php:1208
-#: inc/Admin.php:1223
-#: inc/Admin.php:1250
+#: inc/Admin.php:1142 inc/Admin.php:1208 inc/Admin.php:1223 inc/Admin.php:1250
 msgid "Access denied."
 msgstr "Zugriff verweigert."
 
@@ -194,8 +174,7 @@ msgstr "/llms.txt bereitstellen"
 msgid "Auto (on publish/update)"
 msgstr "Automatisch (bei Veröffentlichung/Aktualisierung)"
 
-#: inc/Admin.php:691
-#: inc/Admin.php:1394
+#: inc/Admin.php:691 inc/Admin.php:1394
 msgid "Manual only"
 msgstr "Nur manuell"
 
@@ -211,57 +190,55 @@ msgstr "Wie viele der neuesten Einträge pro Beitragstyp aufgelistet werden."
 msgid "Add excerpt (if available) under each item in llms.txt"
 msgstr "Auszug (falls verfügbar) unter jedem Eintrag in llms.txt hinzufügen"
 
-#: inc/Admin.php:1539
+#: inc/Admin.php:1593
 msgid "Select at least one post type above to manage exclusions."
 msgstr "Wähle oben mindestens einen Beitragstyp aus, um Ausschlüsse zu verwalten."
 
-#: inc/Admin.php:1588
+#: inc/Admin.php:1642
 msgid "Search by title"
 msgstr "Nach Titel suchen"
 
-#: inc/Admin.php:1593
+#: inc/Admin.php:1647
 msgid "Type at least two characters to search. Results appear in the dropdown instantly."
 msgstr "Gib mindestens zwei Zeichen ein. Ergebnisse erscheinen sofort im Dropdown."
 
-#: inc/Admin.php:1597
+#: inc/Admin.php:1651
 msgid "Currently excluded"
 msgstr "Derzeit ausgeschlossen"
 
-#: inc/Admin.php:1633
+#: inc/Admin.php:1687
 msgid "If empty, uses WordPress setting: Site Title."
 msgstr "Leer: WordPress-Einstellung „Website-Titel“ wird verwendet."
 
-#: inc/Admin.php:1647
+#: inc/Admin.php:1701
 msgid "If empty, uses WordPress setting: Tagline."
 msgstr "Leer: WordPress-Einstellung „Untertitel“ wird verwendet."
 
-#: inc/Admin.php:1661
+#: inc/Admin.php:1715
 msgid "If empty, Markdown metadata uses the post author display name."
 msgstr "Wenn leer, verwenden die Markdown-Metadaten den Anzeigenamen des Beitragsautors."
 
-#: inc/Admin.php:1686
+#: inc/Admin.php:1740
 msgid "Markdown override (LLM Friendly)"
 msgstr "Markdown-Überschreibung (LLM Friendly)"
 
-#: inc/Admin.php:1720
+#: inc/Admin.php:1774
 msgid "If filled, this text will replace the post content in the Markdown export."
 msgstr "Wenn ausgefüllt, ersetzt dieser Text den Beitragsinhalt im Markdown-Export."
 
-#: inc/Admin.php:1722
+#: inc/Admin.php:1776
 msgid "Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->)."
 msgstr "Leer lassen, um den Beitragsinhalt zu exportieren. Du kannst reines Markdown oder Gutenberg-Block-Markup (<!-- wp: ... -->) einfügen."
 
-#: inc/Admin.php:1724
+#: inc/Admin.php:1778
 msgid "llms.txt description (overrides excerpt)"
 msgstr "llms.txt-Beschreibung (überschreibt den Auszug)"
 
-#: inc/Admin.php:1726
+#: inc/Admin.php:1780
 msgid "Optional one-line summary used in llms.txt and Markdown metadata. Leave empty to use the SEO meta description, excerpt, or a generated summary."
 msgstr "Optionale einzeilige Zusammenfassung für llms.txt und Markdown-Metadaten. Leer lassen, um die SEO-Metabeschreibung, den Auszug oder eine generierte Zusammenfassung zu verwenden."
 
-#: inc/Exporter.php:113
-#: inc/Llms.php:328
-#: inc/Plugin.php:278
+#: inc/Exporter.php:113 inc/Llms.php:328 inc/Plugin.php:278
 msgid "Not Found"
 msgstr "Nicht gefunden"
 
@@ -338,14 +315,11 @@ msgstr "LLM Friendly ist wegen nicht erfüllter Anforderungen deaktiviert:"
 msgid "Same-site absolute URL or site-relative path. Default: /sitemap.xml"
 msgstr "Absolute URL derselben Website oder website-relativer Pfad. Standard: /sitemap.xml"
 
-#: inc/Admin.php:212
-#: inc/Admin.php:798
+#: inc/Admin.php:212 inc/Admin.php:798
 msgid "Essential links"
 msgstr "Wichtige Links"
 
-#: inc/Admin.php:255
-#: inc/Admin.php:350
-#: inc/Admin.php:853
+#: inc/Admin.php:255 inc/Admin.php:350 inc/Admin.php:853
 msgid "AI crawler diagnostics"
 msgstr "Diagnose für KI-Crawler"
 
@@ -365,23 +339,7 @@ msgstr "X-Robots-Tag: noindex für /llms.txt senden"
 msgid "Optional curated links for the llms.txt Essential section. One per line: Title | URL | Notes. URLs may be absolute or site-relative."
 msgstr "Optionale kuratierte Links für den Abschnitt „Wichtig“ in llms.txt. Eine Zeile pro Link: Titel | URL | Hinweise. URLs können absolut oder website-relativ sein."
 
-#: inc/Admin.php:1517
-msgid "Allow OAI-SearchBot when you want pages to appear in ChatGPT search answers."
-msgstr "Erlaube OAI-SearchBot, wenn Seiten in ChatGPT-Suchantworten erscheinen sollen."
-
-#: inc/Admin.php:1518
-msgid "Decide on GPTBot separately; it is used for OpenAI model training rather than ChatGPT search inclusion."
-msgstr "Entscheide über GPTBot separat; er wird für das Training von OpenAI-Modellen verwendet, nicht für die Aufnahme in die ChatGPT-Suche."
-
-#: inc/Admin.php:1519
-msgid "For Google AI Overviews and AI Mode, Googlebot crawl and normal Search index eligibility remain the key controls."
-msgstr "Für Google AI Overviews und AI Mode bleiben Googlebot-Crawling und die normale Indexierbarkeit in der Suche die wichtigsten Kontrollen."
-
-#: inc/Admin.php:1520
-msgid "Use Google-Extended separately if you need to limit training or grounding in some Google AI systems outside Search."
-msgstr "Nutze Google-Extended separat, wenn du Training oder Grounding in einigen Google-KI-Systemen außerhalb der Suche begrenzen möchtest."
-
-#: inc/Admin.php:1522
+#: inc/Admin.php:1576
 msgid "Recommended robots.txt policy depends on your content strategy; this plugin only surfaces the decision points."
 msgstr "Die empfohlene robots.txt-Richtlinie hängt von deiner Content-Strategie ab; dieses Plugin zeigt nur die Entscheidungspunkte."
 
@@ -395,8 +353,7 @@ msgstr "Einbettung: %s"
 msgid "Embedded content"
 msgstr "Eingebetteter Inhalt"
 
-#: inc/Exporter.php:1015
-#: inc/Exporter.php:1051
+#: inc/Exporter.php:1015 inc/Exporter.php:1051
 msgid "image"
 msgstr "Bild"
 
@@ -412,9 +369,7 @@ msgstr "Startseite"
 msgid "Website home page"
 msgstr "Startseite der Website"
 
-#: inc/Admin.php:709
-#: inc/Admin.php:1500
-#: inc/Llms.php:467
+#: inc/Admin.php:709 inc/Admin.php:1504 inc/Llms.php:467
 msgid "Sitemap"
 msgstr "Sitemap"
 
@@ -452,15 +407,12 @@ msgstr "Datenschutzerklärung"
 msgid "%1$s. Canonical URL: %2$s"
 msgstr "%1$s. Kanonische URL: %2$s"
 
-#: inc/Admin.php:127
-#: inc/Admin.php:347
-#: inc/Admin.php:773
+#: inc/Admin.php:127 inc/Admin.php:347 inc/Admin.php:773
 msgid "Exclusions"
 msgstr "Ausschlüsse"
 
 #. translators: %s: Item title.
-#: inc/Admin.php:983
-#: inc/Admin.php:1045
+#: inc/Admin.php:983 inc/Admin.php:1045
 #, php-format
 msgid "Remove \"%s\" from exclusions"
 msgstr "„%s“ aus Ausschlüssen entfernen"
@@ -511,30 +463,23 @@ msgstr "Verwendet Beitragsauszüge oder generierte Zusammenfassungen, wenn verf�
 msgid "Optional Markdown inserted into llms.txt between the site meta and the content sections. Heading markers are removed so this block cannot break the llms.txt section order."
 msgstr "Optionales Markdown, das in llms.txt zwischen Website-Metadaten und Inhaltsabschnitten eingefügt wird. Überschriftenmarker werden entfernt, damit dieser Block die Abschnittsreihenfolge von llms.txt nicht beschädigen kann."
 
-#: inc/Admin.php:1544
+#: inc/Admin.php:1598
 msgid "Find items by title in real time, add them to the exclusion list, and remove them with one click. Excluded items are omitted from llms.txt and Markdown exports."
 msgstr "Finde Elemente in Echtzeit nach Titel, füge sie zur Ausschlussliste hinzu und entferne sie mit einem Klick. Ausgeschlossene Elemente werden aus llms.txt und Markdown-Exporten ausgelassen."
 
-#: inc/Admin.php:344
-#: inc/Admin.php:648
+#: inc/Admin.php:344 inc/Admin.php:648
 msgid "Overview"
 msgstr "Überblick"
 
-#: inc/Admin.php:345
-#: inc/Admin.php:654
-#: inc/Admin.php:736
-#: inc/Admin.php:1493
+#: inc/Admin.php:345 inc/Admin.php:654 inc/Admin.php:736 inc/Admin.php:1497
 msgid "Markdown exports"
 msgstr "Markdown-Exporte"
 
-#: inc/Admin.php:346
-#: inc/Admin.php:668
-#: inc/Admin.php:758
+#: inc/Admin.php:346 inc/Admin.php:668 inc/Admin.php:758
 msgid "Content scope"
 msgstr "Inhaltsumfang"
 
-#: inc/Admin.php:349
-#: inc/Admin.php:836
+#: inc/Admin.php:349 inc/Admin.php:836
 msgid "Site metadata"
 msgstr "Website-Metadaten"
 
@@ -546,8 +491,7 @@ msgstr "LLM-Zugriffseinstellungen"
 msgid "Control Markdown exports, llms.txt, AI crawler guidance, and exclusions from one place."
 msgstr "Markdown-Exporte, llms.txt, Hinweise für AI-Crawler und Ausschlüsse an einem Ort verwalten."
 
-#: inc/Admin.php:404
-#: inc/Admin.php:818
+#: inc/Admin.php:404 inc/Admin.php:818
 msgid "Open llms.txt"
 msgstr "llms.txt öffnen"
 
@@ -563,27 +507,20 @@ msgstr "Markdown-Muster kopieren"
 msgid "LLM Friendly settings sections"
 msgstr "LLM Friendly Einstellungsbereiche"
 
-#: inc/Admin.php:558
-#: inc/Admin.php:1060
+#: inc/Admin.php:558 inc/Admin.php:1060
 msgid "Cached"
 msgstr "Im Cache"
 
-#: inc/Admin.php:561
-#: inc/Admin.php:655
-#: inc/Admin.php:657
-#: inc/Admin.php:662
-#: inc/Admin.php:664
-#: inc/Admin.php:1063
+#: inc/Admin.php:561 inc/Admin.php:655 inc/Admin.php:657 inc/Admin.php:662
+#: inc/Admin.php:664 inc/Admin.php:1063
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: inc/Admin.php:564
-#: inc/Admin.php:1062
+#: inc/Admin.php:564 inc/Admin.php:1062
 msgid "Needs regeneration"
 msgstr "Muss neu erstellt werden"
 
-#: inc/Admin.php:567
-#: inc/Admin.php:1061
+#: inc/Admin.php:567 inc/Admin.php:1061
 msgid "Not cached"
 msgstr "Nicht im Cache"
 
@@ -591,9 +528,7 @@ msgstr "Nicht im Cache"
 msgid "Current saved state for public AI-readable endpoints and export coverage."
 msgstr "Aktuell gespeicherter Status für öffentliche KI-lesbare Endpunkte und Exportabdeckung."
 
-#: inc/Admin.php:655
-#: inc/Admin.php:657
-#: inc/Admin.php:664
+#: inc/Admin.php:655 inc/Admin.php:657 inc/Admin.php:664
 msgid "Enabled"
 msgstr "Aktiviert"
 
@@ -610,8 +545,7 @@ msgstr[0] "%d Inhaltstyp"
 msgstr[1] "%d Inhaltstypen"
 
 #. translators: %d: Number of excluded items.
-#: inc/Admin.php:676
-#: inc/Admin.php:1579
+#: inc/Admin.php:676 inc/Admin.php:1633
 #, php-format
 msgid "%d excluded item"
 msgid_plural "%d excluded items"
@@ -666,16 +600,11 @@ msgstr "Automatisch"
 msgid "Noindex headers"
 msgstr "Noindex-Header"
 
-#: inc/Admin.php:698
-#: inc/Admin.php:712
-#: inc/Admin.php:1501
+#: inc/Admin.php:698 inc/Admin.php:712 inc/Admin.php:1505
 msgid "Configured"
 msgstr "Konfiguriert"
 
-#: inc/Admin.php:698
-#: inc/Admin.php:705
-#: inc/Admin.php:1487
-#: inc/Admin.php:1494
+#: inc/Admin.php:698 inc/Admin.php:705 inc/Admin.php:1491 inc/Admin.php:1498
 msgid "Indexable"
 msgstr "Indexierbar"
 
@@ -685,19 +614,15 @@ msgstr "Indexierbar"
 msgid "Markdown: %1$s. llms.txt: %2$s."
 msgstr "Markdown: %1$s. llms.txt: %2$s."
 
-#: inc/Admin.php:702
-#: inc/Admin.php:703
+#: inc/Admin.php:702 inc/Admin.php:703
 msgid "noindex"
 msgstr "noindex"
 
-#: inc/Admin.php:702
-#: inc/Admin.php:703
+#: inc/Admin.php:702 inc/Admin.php:703
 msgid "indexable"
 msgstr "indexierbar"
 
-#: inc/Admin.php:705
-#: inc/Admin.php:1487
-#: inc/Admin.php:1494
+#: inc/Admin.php:705 inc/Admin.php:1491 inc/Admin.php:1498
 msgid "Noindex"
 msgstr "Noindex"
 
@@ -805,18 +730,15 @@ msgstr "llms.txt ist in den gespeicherten Einstellungen deaktiviert."
 msgid "Preview was truncated for display."
 msgstr "Vorschau wurde für die Anzeige gekürzt."
 
-#: inc/Admin.php:1064
-#: inc/Admin.php:1115
+#: inc/Admin.php:1064 inc/Admin.php:1115
 msgid "Unsaved changes"
 msgstr "Ungespeicherte Änderungen"
 
-#: inc/Admin.php:1068
-#: inc/Admin.php:1550
+#: inc/Admin.php:1068 inc/Admin.php:1604
 msgid "Exclusions changed. Save settings to apply."
 msgstr "Ausschlüsse geändert. Speichern Sie die Einstellungen, um sie anzuwenden."
 
-#: inc/Admin.php:1069
-#: inc/Admin.php:1584
+#: inc/Admin.php:1069 inc/Admin.php:1638
 msgid "Clear this type"
 msgstr "Diesen Typ leeren"
 
@@ -828,35 +750,35 @@ msgstr "Änderungen verwerfen"
 msgid "Included"
 msgstr "Enthalten"
 
-#: inc/Admin.php:1486
+#: inc/Admin.php:1490
 msgid "Search visibility"
 msgstr "Suchsichtbarkeit"
 
-#: inc/Admin.php:1489
+#: inc/Admin.php:1493
 msgid "The llms.txt noindex header controls whether search engines should index the file itself."
 msgstr "Der noindex-Header von llms.txt steuert, ob Suchmaschinen die Datei selbst indexieren sollen."
 
-#: inc/Admin.php:1496
+#: inc/Admin.php:1500
 msgid "Markdown endpoint headers are separate from normal WordPress post visibility."
 msgstr "Header der Markdown-Endpunkte sind von der normalen WordPress-Beitragssichtbarkeit getrennt."
 
-#: inc/Admin.php:1504
+#: inc/Admin.php:1508
 msgid "Open sitemap"
 msgstr "Sitemap öffnen"
 
-#: inc/Admin.php:1508
+#: inc/Admin.php:1512
 msgid "robots.txt"
 msgstr "robots.txt"
 
-#: inc/Admin.php:1509
+#: inc/Admin.php:1513
 msgid "Manual policy"
 msgstr "Manuelle Richtlinie"
 
-#: inc/Admin.php:1511
+#: inc/Admin.php:1515
 msgid "LLM Friendly does not edit robots.txt automatically."
 msgstr "LLM Friendly bearbeitet robots.txt nicht automatisch."
 
-#: inc/Admin.php:1512
+#: inc/Admin.php:1516
 msgid "Open robots.txt"
 msgstr "robots.txt öffnen"
 
@@ -864,8 +786,7 @@ msgstr "robots.txt öffnen"
 msgid "Saving settings..."
 msgstr "Einstellungen werden gespeichert..."
 
-#: inc/Admin.php:1066
-#: inc/Admin.php:1237
+#: inc/Admin.php:1066 inc/Admin.php:1237
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."
 
@@ -876,3 +797,75 @@ msgstr "Einstellungen konnten nicht gespeichert werden. Bitte versuche es erneut
 #: inc/Admin.php:1229
 msgid "Settings payload is missing."
 msgstr "Einstellungsdaten fehlen."
+
+#: inc/Admin.php:1523
+msgid "OAI-SearchBot: ChatGPT Search"
+msgstr "OAI-SearchBot: ChatGPT-Suche"
+
+#: inc/Admin.php:1524
+msgid "Allow OAI-SearchBot when you want eligible pages to appear in ChatGPT search answers. This is independent from GPTBot training policy."
+msgstr "Erlaube OAI-SearchBot, wenn geeignete Seiten in ChatGPT-Suchantworten erscheinen sollen. Das ist unabhängig von der GPTBot-Trainingsrichtlinie."
+
+#: inc/Admin.php:1525
+msgid "Example: allow ChatGPT Search"
+msgstr "Beispiel: ChatGPT-Suche erlauben"
+
+#: inc/Admin.php:1528 inc/Admin.php:1536
+msgid "OpenAI crawler documentation"
+msgstr "OpenAI-Crawler-Dokumentation"
+
+#: inc/Admin.php:1531
+msgid "GPTBot: OpenAI training"
+msgstr "GPTBot: OpenAI-Training"
+
+#: inc/Admin.php:1532
+msgid "Use GPTBot separately when deciding whether crawled content may be used to train OpenAI generative AI foundation models."
+msgstr "Verwende GPTBot separat, wenn du entscheidest, ob gecrawlte Inhalte zum Training generativer KI-Basismodelle von OpenAI verwendet werden dürfen."
+
+#: inc/Admin.php:1533
+msgid "Example: block OpenAI training"
+msgstr "Beispiel: OpenAI-Training blockieren"
+
+#: inc/Admin.php:1539
+msgid "Googlebot: Search and AI features"
+msgstr "Googlebot: Suche und KI-Funktionen"
+
+#: inc/Admin.php:1540
+msgid "For Google AI Overviews and AI Mode, keep normal Google Search crawling, indexing, and snippet eligibility in mind; there is no separate robots.txt token for those Search features."
+msgstr "Für Google AI Overviews und AI Mode bleiben normales Crawling durch Google Search, Indexierung und Snippet-Eignung maßgeblich; es gibt keinen separaten robots.txt-Token für diese Suchfunktionen."
+
+#: inc/Admin.php:1541
+msgid "Example: allow Google Search crawling"
+msgstr "Beispiel: Google-Search-Crawling erlauben"
+
+#: inc/Admin.php:1544
+msgid "Google AI feature guidance"
+msgstr "Google-Leitfaden zu KI-Funktionen"
+
+#: inc/Admin.php:1547
+msgid "Google-Extended: Gemini training and grounding"
+msgstr "Google-Extended: Gemini-Training und Grounding"
+
+#: inc/Admin.php:1548
+msgid "Use Google-Extended to limit training future Gemini models and grounding in some Google AI systems outside Search. Google says this token does not affect Search inclusion or ranking."
+msgstr "Nutze Google-Extended, um das Training zukünftiger Gemini-Modelle und Grounding in einigen Google-KI-Systemen außerhalb der Suche einzuschränken. Laut Google beeinflusst dieser Token weder Aufnahme in die Suche noch Ranking."
+
+#: inc/Admin.php:1549
+msgid "Example: block Google-Extended"
+msgstr "Beispiel: Google-Extended blockieren"
+
+#: inc/Admin.php:1552
+msgid "Google-Extended documentation"
+msgstr "Google-Extended-Dokumentation"
+
+#: inc/Admin.php:1558
+msgid "Crawler policy examples"
+msgstr "Beispiele für Crawler-Richtlinien"
+
+#: inc/Admin.php:1559
+msgid "Use these snippets as starting points for manual robots.txt edits. Combine them with your own private paths, CDN rules, and legal/content policy."
+msgstr "Nutze diese Snippets als Ausgangspunkt für manuelle robots.txt-Änderungen. Kombiniere sie mit eigenen privaten Pfaden, CDN-Regeln und rechtlichen bzw. inhaltlichen Vorgaben."
+
+#: inc/Admin.php:1568
+msgid "robots.txt syntax guide"
+msgstr "robots.txt-Syntaxleitfaden"
