@@ -73,7 +73,8 @@ final class Plugin {
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'template_redirect', array( $this, 'template_redirect' ), 0 );
 
-		add_action( 'wp_head', array( $this, 'output_alternate_markdown_link' ), 1 );
+		add_action( 'wp_head', array( $this, 'output_discovery_links' ), 1 );
+		add_filter( 'wp_headers', array( $this, 'filter_response_headers' ) );
 
 		add_action( 'admin_init', array( $this, 'maybe_flush_rewrites' ) );
 	}
@@ -252,6 +253,145 @@ final class Plugin {
 			$this->exporter->output_markdown( $post );
 			exit;
 		}
+
+		if ( $this->should_negotiate_markdown_request() ) {
+			global $post;
+
+			$method    = $this->request_method();
+			$send_body = $method !== 'HEAD';
+			$this->exporter->output_markdown( $post, $send_body );
+		}
+	}
+
+	/**
+	 * Add Accept to Vary when canonical URLs may return Markdown.
+	 *
+	 * @param array<string,string> $headers WordPress response headers.
+	 * @return array<string,string>
+	 */
+	public function filter_response_headers( array $headers ): array {
+		$opt = $this->options->get();
+		if ( empty( $opt['enabled_markdown'] ) || empty( $opt['enabled_content_negotiation'] ) ) {
+			return $headers;
+		}
+
+		$vary_key = '';
+		foreach ( array_keys( $headers ) as $key ) {
+			if ( is_string( $key ) && strcasecmp( $key, 'Vary' ) === 0 ) {
+				$vary_key = $key;
+				break;
+			}
+		}
+
+		if ( $vary_key === '' ) {
+			$headers['Vary'] = 'Accept';
+			return $headers;
+		}
+
+		$tokens = array_filter( array_map( 'trim', explode( ',', (string) $headers[ $vary_key ] ) ), 'strlen' );
+		foreach ( $tokens as $token ) {
+			if ( $token === '*' || strcasecmp( $token, 'Accept' ) === 0 ) {
+				return $headers;
+			}
+		}
+
+		$tokens[]             = 'Accept';
+		$headers[ $vary_key ] = implode( ', ', $tokens );
+
+		return $headers;
+	}
+
+	/**
+	 * Decide whether the current canonical request should return Markdown.
+	 *
+	 * @return bool
+	 */
+	private function should_negotiate_markdown_request(): bool {
+		$opt = $this->options->get();
+		if ( empty( $opt['enabled_markdown'] ) || empty( $opt['enabled_content_negotiation'] ) ) {
+			return false;
+		}
+
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return false;
+		}
+
+		if ( ! in_array( $this->request_method(), array( 'GET', 'HEAD' ), true ) ) {
+			return false;
+		}
+
+		if ( is_feed() || is_preview() || is_attachment() || is_404() || ! is_singular() ) {
+			return false;
+		}
+
+		if ( ! $this->request_accepts_markdown() ) {
+			return false;
+		}
+
+		global $post;
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return false;
+		}
+
+		return $this->options->is_selected_post_type( (string) $post->post_type, $opt )
+			&& $this->options->can_export_post( $post, 'markdown' );
+	}
+
+	/**
+	 * Return the normalized HTTP request method.
+	 *
+	 * @return string
+	 */
+	private function request_method(): string {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? (string) wp_unslash( $_SERVER['REQUEST_METHOD'] ) : 'GET';
+
+		return strtoupper( trim( $method ) );
+	}
+
+	/**
+	 * Check for an explicit acceptable text/markdown media range.
+	 *
+	 * Wildcards do not opt a request into Markdown. Invalid quality values make
+	 * only that media range unacceptable and do not affect later ranges.
+	 *
+	 * @return bool
+	 */
+	private function request_accepts_markdown(): bool {
+		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) ? (string) wp_unslash( $_SERVER['HTTP_ACCEPT'] ) : '';
+		$accept = str_replace( array( "\r", "\n" ), '', $accept );
+		if ( trim( $accept ) === '' ) {
+			return false;
+		}
+
+		foreach ( explode( ',', $accept ) as $media_range ) {
+			$parts = array_map( 'trim', explode( ';', $media_range ) );
+			$type  = array_shift( $parts );
+			if ( ! is_string( $type ) || strcasecmp( $type, 'text/markdown' ) !== 0 ) {
+				continue;
+			}
+
+			$quality = 1.0;
+			foreach ( $parts as $parameter ) {
+				$pair = array_map( 'trim', explode( '=', $parameter, 2 ) );
+				if ( count( $pair ) !== 2 || strcasecmp( $pair[0], 'q' ) !== 0 ) {
+					continue;
+				}
+
+				$value = trim( $pair[1], " \t\n\r\0\x0B\"'" );
+				if ( ! preg_match( '/^(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/', $value ) ) {
+					$quality = 0.0;
+					break;
+				}
+
+				$quality = (float) $value;
+			}
+
+			if ( $quality > 0.0 ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -312,35 +452,51 @@ final class Plugin {
 	}
 
 	/**
-	 * Add <link rel="alternate" type="text/markdown"> for supported singular posts.
+	 * Add discovery links for llms.txt and supported Markdown exports.
 	 *
 	 * @return void
 	 */
-	public function output_alternate_markdown_link(): void {
-		if ( ! is_singular() ) {
+	public function output_discovery_links(): void {
+		if ( is_feed() || is_preview() || is_404() ) {
 			return;
 		}
 
 		$opt = $this->options->get();
+		$links = array();
 
-		if ( empty( $opt['enabled_markdown'] ) ) {
+		if ( ! empty( $opt['enabled_llms_txt'] ) ) {
+			$llms_url = Markdown::url_destination( home_url( '/llms.txt' ), array( 'http', 'https' ), false );
+			if ( $llms_url !== '' ) {
+				$links[] = '<link rel="describedby" type="text/markdown" href="' . esc_url( $llms_url ) . '" />';
+			}
+		}
+
+		if ( is_singular() && ! empty( $opt['enabled_markdown'] ) ) {
+			global $post;
+			if ( $post instanceof WP_Post
+				&& $this->options->is_selected_post_type( (string) $post->post_type, $opt )
+				&& $this->options->can_export_post( $post, 'markdown' )
+			) {
+				$url = $this->options->markdown_url_for_post( $post );
+				if ( $url !== '' ) {
+					$links[] = '<link rel="alternate" type="text/markdown" href="' . esc_url( $url ) . '" />';
+				}
+			}
+		}
+
+		if ( empty( $links ) ) {
 			return;
 		}
 
-		global $post;
-		if ( ! ( $post instanceof WP_Post ) ) {
-			return;
-		}
+		echo "\n" . implode( "\n", $links ) . "\n";
+	}
 
-		if ( ! $this->options->is_selected_post_type( (string) $post->post_type, $opt ) || ! $this->options->can_export_post( $post, 'markdown' ) ) {
-			return;
-		}
-
-		$url = $this->options->markdown_url_for_post( $post );
-		if ( $url === '' ) {
-			return;
-		}
-
-		echo "\n" . '<link rel="alternate" type="text/markdown" href="' . esc_url( $url ) . '" />' . "\n";
+	/**
+	 * Backward-compatible wrapper for the previous discovery callback name.
+	 *
+	 * @return void
+	 */
+	public function output_alternate_markdown_link(): void {
+		$this->output_discovery_links();
 	}
 }

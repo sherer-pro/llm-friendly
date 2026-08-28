@@ -110,6 +110,7 @@ final class Options {
 
 		$out['enabled_markdown'] = ! empty( $input['enabled_markdown'] ) ? 1 : 0;
 		$out['enabled_llms_txt'] = ! empty( $input['enabled_llms_txt'] ) ? 1 : 0;
+		$out['enabled_content_negotiation'] = ! empty( $input['enabled_content_negotiation'] ) ? 1 : 0;
 
 		$out['base_path'] = $this->sanitize_base_path( isset( $input['base_path'] ) ? (string) $input['base_path'] : $prev['base_path'] );
 
@@ -244,10 +245,11 @@ final class Options {
 	 */
 	public function defaults() {
 		return array(
-			'enabled_markdown' => 1,
-			'enabled_llms_txt' => 1,
-			'base_path'        => 'llm',
-			'post_types'       => array( 'post' ),
+			'enabled_markdown'            => 1,
+			'enabled_llms_txt'            => 1,
+			'enabled_content_negotiation' => 0,
+			'base_path'                   => 'llm',
+			'post_types'                  => array( 'post' ),
 			'llms_send_noindex'=> 1,
 			'md_send_noindex'   => 1,
 			'llms_regen_mode'  => 'auto',   // auto | manual

@@ -15,9 +15,9 @@
 ## Навигация
 
 - `llm-friendly.php` - входная точка WordPress-плагина: header metadata, версии, требования PHP/WP, загрузка переводов, require классов, activation/deactivation hooks, bootstrap через `plugins_loaded`.
-- `inc/Plugin.php` - оркестратор сервисов, rewrite flush, public endpoint dispatch, alternate Markdown links.
-- `inc/Options.php` - defaults, sanitization, export eligibility, sitemap/base path logic, description fallbacks, exclusion validation.
-- `inc/Exporter.php` - `.md` endpoint: headers, metadata JSON fence, post override, Gutenberg/HTML to Markdown conversion, Markdown cache key.
+- `inc/Plugin.php` - оркестратор сервисов, rewrite flush, public endpoint dispatch, `alternate`/`describedby` discovery и opt-in `Accept: text/markdown` negotiation.
+- `inc/Options.php` - defaults, sanitization, export eligibility, sitemap/base path logic, content-negotiation option, description fallbacks, exclusion validation.
+- `inc/Exporter.php` - `.md` endpoint: canonical/describedby headers, metadata JSON fence, post override, Gutenberg/HTML to Markdown conversion, Markdown cache key.
 - `inc/Llms.php` - `/llms.txt`: cache, scheduled regeneration, ETag/Last-Modified, Essential links, recent post sections.
 - `inc/Admin.php` - Settings UI, AJAX exclusion search, regenerate action, editor metabox.
 - `inc/Rewrites.php` - query vars and rewrite rules for `/llms.txt` and `/{base}/{post_type}/{path}.md`.
@@ -38,7 +38,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on `llm-friendly.php`, every file in `inc/`, and `tests/run.php`.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 51 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 164 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command: the plugin stores settings in one option key (`llmf_options`) and post meta, with no custom DB tables.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
@@ -57,14 +57,14 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 - CSS uses `.llmf-...` class prefixes and small WordPress-admin compatible rules.
 - No `.editorconfig`, PHPCS, PHP-CS-Fixer, Prettier, ESLint, or pre-commit hooks are configured. Preserve surrounding style manually.
 - No hard line-length rule is enforced. Real source contains long admin `echo` lines; keep new lines readable and avoid rewrapping unrelated code.
-- Commit history is mostly short English imperative messages (`Improve...`, `Harden...`, `Update...`, `Fix...`) with occasional Conventional Commits (`docs:`, `fix:`, `chore:`). Prefer `type: summary` for automation-generated docs/fix/chore commits, unless matching an existing release message like `Version 0.1.2`.
+- Commit history is mostly short English imperative messages (`Improve...`, `Harden...`, `Update...`, `Fix...`) with occasional Conventional Commits (`docs:`, `fix:`, `chore:`). Prefer `type: summary` for automation-generated docs/fix/chore commits, unless matching an existing release message like `Version 0.2.0`.
 
 ## Окружение
 
 - Minimum runtime from code/docs: WordPress 6.0+ and PHP 7.4+.
 - `readme.txt` currently says `Tested up to: 7.0`.
 - No `.env` is required for tests or local syntax checks.
-- Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
+- Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `enabled_content_negotiation=0`, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
 - Runtime rewrite changes (`enabled_markdown`, `enabled_llms_txt`, `base_path`, `post_types`) set a transient and flush rewrite rules later in admin. Manual WP testing after endpoint changes should include re-saving permalinks.
 
 ## Зависимости
@@ -100,6 +100,7 @@ Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tool
 ## Подводные камни
 
 - Changing `.md` endpoint behavior usually touches `Options`, `Rewrites`, `Plugin`, `Exporter`, docs, and tests. Include Nginx/static-file routing scenarios from `TESTING.md`.
+- Content negotiation must remain opt-in, require an explicit acceptable `text/markdown` media range, and merge (not replace) `Vary: Accept`; verify page-cache/CDN separation of HTML and Markdown variants.
 - Changing `/llms.txt` output usually touches `Llms`, `Options`, docs, translations, and tests. Preserve section order: site heading/meta, optional custom notes, `Main links`, `Essential`, then post-type sections.
 - Metadata-only changes must not be hidden by `If-Modified-Since`; ETags/settings hashes are intentionally part of cache behavior.
 - Markdown override and llms description meta changes affect cache invalidation. Keep `_llmf_md_content_override` and `_llmf_llms_description` behavior covered.

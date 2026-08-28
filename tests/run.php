@@ -17,6 +17,13 @@ $GLOBALS['llmf_test_meta']    = array();
 $GLOBALS['llmf_test_filters'] = array();
 $GLOBALS['llmf_test_scheduled_events'] = array();
 $GLOBALS['llmf_test_current_user_can'] = true;
+$GLOBALS['llmf_test_query_state'] = array(
+	'singular'   => false,
+	'feed'       => false,
+	'preview'    => false,
+	'attachment' => false,
+	'is_404'     => false,
+);
 $GLOBALS['llmf_tests_run']    = 0;
 
 if ( ! class_exists( 'WP_Post' ) ) {
@@ -85,6 +92,11 @@ function esc_textarea( $text ) { return esc_html( $text ); }
 function checked( $checked, $current = true, $echo = true ) { return $checked == $current ? ' checked="checked"' : ''; }
 function selected( $selected, $current = true, $echo = true ) { return $selected == $current ? ' selected="selected"' : ''; }
 function is_admin() { return false; }
+function is_singular() { return ! empty( $GLOBALS['llmf_test_query_state']['singular'] ); }
+function is_feed() { return ! empty( $GLOBALS['llmf_test_query_state']['feed'] ); }
+function is_preview() { return ! empty( $GLOBALS['llmf_test_query_state']['preview'] ); }
+function is_attachment() { return ! empty( $GLOBALS['llmf_test_query_state']['attachment'] ); }
+function is_404() { return ! empty( $GLOBALS['llmf_test_query_state']['is_404'] ); }
 function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) { return true; }
 function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
 	$GLOBALS['llmf_test_filters'][ $hook ][] = $callback;
@@ -329,13 +341,16 @@ require_once __DIR__ . '/../inc/Options.php';
 require_once __DIR__ . '/../inc/Response.php';
 require_once __DIR__ . '/../inc/Exporter.php';
 require_once __DIR__ . '/../inc/Llms.php';
+require_once __DIR__ . '/../inc/Rewrites.php';
 require_once __DIR__ . '/../inc/Admin.php';
+require_once __DIR__ . '/../inc/Plugin.php';
 
 use LLMFriendly\Admin;
 use LLMFriendly\Exporter;
 use LLMFriendly\Llms;
 use LLMFriendly\Markdown;
 use LLMFriendly\Options;
+use LLMFriendly\Plugin;
 
 function assert_true( bool $condition, string $message ): void {
 	$GLOBALS['llmf_tests_run'] ++;
@@ -406,16 +421,20 @@ remove_all_filters( 'llmf_exportable_post_type' );
 
 $clean = $options->sanitize(
 	array(
-		'enabled_markdown'      => 1,
-		'enabled_llms_txt'      => 1,
-		'md_send_noindex'       => 1,
-		'post_types'            => array( 'post', 'page' ),
-		'llms_custom_markdown'  => "# Bad Heading\n\nSetext heading\n---\n\nHelpful note\n\n```\n# kept in code\n```",
-		'llms_essential_links'  => "Docs | /docs | Key documentation\nBad | javascript:alert(1)",
-		'llms_recent_limit'     => 5,
-		'sitemap_url'           => '/sitemap.xml',
+		'enabled_markdown'            => 1,
+		'enabled_llms_txt'            => 1,
+		'enabled_content_negotiation' => 1,
+		'md_send_noindex'             => 1,
+		'post_types'                  => array( 'post', 'page' ),
+		'llms_custom_markdown'        => "# Bad Heading\n\nSetext heading\n---\n\nHelpful note\n\n```\n# kept in code\n```",
+		'llms_essential_links'        => "Docs | /docs | Key documentation\nBad | javascript:alert(1)",
+		'llms_recent_limit'           => 5,
+		'sitemap_url'                 => '/sitemap.xml',
 	)
 );
+
+assert_true( $options->defaults()['enabled_content_negotiation'] === 0, 'Content negotiation is disabled by default.' );
+assert_true( $clean['enabled_content_negotiation'] === 1, 'Content negotiation is sanitized as a boolean option.' );
 
 assert_not_contains_text( '# Bad Heading', $clean['llms_custom_markdown'], 'Custom llms.txt Markdown cannot keep ATX headings.' );
 assert_not_contains_text( "Setext heading\n---", $clean['llms_custom_markdown'], 'Custom llms.txt Markdown cannot keep setext headings.' );
@@ -478,6 +497,11 @@ assert_contains_text( 'aria-describedby="llmf-base-path-description"', $admin_ht
 assert_contains_text( 'class="llmf-field llmf-field--full"', $admin_html, 'Self-labeled switch fields span the full panel width.' );
 assert_contains_text( 'aria-describedby="llmf-enabled-markdown-description"', $admin_html, 'Switch fields keep accessible description references.' );
 assert_contains_text( 'class="description llmf-switch-field__description" id="llmf-enabled-markdown-description"', $admin_html, 'Switch descriptions render inside the switch copy column.' );
+assert_contains_text( 'name="llmf_options[enabled_content_negotiation]"', $admin_html, 'Content negotiation has a stable settings control.' );
+assert_contains_text( 'Vary: Accept', $admin_html, 'Content negotiation warns administrators about cache variation.' );
+assert_contains_text( 'ChatGPT-User: user-requested access', $admin_html, 'Crawler guidance covers user-requested ChatGPT access.' );
+assert_not_contains_text( 'User-agent: ChatGPT-User', $admin_html, 'ChatGPT-User guidance does not suggest a robots.txt rule.' );
+assert_contains_text( 'llms.txt and Markdown exports do not grant usage rights.', $admin_html, 'Crawler guidance separates discovery from usage rights.' );
 assert_contains_text( 'name="llmf_options[base_path]"', $admin_html, 'Existing option name is preserved for base path.' );
 assert_contains_text( 'name="llmf_options[post_types][]"', $admin_html, 'Existing option name is preserved for post types.' );
 assert_contains_text( 'name="llmf_options[llms_regen_mode]"', $admin_html, 'Existing option name is preserved for regeneration mode.' );
@@ -571,18 +595,19 @@ $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $options->defaults();
 unset( $GLOBALS['llmf_test_options']['transient_llmf_flush_rewrite_rules'] );
 $_POST = array(
 	Options::OPTION_KEY => array(
-		'enabled_llms_txt'      => '1',
-		'base_path'             => ' /Async Docs/ ',
-		'post_types'            => array( 'page', 'attachment', 'post', 'page' ),
-		'llms_send_noindex'     => '1',
-		'md_send_noindex'       => '1',
-		'llms_regen_mode'       => 'manual',
-		'llms_recent_limit'     => '500',
-		'sitemap_url'           => 'https://evil.test/sitemap.xml',
-		'llms_custom_markdown'  => '# Saved heading',
-		'llms_essential_links'  => 'Docs | /docs | Notes',
-		'llms_show_excerpt'     => '1',
-		'excluded_posts'        => array(
+		'enabled_llms_txt'            => '1',
+		'enabled_content_negotiation' => '1',
+		'base_path'                   => ' /Async Docs/ ',
+		'post_types'                  => array( 'page', 'attachment', 'post', 'page' ),
+		'llms_send_noindex'           => '1',
+		'md_send_noindex'             => '1',
+		'llms_regen_mode'             => 'manual',
+		'llms_recent_limit'           => '500',
+		'sitemap_url'                 => 'https://evil.test/sitemap.xml',
+		'llms_custom_markdown'        => '# Saved heading',
+		'llms_essential_links'        => 'Docs | /docs | Notes',
+		'llms_show_excerpt'           => '1',
+		'excluded_posts'              => array(
 			'page'       => array( '10', '10', '999' ),
 			'attachment' => array( '10' ),
 		),
@@ -602,13 +627,25 @@ assert_true( isset( $json['data']['message'], $json['data']['options'] ) && is_a
 assert_true( isset( $saved['base_path'] ) && $saved['base_path'] === 'async-docs', 'Save AJAX applies base path sanitization.' );
 assert_true( isset( $saved['enabled_markdown'] ) && $saved['enabled_markdown'] === 0, 'Save AJAX stores unchecked booleans as disabled.' );
 assert_true( isset( $saved['enabled_llms_txt'] ) && $saved['enabled_llms_txt'] === 1, 'Save AJAX stores checked booleans as enabled.' );
+assert_true( isset( $saved['enabled_content_negotiation'] ) && $saved['enabled_content_negotiation'] === 1, 'Save AJAX stores content negotiation as enabled.' );
 assert_true( isset( $saved['post_types'] ) && $saved['post_types'] === array( 'page', 'post' ), 'Save AJAX sanitizes selected post types.' );
 assert_true( isset( $saved['excluded_posts']['page'] ) && $saved['excluded_posts']['page'] === array( 10 ), 'Save AJAX sanitizes exclusions.' );
 assert_true( isset( $saved['llms_recent_limit'] ) && $saved['llms_recent_limit'] === 200, 'Save AJAX reuses numeric bounds sanitization.' );
 assert_true( isset( $saved['sitemap_url'] ) && $saved['sitemap_url'] === '/sitemap.xml', 'Save AJAX reuses sitemap sanitization.' );
 assert_true( (bool) get_transient( 'llmf_flush_rewrite_rules' ), 'Save AJAX sets rewrite flush transient for endpoint changes.' );
 
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $options->defaults();
+unset( $GLOBALS['llmf_test_options']['transient_llmf_flush_rewrite_rules'] );
+$negotiation_only_input = $options->defaults();
+$negotiation_only_input['enabled_content_negotiation'] = 1;
+$negotiation_only_clean = $options->sanitize( $negotiation_only_input );
+assert_true( $negotiation_only_clean['enabled_content_negotiation'] === 1, 'Content negotiation can change independently from endpoint URLs.' );
+assert_true( ! get_transient( 'llmf_flush_rewrite_rules' ), 'Content negotiation changes do not flush rewrite rules.' );
+
 $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = array_merge( $options->defaults(), $clean );
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ]['llms_show_excerpt'] = 1;
+$GLOBALS['llmf_test_posts'][20] = new WP_Post( array( 'ID' => 20, 'post_type' => 'post', 'post_name' => 'latest', 'post_title' => 'Latest Post' ) );
+$GLOBALS['llmf_test_meta'][20][ Options::META_LLMS_DESCRIPTION ] = "Useful summary\nfor agents";
 
 $txt  = call_private( $llms, 'build_llms_txt' );
 assert_true( strpos( $txt, '# Test Site' ) === 0, 'llms.txt starts with an H1 site title.' );
@@ -616,12 +653,31 @@ assert_true( strpos( $txt, '> Test description' ) !== false, 'llms.txt includes 
 assert_true( strpos( $txt, '## Main links' ) < strpos( $txt, '## Essential' ), 'Essential section follows Main links.' );
 assert_true( strpos( $txt, '## Essential' ) < strpos( $txt, '## Posts' ), 'Recent post type sections follow Essential.' );
 assert_contains_text( '- [Docs](https://example.test/docs): Key documentation', $txt, 'Configured essential links are emitted as absolute URLs.' );
+assert_contains_text( '- [Latest Post](https://example.test/llm/post/latest.md): Useful summary for agents; Updated 2026-01-02. Canonical URL: https://example.test/post/latest/', $txt, 'Recent items keep summaries and metadata on one linked line.' );
+assert_not_contains_text( "\n  \n", $txt, 'Recent item summaries do not use continuation paragraphs.' );
+assert_not_contains_text( '(no published items found)', $txt, 'llms.txt does not emit non-link placeholders.' );
+foreach ( preg_split( '/\R/', $txt ) as $line ) {
+	if ( strpos( $line, '- ' ) === 0 ) {
+		assert_true( strpos( $line, '- [' ) === 0, 'Every llms.txt list item starts with a Markdown link.' );
+	}
+}
+
+$llms_options_backup = $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ];
+$posts_backup        = $GLOBALS['llmf_test_posts'];
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ]['post_types'] = array( 'post' );
+unset( $GLOBALS['llmf_test_posts'][20] );
+$empty_txt = call_private( $llms, 'build_llms_txt' );
+assert_not_contains_text( '## Posts', $empty_txt, 'Post type sections without exportable links are omitted.' );
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $llms_options_backup;
+$GLOBALS['llmf_test_posts'] = $posts_backup;
 
 $exporter = new Exporter( $options );
 $post     = new WP_Post( array( 'ID' => 21, 'post_type' => 'post', 'post_name' => 'example-post', 'post_title' => 'Example Post' ) );
 $headers  = call_private( $exporter, 'markdown_headers_for_post', array( $post ) );
 $headers_text = implode( "\n", $headers );
 assert_contains_text( 'Link: <https://example.test/post/example-post/>; rel="canonical"', $headers_text, 'Markdown export sends a canonical Link header.' );
+assert_contains_text( '<https://example.test/llms.txt>; rel="describedby"; type="text/markdown"', $headers_text, 'Markdown export links to the covering llms.txt file.' );
+assert_occurrences( 'Link:', $headers_text, 1, 'Canonical and describedby relations share one Link header.' );
 assert_contains_text( 'X-Robots-Tag: noindex', $headers_text, 'Markdown export sends noindex by default.' );
 assert_not_contains_text( 'nofollow', $headers_text, 'Markdown export does not send nofollow.' );
 
@@ -702,6 +758,108 @@ assert_true( ! $options->can_export_post( $attachment, 'markdown' ), 'Attachment
 assert_true( ! $options->can_export_post( $private_type, 'markdown' ), 'Non-public post types are not exportable.' );
 assert_true( ! $options->can_export_post( $public_hidden, 'markdown' ), 'Public but non-queryable post types are not exportable by default.' );
 assert_true( ! $options->can_export_post( $excluded, 'markdown' ), 'Excluded posts are not exportable.' );
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $saved_options;
+
+$plugin = Plugin::instance();
+$eligible_post = $post;
+$GLOBALS['llmf_test_query_state'] = array(
+	'singular'   => true,
+	'feed'       => false,
+	'preview'    => false,
+	'attachment' => false,
+	'is_404'     => false,
+);
+$GLOBALS['post'] = $eligible_post;
+$_SERVER['REQUEST_METHOD'] = 'GET';
+
+$negotiation_options = array_merge(
+	$options->defaults(),
+	array(
+		'enabled_markdown'            => 1,
+		'enabled_llms_txt'            => 1,
+		'enabled_content_negotiation' => 0,
+		'post_types'                  => array( 'post' ),
+	)
+);
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+$_SERVER['HTTP_ACCEPT'] = 'text/markdown';
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Content negotiation remains inactive by default.' );
+$disabled_headers = $plugin->filter_response_headers( array( 'Vary' => 'Origin' ) );
+assert_true( $disabled_headers['Vary'] === 'Origin', 'Disabled content negotiation does not alter Vary.' );
+
+$negotiation_options['enabled_content_negotiation'] = 1;
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+assert_true( call_private( $plugin, 'should_negotiate_markdown_request' ), 'Explicit text/markdown requests negotiate eligible singular posts.' );
+
+$negotiation_options['enabled_markdown'] = 0;
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Content negotiation cannot bypass disabled Markdown exports.' );
+$negotiation_options['enabled_markdown'] = 1;
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+
+$_SERVER['HTTP_ACCEPT'] = '*/*';
+assert_true( ! call_private( $plugin, 'request_accepts_markdown' ), 'A wildcard Accept header does not opt into Markdown.' );
+$_SERVER['HTTP_ACCEPT'] = 'text/html, application/xhtml+xml';
+assert_true( ! call_private( $plugin, 'request_accepts_markdown' ), 'A normal HTML Accept header keeps the HTML representation.' );
+$_SERVER['HTTP_ACCEPT'] = 'text/html, text/markdown; q=0';
+assert_true( ! call_private( $plugin, 'request_accepts_markdown' ), 'A zero-quality Markdown range is rejected.' );
+$_SERVER['HTTP_ACCEPT'] = 'text/markdown; q=invalid, text/markdown; q=0.5';
+assert_true( call_private( $plugin, 'request_accepts_markdown' ), 'A later valid Markdown range survives an earlier invalid quality value.' );
+
+$_SERVER['HTTP_ACCEPT'] = 'text/markdown';
+$_SERVER['REQUEST_METHOD'] = 'HEAD';
+assert_true( call_private( $plugin, 'should_negotiate_markdown_request' ), 'HEAD requests can negotiate the same Markdown headers without a body.' );
+$_SERVER['REQUEST_METHOD'] = 'POST';
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Non-read requests never negotiate Markdown.' );
+$_SERVER['REQUEST_METHOD'] = 'GET';
+
+$GLOBALS['llmf_test_query_state']['preview'] = true;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Preview requests never negotiate public Markdown.' );
+$GLOBALS['llmf_test_query_state']['preview'] = false;
+$GLOBALS['post'] = $draft;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Draft posts cannot be exposed by content negotiation.' );
+$GLOBALS['post'] = $locked;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Password-protected posts cannot be exposed by content negotiation.' );
+$GLOBALS['post'] = $attachment;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Attachments cannot be exposed by content negotiation.' );
+$negotiation_options['excluded_posts'] = array( 'post' => array( $eligible_post->ID ) );
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+$GLOBALS['post'] = $eligible_post;
+assert_true( ! call_private( $plugin, 'should_negotiate_markdown_request' ), 'Excluded posts cannot be exposed by content negotiation.' );
+$negotiation_options['excluded_posts'] = array();
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $negotiation_options;
+$GLOBALS['post'] = $eligible_post;
+
+$headers = $plugin->filter_response_headers( array() );
+assert_true( isset( $headers['Vary'] ) && $headers['Vary'] === 'Accept', 'Content negotiation adds a new Vary header when needed.' );
+$headers = $plugin->filter_response_headers( array( 'Vary' => 'Origin' ) );
+assert_true( isset( $headers['Vary'] ) && $headers['Vary'] === 'Origin, Accept', 'Content negotiation merges Accept into an existing Vary header.' );
+$headers = $plugin->filter_response_headers( $headers );
+assert_true( $headers['Vary'] === 'Origin, Accept', 'Content negotiation does not duplicate Accept in Vary.' );
+$headers = $plugin->filter_response_headers( array( 'vary' => '*' ) );
+assert_true( $headers['vary'] === '*', 'A wildcard Vary header is preserved.' );
+
+ob_start();
+$plugin->output_discovery_links();
+$discovery_html = (string) ob_get_clean();
+assert_contains_text( 'rel="describedby" type="text/markdown" href="https://example.test/llms.txt"', $discovery_html, 'Frontend discovery links point to llms.txt.' );
+assert_contains_text( 'rel="alternate" type="text/markdown" href="https://example.test/llm/post/example-post.md"', $discovery_html, 'Eligible singular pages advertise their stable Markdown endpoint.' );
+
+$GLOBALS['llmf_test_query_state']['singular'] = false;
+ob_start();
+$plugin->output_discovery_links();
+$site_discovery_html = (string) ob_get_clean();
+assert_contains_text( 'rel="describedby"', $site_discovery_html, 'Non-singular frontend pages still advertise the site llms.txt file.' );
+assert_not_contains_text( 'rel="alternate"', $site_discovery_html, 'Non-singular pages do not advertise a per-post Markdown alternate.' );
+
+$GLOBALS['llmf_test_query_state']['is_404'] = true;
+ob_start();
+$plugin->output_discovery_links();
+$not_found_discovery_html = (string) ob_get_clean();
+assert_true( $not_found_discovery_html === '', '404 pages do not emit discovery links.' );
+$GLOBALS['llmf_test_query_state']['is_404'] = false;
+$GLOBALS['llmf_test_query_state']['singular'] = true;
+unset( $_SERVER['HTTP_ACCEPT'], $_SERVER['REQUEST_METHOD'] );
 $GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $saved_options;
 
 $GLOBALS['llmf_test_scheduled_events'] = array();
