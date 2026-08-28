@@ -3,7 +3,7 @@
  *  Plugin Name:    LLM Friendly
  *  Plugin URI:     https://github.com/sherer-pro/llm-friendly
  *  Description:    Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.
- *  Version:        0.1.2
+ *  Version:        0.2.0
  *  Author:         Pavel Sherer
  *  Author URI:     https://sherer.pro
  *  License:        GPL-3.0-or-later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Current plugin version, used for caches and asset URLs.
  * Update this value and the plugin header together so WordPress detects updates correctly.
  */
-define( 'LLMF_VERSION', '0.1.2' );
+define( 'LLMF_VERSION', '0.2.0' );
 define( 'LLMF_FILE', __FILE__ );
 define( 'LLMF_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLMF_URL', plugin_dir_url( __FILE__ ) );

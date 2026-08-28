@@ -4,7 +4,7 @@ Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,9 @@ For selected public, publicly queryable post types, the plugin exposes `.md` end
 
 `/{base}/{post_type}/{path}.md`
 
-Each Markdown export includes a JSON metadata block with title, URL, published and modified dates, language, description, author, and publisher, followed by a Markdown conversion of the post content. Singular views also receive alternate Markdown links, so compatible tools can discover the plain-text version.
+Each Markdown export includes a stable, plugin-defined JSON metadata block with title, URL, published and modified dates, language, description, author, and publisher, followed by a Markdown conversion of the post content. Frontend pages advertise `/llms.txt` with a `describedby` link, while supported singular views also receive alternate Markdown links.
+
+An optional content-negotiation mode can return the same representation from canonical singular URLs when a client explicitly sends `Accept: text/markdown`. The mode is disabled by default and uses `Vary: Accept`, so it should only be enabled when every page cache, reverse proxy, and CDN respects that header.
 
 = Why site owners use it =
 
@@ -38,12 +40,13 @@ Each Markdown export includes a JSON metadata block with title, URL, published a
 * Add short AI-facing descriptions from a per-post field, SEO meta description, excerpt, or generated content summary.
 * Exclude individual items from both `/llms.txt` and Markdown exports without changing their WordPress visibility.
 * Preview generated llms.txt content before relying on the public endpoint.
-* Review practical AI crawler policy guidance for OAI-SearchBot, GPTBot, Googlebot/Search AI features, and Google-Extended.
+* Review practical AI crawler policy guidance for OAI-SearchBot, GPTBot, ChatGPT-User, Googlebot/Search AI features, and Google-Extended.
 
 = Key features =
 
-* llms.txt endpoint with cached generation, ETag/Last-Modified support, main links, sitemap/RSS references, an Essential section, selected post-type sections, optional item descriptions, and an optional custom Markdown notes block.
-* Markdown exports for selected public, publicly queryable post types with Gutenberg/HTML-to-Markdown conversion, JSON metadata, canonical Link headers, alternate Markdown discovery links, and transient-based body caching.
+* llms.txt endpoint with cached generation, ETag/Last-Modified support, v2-compatible linked lists, main links, sitemap/RSS references, an Essential section, selected post-type sections, optional item descriptions, and an optional custom Markdown notes block.
+* Markdown exports for selected public, publicly queryable post types with Gutenberg/HTML-to-Markdown conversion, plugin-defined JSON metadata, canonical/describedby Link headers, alternate Markdown discovery links, and transient-based body caching.
+* Optional `Accept: text/markdown` content negotiation on canonical singular URLs with `Vary: Accept`; disabled by default for cache safety.
 * Overview dashboard with endpoint status, cache status, noindex status, sitemap URL, and quick copy buttons for `/llms.txt` and the Markdown URL pattern.
 * Configurable Markdown base path, for example `/llm/post/example.md`, with post type controls for posts, pages, and safe public custom post types.
 * Per-post-type exclusion picker with live title search, selected-item lists, clear buttons, and server-side validation.
@@ -54,7 +57,7 @@ Each Markdown export includes a JSON metadata block with title, URL, published a
 * Per-post "Markdown override (LLM Friendly)" metabox for custom Markdown or Gutenberg block markup, plus a one-line llms.txt description field.
 * Optional site title, site description, and author overrides for generated metadata.
 * Same-site sitemap URL validation. External sitemap URLs are rejected unless a developer explicitly allows them with a filter.
-* AI crawler diagnostics with policy examples and documentation links for OAI-SearchBot, GPTBot, Googlebot/Search AI features, and Google-Extended. The plugin does not edit robots.txt automatically.
+* AI crawler diagnostics with policy examples and documentation links for OAI-SearchBot, GPTBot, ChatGPT-User, Googlebot/Search AI features, and Google-Extended. The plugin does not edit robots.txt automatically.
 * Hardened public export boundaries: attachments, drafts, private content, password-protected posts, and non-public/non-queryable post types are excluded by default.
 * KSES sanitization for users without `unfiltered_html`, length caps for custom Markdown fields, and developer filters for edge cases.
 
@@ -95,6 +98,14 @@ When you change the base path, flush permalinks and confirm that `.md` and `/llm
 
 Enable the "Send noindex header for Markdown exports" option (stored as `md_send_noindex`) to emit the header on all Markdown responses.
 
+= How do I enable Accept: text/markdown? =
+
+Enable "Serve Markdown when a client explicitly requests it" in the Markdown exports panel. The option is stored as `enabled_content_negotiation` and is off by default. Before enabling it, verify that page caches, reverse proxies, and CDNs respect `Vary: Accept`; otherwise a cached Markdown response could be served to an HTML visitor or vice versa.
+
+= Does llms.txt improve Google AI visibility or grant AI usage rights? =
+
+No special Google Search treatment is promised. Google states that llms.txt and Markdown are not specially used for AI Overviews or AI Mode; normal crawling, indexing, and snippet eligibility still apply. Discovery files, noindex directives, crawler access rules, and training or licensing permissions are separate controls. Publishing llms.txt or Markdown does not grant usage rights.
+
 = How do I configure the llms.txt Essential section? =
 
 Use Settings -> LLM Friendly -> llms.txt -> "Essential links". Add one item per line as `Title | URL | Notes`; URLs may be absolute or site-relative. The plugin also adds configured front page, posts page, and privacy policy links when available.
@@ -124,6 +135,16 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap. Default: 500; absolute maximum: 5000.
 * `llmf_allow_external_sitemap_url` allows an external sitemap URL when returning `true`.
 * Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES. Heading markers are removed from the custom llms.txt notes block so user-provided notes cannot break the required llms.txt section order.
+
+== Changelog ==
+
+= 0.2.0 =
+
+* Align llms.txt item sections with the v2 linked-list format and omit empty sections.
+* Add `describedby` discovery for llms.txt and combined canonical/describedby Markdown Link headers.
+* Add opt-in `Accept: text/markdown` content negotiation with `Vary: Accept`.
+* Update crawler guidance for ChatGPT-User and current Google/OpenAI documentation.
+* Clarify that JSON metadata is plugin-defined and that discovery, indexing, crawler access, and usage rights are separate controls.
 
 == Screenshots ==
 

@@ -97,6 +97,15 @@ final class Admin {
 		);
 
 		add_settings_field(
+			'enabled_content_negotiation',
+			__( 'Enable Markdown content negotiation', 'llm-friendly' ),
+			array( $this, 'field_enabled_content_negotiation' ),
+			'llm-friendly',
+			'llmf_general',
+			array( 'label_for' => $this->option_field_id( 'enabled_content_negotiation' ) )
+		);
+
+		add_settings_field(
 			'md_send_noindex',
 			__('Send "noindex" header for Markdown exports', 'llm-friendly'),
 			array($this, 'field_md_noindex'),
@@ -737,6 +746,7 @@ final class Admin {
 			__( 'Configure per-item .md endpoints and their indexing behavior.', 'llm-friendly' )
 		);
 		$this->render_setting_field( '', array( $this, 'field_enabled_markdown' ) );
+		$this->render_setting_field( '', array( $this, 'field_enabled_content_negotiation' ) );
 		$this->render_setting_field( '', array( $this, 'field_md_noindex' ) );
 		$this->render_setting_field( __( 'Base path for Markdown exports', 'llm-friendly' ), array( $this, 'field_base_path' ), $this->option_field_id( 'base_path' ) );
 		echo '<div class="llmf-inline-preview" id="llmf-markdown-pattern-preview">';
@@ -1285,6 +1295,19 @@ final class Admin {
 	}
 
 	/**
+	 * Field: Enable Markdown content negotiation on canonical URLs.
+	 *
+	 * @return void
+	 */
+	public function field_enabled_content_negotiation() {
+		$this->render_option_checkbox(
+			'enabled_content_negotiation',
+			__( 'Serve Markdown when a client explicitly requests it', 'llm-friendly' ),
+			__( 'Adds support for Accept: text/markdown on public singular URLs. Keep this disabled unless page caches and CDNs respect Vary: Accept.', 'llm-friendly' )
+		);
+	}
+
+	/**
 	 * Field: send X-Robots-Tag: noindex for Markdown exports.
 	 *
 	 * @return void
@@ -1478,8 +1501,8 @@ final class Admin {
 		$opt                  = $this->options->get();
 		$sitemap              = $this->options->sitemap_absolute_url();
 		$robots               = home_url( '/robots.txt' );
-		$openai_crawlers_docs = 'https://platform.openai.com/docs/bots';
-		$google_ai_docs       = 'https://developers.google.com/search/docs/appearance/ai-features';
+		$openai_crawlers_docs = 'https://developers.openai.com/api/docs/bots';
+		$google_ai_docs       = 'https://developers.google.com/search/docs/fundamentals/ai-optimization-guide';
 		$google_crawlers_docs = 'https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers';
 		$google_robots_docs   = 'https://developers.google.com/search/docs/crawling-indexing/robots/create-robots-txt';
 
@@ -1536,8 +1559,16 @@ final class Admin {
 				'docs_label'    => __( 'OpenAI crawler documentation', 'llm-friendly' ),
 			),
 			array(
+				'title'         => __( 'ChatGPT-User: user-requested access', 'llm-friendly' ),
+				'description'   => __( 'ChatGPT-User is used for user-initiated requests in ChatGPT. OpenAI says robots.txt rules may not apply to these requests, so do not treat it as an automatic crawler policy.', 'llm-friendly' ),
+				'example_label' => '',
+				'example'       => '',
+				'docs'          => $openai_crawlers_docs,
+				'docs_label'    => __( 'OpenAI crawler documentation', 'llm-friendly' ),
+			),
+			array(
 				'title'         => __( 'Googlebot: Search and AI features', 'llm-friendly' ),
-				'description'   => __( 'For Google AI Overviews and AI Mode, keep normal Google Search crawling, indexing, and snippet eligibility in mind; there is no separate robots.txt token for those Search features.', 'llm-friendly' ),
+				'description'   => __( 'Google says llms.txt and Markdown are not specially used for AI Overviews or AI Mode. Normal Search crawling, indexing, and snippet eligibility still apply.', 'llm-friendly' ),
 				'example_label' => __( 'Example: allow Google Search crawling', 'llm-friendly' ),
 				'example'       => "User-agent: Googlebot\nAllow: /\n\nSitemap: " . $sitemap,
 				'docs'          => $google_ai_docs,
@@ -1557,6 +1588,7 @@ final class Admin {
 		echo '<div class="llmf-crawler-guide__header">';
 		echo '<h3>' . esc_html__( 'Crawler policy examples', 'llm-friendly' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Use these snippets as starting points for manual robots.txt edits. Combine them with your own private paths, CDN rules, and legal/content policy.', 'llm-friendly' ) . '</p>';
+		echo '<p>' . esc_html__( 'Discovery, search indexing, crawler access, and AI training or licensing permissions are separate controls. llms.txt and Markdown exports do not grant usage rights.', 'llm-friendly' ) . '</p>';
 		echo '</div>';
 		echo '<div class="llmf-crawler-guide__grid">';
 		foreach ( $guidance as $item ) {
@@ -1567,8 +1599,10 @@ final class Admin {
 			echo '<a href="' . esc_url( $item['docs'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $item['docs_label'] ) . '</a>';
 			echo '<a href="' . esc_url( $google_robots_docs ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'robots.txt syntax guide', 'llm-friendly' ) . '</a>';
 			echo '</div>';
-			echo '<p class="llmf-crawler-guide__example-label">' . esc_html( $item['example_label'] ) . '</p>';
-			echo '<pre class="llmf-crawler-guide__example"><code>' . esc_html( $item['example'] ) . '</code></pre>';
+			if ( $item['example'] !== '' ) {
+				echo '<p class="llmf-crawler-guide__example-label">' . esc_html( $item['example_label'] ) . '</p>';
+				echo '<pre class="llmf-crawler-guide__example"><code>' . esc_html( $item['example'] ) . '</code></pre>';
+			}
 			echo '</article>';
 		}
 		echo '</div>';

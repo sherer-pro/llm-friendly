@@ -485,25 +485,19 @@ final class Llms {
 				continue;
 			}
 
-			$label    = $this->post_type_label( $pt );
-			$blocks[] = '## ' . $label;
-
 			$items = $this->get_recent_posts_by_type( $pt, $limit );
 			if ( empty( $items ) ) {
-				$blocks[] = '- ' . __( '(no published items found)', 'llm-friendly' );
 				continue;
 			}
 
 			$item_blocks = array();
-
-
 			foreach ( $items as $item ) {
-				$item_lines = array();
 				$title_txt  = isset( $item['title'] ) ? (string) $item['title'] : '';
 				$md_url     = isset( $item['md_url'] ) ? (string) $item['md_url'] : '';
 				$canonical  = isset( $item['canonical'] ) ? (string) $item['canonical'] : '';
 				$modified   = isset( $item['modified'] ) ? (string) $item['modified'] : '';
 				$excerpt    = isset( $item['excerpt'] ) ? (string) $item['excerpt'] : '';
+				$item_url   = '';
 
 				if ( $md_enabled ) {
 					$md_url       = Markdown::url_destination( $md_url, array( 'http', 'https' ), false );
@@ -514,7 +508,7 @@ final class Llms {
 						$canonical
 					);
 					if ( $md_url !== '' ) {
-						$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $md_url . '): ' . Markdown::plain_text_line( $notes );
+						$item_url = $md_url;
 					}
 				} else {
 					$notes        = sprintf(
@@ -523,22 +517,32 @@ final class Llms {
 						$modified
 					);
 					if ( $canonical !== '' ) {
-						$item_lines[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $canonical . '): ' . Markdown::plain_text_line( $notes );
+						$item_url = $canonical;
 					}
 				}
 
-				if ( ! empty( $item_lines ) && $show_excerpt && $excerpt !== '' ) {
-					// Keep the excerpt inside the list item by indenting it.
-					$item_lines[] = '  ';
-					$item_lines[] = '  ' . Markdown::plain_text_line( $excerpt );
-					$item_lines[] = '  ';
+				if ( empty( $item_url ) ) {
+					continue;
 				}
-				if ( ! empty( $item_lines ) ) {
-					$item_blocks[] = implode( "\n", $item_lines );
+
+				$notes = Markdown::plain_text_line( $notes );
+				if ( $show_excerpt && $excerpt !== '' ) {
+					$summary = Markdown::plain_text_line( $excerpt );
+					if ( $summary !== '' ) {
+						$separator = preg_match( '/[.!?…]$/u', $summary ) ? ' ' : '; ';
+						$notes     = $summary . $separator . $notes;
+					}
 				}
+
+				$item_blocks[] = '- [' . $this->md_link_text( $title_txt ) . '](' . $item_url . '): ' . trim( $notes );
 			}
 
-			$blocks[] = implode( "\n\n", $item_blocks );
+			if ( empty( $item_blocks ) ) {
+				continue;
+			}
+
+			$blocks[] = '## ' . $this->post_type_label( $pt );
+			$blocks[] = implode( "\n", $item_blocks );
 		}
 
 		$blocks  = array_values( array_filter( array_map( 'trim', $blocks ), 'strlen' ) );

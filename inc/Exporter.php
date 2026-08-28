@@ -32,11 +32,12 @@ final class Exporter {
 	/**
 	 * Output post as Markdown and exit.
 	 *
-	 * @param WP_Post $post
+	 * @param WP_Post $post      Post being exported.
+	 * @param bool    $send_body Whether to emit the Markdown body.
 	 *
 	 * @return void
 	 */
-	public function output_markdown( WP_Post $post ): void {
+	public function output_markdown( WP_Post $post, bool $send_body = true ): void {
 		if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
 			$this->send_not_found();
 		}
@@ -70,7 +71,9 @@ final class Exporter {
 			false
 		);
 
-		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
+		if ( $send_body ) {
+			echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
+		}
 		exit;
 	}
 
@@ -86,12 +89,24 @@ final class Exporter {
 			'X-Content-Type-Options: nosniff',
 		);
 
+		$link_values = array();
 		$canonical = Markdown::url_destination( get_permalink( $post ), array( 'http', 'https' ), false );
 		if ( $canonical !== '' ) {
-			$headers[] = 'Link: <' . $canonical . '>; rel="canonical"';
+			$link_values[] = '<' . $canonical . '>; rel="canonical"';
 		}
 
 		$opt = $this->options->get();
+		if ( ! empty( $opt['enabled_llms_txt'] ) ) {
+			$llms_url = Markdown::url_destination( home_url( '/llms.txt' ), array( 'http', 'https' ), false );
+			if ( $llms_url !== '' ) {
+				$link_values[] = '<' . $llms_url . '>; rel="describedby"; type="text/markdown"';
+			}
+		}
+
+		if ( ! empty( $link_values ) ) {
+			$headers[] = 'Link: ' . implode( ', ', $link_values );
+		}
+
 		if ( ! empty( $opt['md_send_noindex'] ) ) {
 			$headers[] = 'X-Robots-Tag: noindex';
 		}
