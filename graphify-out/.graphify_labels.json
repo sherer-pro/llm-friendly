@@ -1,11 +1,11 @@
 {
   "0": "Admin",
   "1": "Options",
-  "2": "run.php",
+  "2": "Catalog",
   "3": "Exporter",
-  "4": "Llms",
+  "4": "WP_Post",
   "5": "LLM Friendly",
-  "6": "Plugin",
+  "6": "run.php",
   "7": "lint",
   "8": "llmf-admin.js",
   "9": "llm-friendly-de_DE.l10n.php",
@@ -15,5 +15,8 @@
   "13": "llm-friendly-uk.l10n.php",
   "14": "llm-friendly-uk_UA.l10n.php",
   "15": "current_user_can",
-  "16": "llm-friendly.php"
+  "16": "add_action",
+  "17": "legacy-markdown.md",
+  "18": "legacy-blocks.md",
+  "19": "wordpress-scale.php"
 }

@@ -402,6 +402,137 @@
 		});
 	}
 
+	const mechanicsRequest = async (action, values, useForm) => {
+		const data = useForm && form ? new FormData(form) : new FormData();
+		data.set('action', action);
+		data.set('nonce', cfg.mechanicsNonce || '');
+		Object.entries(values || {}).forEach(([key, value]) => data.set(key, String(value)));
+		const response = await fetch(ajaxUrl, { method: 'POST', body: data, credentials: 'same-origin' });
+		const json = await response.json();
+		if (!response.ok || !json.success) throw new Error(json.data && json.data.message || t('operationError', 'The check failed. Try again.'));
+		return json.data;
+	};
+
+	const compare = qs('[data-llmf-compare]');
+	if (compare) compare.addEventListener('click', async () => {
+		const status = qs('[data-llmf-compare-status]');
+		compare.disabled = true;
+		status.textContent = t('working', 'Working…');
+		try {
+			const data = await mechanicsRequest('llmf_compare_modes', { post_id: qs('#llmf-compare-id').value || 0 }, true);
+			qs('[data-llmf-legacy]').textContent = data.legacy.root + '\n' + data.legacy.markdown;
+			qs('[data-llmf-selected]').textContent = data.selected.root + '\n' + data.selected.markdown;
+			status.textContent = data.selected.largeRoot ? t('rootSizeWarning', 'The root index is large.') : t('completed', 'Completed.');
+			const warnings = (data.selected.warnings || []).map((warning) => t('warning_' + warning, warning));
+			if (warnings.length) status.textContent += ' ' + warnings.join(' ');
+		} catch (error) {
+			status.textContent = error.message;
+		} finally {
+			compare.disabled = false;
+		}
+	});
+
+	const pins = qs('#llmf-pins');
+	if (pins) {
+		const list = qs('[data-llmf-pin-list]', pins);
+		const ids = qs('#llmf-pinned-ids', pins);
+		const syncPins = () => {
+			ids.value = qsa('[data-pin-id]', list).map((item) => item.dataset.pinId).join(',');
+			qsa('[data-pin-id]', list).forEach((item, index, items) => {
+				qs('[data-pin-up]', item).disabled = index === 0;
+				qs('[data-pin-down]', item).disabled = index === items.length - 1;
+			});
+		};
+		list.addEventListener('click', (event) => {
+			const button = event.target.closest('button');
+			if (!button) return;
+			const item = button.closest('[data-pin-id]');
+			if (button.hasAttribute('data-pin-up') && item.previousElementSibling) list.insertBefore(item, item.previousElementSibling);
+			if (button.hasAttribute('data-pin-down') && item.nextElementSibling) list.insertBefore(item.nextElementSibling, item);
+			if (button.hasAttribute('data-pin-remove')) item.remove();
+			syncPins();
+			markFormDirty();
+		});
+		const search = qs('[data-llmf-pin-search]', pins);
+		search.addEventListener('click', async () => {
+			const status = qs('[data-llmf-pin-status]', pins);
+			const results = qs('[data-llmf-pin-results]', pins);
+			search.disabled = true;
+			status.textContent = t('working', 'Working…');
+			try {
+				const data = await mechanicsRequest('llmf_search_pins', { post_type: qs('#llmf-pin-type').value, q: qs('#llmf-pin-query').value }, true);
+				results.replaceChildren();
+				data.items.forEach((post) => {
+					const row = document.createElement('p');
+					const label = document.createElement('span');
+					label.textContent = post.title + ' ';
+					const button = document.createElement('button');
+					button.type = 'button';
+					button.className = 'button';
+					button.textContent = t('addPin', 'Pin item');
+					button.addEventListener('click', () => {
+						if (qsa('[data-pin-id]', list).length >= 100) { status.textContent = t('pinLimit', 'Up to 100 items can be pinned.'); return; }
+						if (qsa('[data-pin-id]', list).some((item) => item.dataset.pinId === String(post.id))) return;
+						const item = document.createElement('li');
+						item.dataset.pinId = post.id;
+						const title = document.createElement('span');
+						title.textContent = post.title + ' ';
+						item.append(title);
+						[['up', '↑', 'moveUp'], ['down', '↓', 'moveDown'], ['remove', t('removePin', 'Remove'), 'removePin']].forEach(([action, text, key]) => {
+							const control = document.createElement('button');
+							control.type = 'button'; control.className = 'button';
+							control.setAttribute('data-pin-' + action, '');
+							control.textContent = text;
+							control.setAttribute('aria-label', t(key, text));
+							item.append(control, document.createTextNode(' '));
+						});
+						list.append(item); button.disabled = true;
+						syncPins(); markFormDirty();
+					});
+					row.append(label, button); results.append(row);
+				});
+				status.textContent = data.items.length ? t('completed', 'Completed.') : t('nothingFound', 'Nothing found.');
+			} catch (error) { status.textContent = error.message; }
+			finally { search.disabled = false; }
+		});
+		syncPins();
+	}
+
+	const diagnosticPanel = qs('#llmf-diagnostics');
+	if (diagnosticPanel) {
+		const status = qs('[data-llmf-diagnostic-status]', diagnosticPanel);
+		const report = qs('[data-llmf-report]', diagnosticPanel);
+		const renderReport = (data) => {
+			report.replaceChildren();
+			const line = (value) => { const paragraph = document.createElement('p'); paragraph.textContent = value; report.append(paragraph); };
+			if (data.endpoints) Object.entries(data.endpoints).forEach(([kind, methods]) => {
+				Object.entries(methods).forEach(([method, result]) => line(t('endpoint_' + kind, kind) + ' (' + method + '): ' + t(result.status, result.status) + (result.reason ? '. ' + result.reason : '')));
+			});
+			if (data.post) {
+				line(data.post.title + ': ' + t(data.post.eligibility, data.post.eligibility));
+				if (data.post.eligibility === 'exportable' && !data.post.inShortMap) line(t('shortMapMissing', 'Exportable, but absent from the short map.'));
+				line(t('descriptionSourceLabel', 'Description source') + ': ' + t('source_' + data.post.descriptionSource, data.post.descriptionSource));
+				line(t('overrideLabel', 'Manual Markdown') + ': ' + t('override_' + data.post.overrideState, data.post.overrideState));
+				(data.post.warnings || []).forEach((warning) => line(t('warning_' + warning, warning)));
+			}
+			const coverage = data.coverage || (data.scanned !== undefined ? data : null);
+			if (coverage) line(t('coverageSummary', 'Scanned: %1$s. Exportable: %2$s. In short map: %3$s. Status: %4$s.').replace('%1$s', coverage.scanned || 0).replace('%2$s', coverage.exportable || 0).replace('%3$s', coverage.inShortMap || 0).replace('%4$s', t('scan_' + coverage.status, coverage.status)));
+			qs('[data-llmf-diagnostic-details]', diagnosticPanel).textContent = JSON.stringify(data, null, 2);
+		};
+		qsa('[data-llmf-diagnostics], [data-llmf-coverage]', diagnosticPanel).forEach((button) => button.addEventListener('click', async () => {
+			const buttons = qsa('button', diagnosticPanel);
+			buttons.forEach((control) => { control.disabled = true; });
+			status.textContent = t('working', 'Working…');
+			try {
+				const coverage = button.dataset.llmfCoverage;
+				const data = await mechanicsRequest(coverage ? 'llmf_coverage' : 'llmf_diagnostics', coverage ? { operation: coverage } : { post_id: qs('#llmf-diagnostic-id').value || 0 });
+				renderReport(data); status.textContent = t('completed', 'Completed.');
+			} catch (error) { status.textContent = error.message; }
+			finally { buttons.forEach((control) => { control.disabled = false; }); }
+		}));
+		mechanicsRequest('llmf_coverage', { operation: 'status' }).then(renderReport).catch(() => {});
+	}
+
 	const root = document.getElementById('llmf-excluded-posts');
 	if (!root || !ajaxUrl || !nonce) {
 		return;

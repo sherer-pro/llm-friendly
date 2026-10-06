@@ -17,6 +17,7 @@ final class Rewrites {
 	public const QV_MD   = 'llmf_md';
 	public const QV_PT   = 'llmf_pt';
 	public const QV_PATH = 'llmf_path';
+	public const QV_CATALOG = 'llmf_catalog';
 
 	/**
 	 * @var Options Options service.
@@ -44,6 +45,7 @@ final class Rewrites {
 		$vars[] = self::QV_MD;
 		$vars[] = self::QV_PT;
 		$vars[] = self::QV_PATH;
+		$vars = array_merge( $vars, array( self::QV_CATALOG, 'llmf_tax', 'llmf_term', 'llmf_after', 'llmf_parent' ) );
 
 		return $vars;
 	}
@@ -61,6 +63,14 @@ final class Rewrites {
 		}
 
 		$opt = $this->options->get();
+		if ( ! empty( $opt['enabled_llms_txt'] ) && $opt['llms_index_mode'] === 'structured' ) {
+			$base = preg_quote( $this->options->sanitize_base_path( $opt['base_path'] ), '~' );
+			add_rewrite_rule( '^' . $base . '/catalog/index\.txt$', 'index.php?llmf_catalog=1', 'top' );
+			add_rewrite_rule( '^' . $base . '/catalog/essential\.txt$', 'index.php?llmf_catalog=1&llmf_pt=essential', 'top' );
+			add_rewrite_rule( '^' . $base . '/catalog/([^/]+)/index\.txt$', 'index.php?llmf_catalog=1&llmf_pt=$matches[1]', 'top' );
+			add_rewrite_rule( '^' . $base . '/catalog/([^/]+)/([^/]+)/index\.txt$', 'index.php?llmf_catalog=1&llmf_pt=$matches[1]&llmf_tax=$matches[2]', 'top' );
+			add_rewrite_rule( '^' . $base . '/catalog/([^/]+)/([^/]+)/([1-9][0-9]*)\.txt$', 'index.php?llmf_catalog=1&llmf_pt=$matches[1]&llmf_tax=$matches[2]&llmf_term=$matches[3]', 'top' );
+		}
 
 		// llms.txt
 		if ( ! empty( $opt['enabled_llms_txt'] ) ) {

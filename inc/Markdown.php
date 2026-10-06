@@ -109,7 +109,7 @@ final class Markdown {
 	 * @param string $markdown Raw Markdown.
 	 * @return string Markdown with consistent block spacing.
 	 */
-	public static function normalize_blocks( string $markdown ): string {
+	public static function normalize_blocks( string $markdown, bool $preserve = false ): string {
 		$markdown = self::normalize_newlines( $markdown );
 		$lines    = explode( "\n", $markdown );
 
@@ -117,8 +117,10 @@ final class Markdown {
 		$cur_lines = array();
 		$cur_type  = '';
 		$in_code   = false;
+		$fence_char = '';
+		$fence_length = 0;
 
-		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type ): void {
+		$flush = static function() use ( &$blocks, &$cur_lines, &$cur_type, $preserve ): void {
 			if ( empty( $cur_lines ) ) {
 				$cur_type = '';
 				return;
@@ -126,7 +128,7 @@ final class Markdown {
 
 			$tmp = array();
 			foreach ( $cur_lines as $line ) {
-				$tmp[] = rtrim( (string) $line );
+				$tmp[] = $preserve && $cur_type === 'code' ? (string) $line : rtrim( (string) $line );
 			}
 
 			while ( ! empty( $tmp ) && trim( (string) $tmp[0] ) === '' ) {
@@ -149,6 +151,16 @@ final class Markdown {
 			$trim = trim( $raw );
 
 			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
+			if ( $preserve ) {
+				$match = array();
+				$is_fence = preg_match( '/^ {0,3}(`{3,}|~{3,})(.*)$/', $raw, $match ) === 1;
+				if ( $is_fence && $in_code ) {
+					$is_fence = $match[1][0] === $fence_char && strlen( $match[1] ) >= $fence_length && trim( $match[2] ) === '';
+				} elseif ( $is_fence ) {
+					$fence_char = $match[1][0];
+					$fence_length = strlen( $match[1] );
+				}
+			}
 			if ( $is_fence ) {
 				if ( ! $in_code ) {
 					$flush();
@@ -164,7 +176,7 @@ final class Markdown {
 			}
 
 			if ( $in_code ) {
-				$cur_lines[] = rtrim( $raw );
+				$cur_lines[] = $preserve ? $raw : rtrim( $raw );
 				continue;
 			}
 
@@ -178,7 +190,7 @@ final class Markdown {
 				$type = 'heading';
 			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
 				$type = 'quote';
-			} elseif ( preg_match( '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
+			} elseif ( preg_match( $preserve ? '/^\s*(\d+\.|[-+*])\s+/' : '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
 				$type = 'list';
 			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
 				$type = 'table';

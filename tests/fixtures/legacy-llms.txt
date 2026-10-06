@@ -1,0 +1,36 @@
+# Test Site
+
+> Test description
+
+Bad Heading
+
+Setext heading
+
+Helpful note
+
+```
+# kept in code
+```
+
+## Main links
+
+- [Home](https://example.test/): Website home page
+- [Sitemap](https://example.test/sitemap.xml): XML sitemap
+- [RSS](https://example.test/feed/): Latest updates feed
+
+## Essential
+
+- [Front Page](https://example.test/llm/page/front.md): Front page content. Canonical URL: https://example.test/front/
+- [Blog](https://example.test/llm/page/blog.md): Posts page. Canonical URL: https://example.test/blog/
+- [Privacy](https://example.test/llm/page/privacy.md): Privacy policy. Canonical URL: https://example.test/privacy/
+- [Docs](https://example.test/docs): Key documentation
+
+## Posts
+
+- [Latest Post](https://example.test/llm/post/latest.md): Useful summary for agents; Updated 2026-01-02. Canonical URL: https://example.test/post/latest/
+
+## Pages
+
+- [Front Page](https://example.test/llm/page/front.md): Updated 2026-01-02. Canonical URL: https://example.test/front/
+- [Blog](https://example.test/llm/page/blog.md): Updated 2026-01-02. Canonical URL: https://example.test/blog/
+- [Privacy](https://example.test/llm/page/privacy.md): Updated 2026-01-02. Canonical URL: https://example.test/privacy/

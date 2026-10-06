@@ -24,6 +24,7 @@ final class Admin {
 	 * @var Llms
 	 */
 	private $llms;
+	private $diagnostics;
 
 	/**
 	 * Admin constructor.
@@ -31,9 +32,10 @@ final class Admin {
 	 * @param Options $options Options service.
 	 * @param Llms    $llms    llms.txt service.
 	 */
-	public function __construct($options, $llms) {
+	public function __construct($options, $llms, $diagnostics = null) {
 		$this->options = $options;
 		$this->llms    = $llms;
+		$this->diagnostics = $diagnostics;
 
 		if (is_admin()) {
 			add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -45,6 +47,10 @@ final class Admin {
 			add_action('wp_ajax_llmf_search_posts', array($this, 'ajax_search_posts'));
 			add_action('wp_ajax_llmf_preview_llms', array($this, 'ajax_preview_llms'));
 			add_action('wp_ajax_llmf_save_settings', array($this, 'ajax_save_settings'));
+			add_action( 'wp_ajax_llmf_compare_modes', array( $this, 'ajax_compare_modes' ) );
+			add_action( 'wp_ajax_llmf_search_pins', array( $this, 'ajax_search_pins' ) );
+			add_action( 'wp_ajax_llmf_diagnostics', array( $this, 'ajax_diagnostics' ) );
+			add_action( 'wp_ajax_llmf_coverage', array( $this, 'ajax_coverage' ) );
 		}
 	}
 
@@ -282,7 +288,22 @@ final class Admin {
 	 * @return array<string,mixed>
 	 */
 	public function sanitize_options($input) {
+		if ( is_array( $input ) && ! empty( $input['_llmf_complete'] ) ) {
+			$input = $this->complete_form( $input );
+		}
 		return $this->options->sanitize($input);
+	}
+
+	/** Full forms explicitly clear unchecked fields; partial updates retain absent values. */
+	private function complete_form( array $input ): array {
+		foreach ( array( 'enabled_markdown', 'enabled_llms_txt', 'enabled_content_negotiation', 'llms_send_noindex', 'md_send_noindex', 'llms_show_excerpt' ) as $key ) {
+			if ( ! array_key_exists( $key, $input ) ) {
+				$input[ $key ] = 0;
+			}
+		}
+		$input['post_types'] = $input['post_types'] ?? array();
+		$input['excluded_posts'] = $input['excluded_posts'] ?? array();
+		return $input;
 	}
 
 	/**
@@ -748,6 +769,7 @@ final class Admin {
 		$this->render_setting_field( '', array( $this, 'field_enabled_markdown' ) );
 		$this->render_setting_field( '', array( $this, 'field_enabled_content_negotiation' ) );
 		$this->render_setting_field( '', array( $this, 'field_md_noindex' ) );
+		$this->field_mode( 'content_profile', __( 'Content processing', 'llm-friendly' ), 'enhanced', __( 'Enhanced', 'llm-friendly' ) );
 		$this->render_setting_field( __( 'Base path for Markdown exports', 'llm-friendly' ), array( $this, 'field_base_path' ), $this->option_field_id( 'base_path' ) );
 		echo '<div class="llmf-inline-preview" id="llmf-markdown-pattern-preview">';
 		echo '<span>' . esc_html__( 'Current pattern', 'llm-friendly' ) . '</span>';
@@ -800,6 +822,9 @@ final class Admin {
 		);
 		$this->render_setting_field( '', array( $this, 'field_enabled_llms_txt' ) );
 		$this->render_setting_field( '', array( $this, 'field_llms_noindex' ) );
+		$this->field_mode( 'llms_index_mode', __( 'Index structure', 'llm-friendly' ), 'structured', __( 'Structured catalog', 'llm-friendly' ) );
+		$this->field_catalog_controls();
+		echo '<p class="description">' . esc_html__( 'Item count and excerpt controls below apply to legacy mode. Structured mode lists up to five recently modified items per type with descriptions.', 'llm-friendly' ) . '</p>';
 		$this->render_setting_field( __( 'Regeneration mode', 'llm-friendly' ), array( $this, 'field_llms_regen_mode' ) );
 		$this->render_setting_field( __( 'Items per post type', 'llm-friendly' ), array( $this, 'field_llms_recent_limit' ), $this->option_field_id( 'llms_recent_limit' ) );
 		$this->render_setting_field( '', array( $this, 'field_llms_show_excerpt' ) );
@@ -807,7 +832,59 @@ final class Admin {
 		$this->render_setting_field( __( 'Custom Markdown block', 'llm-friendly' ), array( $this, 'field_llms_custom_markdown' ), $this->option_field_id( 'llms_custom_markdown' ) );
 		$this->render_setting_field( __( 'Essential links', 'llm-friendly' ), array( $this, 'field_llms_essential_links' ), $this->option_field_id( 'llms_essential_links' ) );
 		$this->render_preview_panel();
+		$this->render_comparison();
 		$this->render_panel_close();
+	}
+
+	private function field_mode( string $key, string $label, string $value, string $value_label ): void {
+		$opt = $this->options->get();
+		$id = $this->option_field_id( $key );
+		echo '<div class="llmf-field"><div class="llmf-field__meta"><label class="llmf-field__label" for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label></div><div class="llmf-field__control"><select id="' . esc_attr( $id ) . '" name="' . esc_attr( Options::OPTION_KEY ) . '[' . esc_attr( $key ) . ']">';
+		echo '<option value="legacy"' . selected( $opt[ $key ], 'legacy', false ) . '>' . esc_html__( 'Legacy (default)', 'llm-friendly' ) . '</option>';
+		echo '<option value="' . esc_attr( $value ) . '"' . selected( $opt[ $key ], $value, false ) . '>' . esc_html( $value_label ) . '</option></select>';
+		echo '<p class="description">' . esc_html__( 'Opt in separately. Switching back preserves your new settings and manual content.', 'llm-friendly' ) . '</p></div></div>';
+	}
+
+	private function field_catalog_controls(): void {
+		$opt = $this->options->get();
+		$catalog = new Catalog( $this->options, false );
+		echo '<div class="llmf-field llmf-field--full" id="llmf-pins"><div class="llmf-field__control"><h3>' . esc_html__( 'Pinned content', 'llm-friendly' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'Choose up to 100 public items and arrange their order. The first 10 appear in the short map; the full list has its own index. Legacy Essential links remain separate.', 'llm-friendly' ) . '</p>';
+		echo '<input type="hidden" id="llmf-pinned-ids" name="llmf_options[llms_pinned_ids]" value="' . esc_attr( implode( ',', $opt['llms_pinned_ids'] ) ) . '" />';
+		echo '<ol data-llmf-pin-list>';
+		foreach ( $opt['llms_pinned_ids'] as $id ) {
+			$post = get_post( $id );
+			$title = $post ? get_the_title( $post ) : sprintf( __( 'Item #%d', 'llm-friendly' ), $id );
+			echo '<li data-pin-id="' . esc_attr( $id ) . '"><span>' . esc_html( $title ) . '</span> <button type="button" class="button" data-pin-up aria-label="' . esc_attr__( 'Move up', 'llm-friendly' ) . '">↑</button> <button type="button" class="button" data-pin-down aria-label="' . esc_attr__( 'Move down', 'llm-friendly' ) . '">↓</button> <button type="button" class="button" data-pin-remove>' . esc_html__( 'Remove', 'llm-friendly' ) . '</button></li>';
+		}
+		echo '</ol><label for="llmf-pin-type">' . esc_html__( 'Content type', 'llm-friendly' ) . '</label> <select id="llmf-pin-type">';
+		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type => $obj ) {
+			if ( $this->options->is_exportable_post_type( $type ) ) {
+				echo '<option value="' . esc_attr( $type ) . '">' . esc_html( $obj->labels->name ) . '</option>';
+			}
+		}
+		echo '</select> <label for="llmf-pin-query">' . esc_html__( 'Search content', 'llm-friendly' ) . '</label> <input type="search" id="llmf-pin-query" minlength="2" /> <button type="button" class="button" data-llmf-pin-search>' . esc_html__( 'Search', 'llm-friendly' ) . '</button><div data-llmf-pin-results></div><p data-llmf-pin-status role="status" aria-live="polite"></p></div></div>';
+		echo '<fieldset class="llmf-catalog-topics"><legend><strong>' . esc_html__( 'Catalog topics', 'llm-friendly' ) . '</strong></legend>';
+		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type => $obj ) {
+			if ( ! $this->options->is_exportable_post_type( $type ) ) {
+				continue;
+			}
+			echo '<p><strong>' . esc_html( $obj->labels->name ) . '</strong><input type="hidden" name="llmf_options[catalog_taxonomies][' . esc_attr( $type ) . '][]" value="" /></p>';
+			foreach ( get_object_taxonomies( $type, 'objects' ) as $taxonomy => $tax ) {
+				if ( empty( $tax->public ) || empty( $tax->publicly_queryable ) ) {
+					continue;
+				}
+				echo '<label class="llmf-topic"><input type="checkbox" name="llmf_options[catalog_taxonomies][' . esc_attr( $type ) . '][]" value="' . esc_attr( $taxonomy ) . '"' . checked( in_array( $taxonomy, $catalog->taxonomies( $type ), true ), true, false ) . ' /> ' . esc_html( $tax->labels->name ) . '</label> ';
+			}
+		}
+		echo '<p class="description">' . esc_html__( 'Topics are built in background batches. Detailed indexes update automatically, including when the root index uses manual regeneration.', 'llm-friendly' ) . '</p></fieldset>';
+	}
+
+	private function render_comparison(): void {
+		echo '<div class="llmf-preview" id="llmf-compare"><h3>' . esc_html__( 'Compare modes before saving', 'llm-friendly' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Uses the current form values. Comparison does not save settings, refresh caches, or change public URLs.', 'llm-friendly' ) . '</p>';
+		echo '<label for="llmf-compare-id">' . esc_html__( 'Optional item ID for Markdown comparison', 'llm-friendly' ) . '</label> <input type="number" min="1" id="llmf-compare-id" /> <button type="button" class="button" data-llmf-compare>' . esc_html__( 'Compare', 'llm-friendly' ) . '</button>';
+		echo '<p data-llmf-compare-status role="status" aria-live="polite"></p><div class="llmf-compare-grid"><div><h4>' . esc_html__( 'Legacy output', 'llm-friendly' ) . '</h4><pre class="llmf-preview__content" tabindex="0" data-llmf-legacy></pre></div><div><h4>' . esc_html__( 'Selected modes', 'llm-friendly' ) . '</h4><pre class="llmf-preview__content" tabindex="0" data-llmf-selected></pre></div></div></div>';
 	}
 
 	/**
@@ -884,6 +961,10 @@ final class Admin {
 		echo '<button type="submit" class="button button-secondary" id="llmf-regenerate-submit" name="llmf_regenerate_submit">' . esc_html__( 'Regenerate llms.txt now', 'llm-friendly' ) . '</button>';
 		echo '</form>';
 		echo '<p class="description">' . esc_html__( 'Rebuilds cached llms.txt immediately.', 'llm-friendly' ) . '</p>';
+		echo '<div id="llmf-diagnostics"><h3>' . esc_html__( 'Diagnostics and coverage', 'llm-friendly' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Checks saved settings and public HTTP responses. Coverage scans 100 published, password-free candidates per batch and can be continued later.', 'llm-friendly' ) . '</p>';
+		echo '<label for="llmf-diagnostic-id">' . esc_html__( 'Optional item ID', 'llm-friendly' ) . '</label> <input type="number" min="1" id="llmf-diagnostic-id" /> <button type="button" class="button" data-llmf-diagnostics>' . esc_html__( 'Check availability', 'llm-friendly' ) . '</button> <button type="button" class="button" data-llmf-coverage="start">' . esc_html__( 'Start coverage scan', 'llm-friendly' ) . '</button> <button type="button" class="button" data-llmf-coverage="continue">' . esc_html__( 'Continue scan', 'llm-friendly' ) . '</button>';
+		echo '<p data-llmf-diagnostic-status role="status" aria-live="polite"></p><div data-llmf-report></div><details><summary>' . esc_html__( 'Technical details', 'llm-friendly' ) . '</summary><pre class="llmf-preview__content" tabindex="0" data-llmf-diagnostic-details></pre></details></div>';
 		$this->render_panel_close();
 	}
 
@@ -1018,6 +1099,9 @@ final class Admin {
 		$handle = 'llmf-admin';
 		$src    = trailingslashit( LLMF_URL ) . 'assets/llmf-admin.js';
 		$ver    = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : false;
+		// The development checkout keeps its release version; invalidate changed assets too.
+		$asset_revision = max( (int) filemtime( LLMF_DIR . 'assets/llmf-admin.js' ), (int) filemtime( LLMF_DIR . 'assets/llmf-admin.css' ) );
+		$ver = $ver . '.' . $asset_revision;
 
 		wp_enqueue_style(
 			$handle,
@@ -1041,10 +1125,58 @@ final class Admin {
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'llmf_search_posts' ),
 				'previewNonce'   => wp_create_nonce( 'llmf_preview_llms' ),
+				'mechanicsNonce' => wp_create_nonce( 'llmf_mechanics' ),
 				'llmsUrl'        => $this->llms_url(),
 				'markdownPattern' => $this->markdown_url_pattern(),
 				'minChars'       => 2,
 				'i18n'           => array(
+					'working' => __( 'Working…', 'llm-friendly' ),
+					'completed' => __( 'Completed.', 'llm-friendly' ),
+					'operationError' => __( 'The check failed. Your settings are unchanged. Try again.', 'llm-friendly' ),
+					'addPin' => __( 'Pin item', 'llm-friendly' ),
+					'pinLimit' => __( 'Up to 100 items can be pinned.', 'llm-friendly' ),
+					'moveUp' => __( 'Move up', 'llm-friendly' ),
+					'moveDown' => __( 'Move down', 'llm-friendly' ),
+					'removePin' => __( 'Remove', 'llm-friendly' ),
+					'rootSizeWarning' => __( 'The root index is large. Shorten custom notes or manual links if a compact map is needed.', 'llm-friendly' ),
+					'available' => __( 'Available', 'llm-friendly' ),
+					'failed' => __( 'Failed', 'llm-friendly' ),
+					'unable_to_check' => __( 'Unable to check', 'llm-friendly' ),
+					'exportable' => __( 'Exportable', 'llm-friendly' ),
+					'not_exportable' => __( 'Not exportable', 'llm-friendly' ),
+					'shortMapMissing' => __( 'Exportable, but absent from the short map.', 'llm-friendly' ),
+					/* translators: 1: scanned count, 2: exportable count, 3: short map count, 4: scan status. */
+					'coverageSummary' => __( 'Scanned: %1$s. Exportable: %2$s. In short map: %3$s. Status: %4$s.', 'llm-friendly' ),
+					'descriptionSourceLabel' => __( 'Description source', 'llm-friendly' ),
+					'endpoint_root' => '/llms.txt',
+					'endpoint_markdown' => __( 'Markdown exports', 'llm-friendly' ),
+					'endpoint_catalog' => __( 'Content catalog', 'llm-friendly' ),
+					'overrideLabel' => __( 'Manual Markdown', 'llm-friendly' ),
+					'source_custom' => __( 'Custom description', 'llm-friendly' ),
+					'source_seo' => __( 'SEO description', 'llm-friendly' ),
+					'source_excerpt' => __( 'Explicit excerpt', 'llm-friendly' ),
+					'source_content' => __( 'Content paragraph', 'llm-friendly' ),
+					'source_none' => __( 'No description', 'llm-friendly' ),
+					'source_legacy' => __( 'Legacy extraction', 'llm-friendly' ),
+					'override_automatic' => __( 'Automatic export', 'llm-friendly' ),
+					'override_current' => __( 'Reviewed against current source', 'llm-friendly' ),
+					'override_outdated' => __( 'Source changed; review needed', 'llm-friendly' ),
+					'override_unconfirmed' => __( 'Existing override; source not confirmed', 'llm-friendly' ),
+					'scan_complete' => __( 'Complete', 'llm-friendly' ),
+					'scan_running' => __( 'In progress', 'llm-friendly' ),
+					'scan_stale' => __( 'Content changed; restart needed', 'llm-friendly' ),
+					'scan_not_started' => __( 'Not started', 'llm-friendly' ),
+					'warning_empty_description' => __( 'No meaningful paragraph was found for a description.', 'llm-friendly' ),
+					'warning_empty_markdown' => __( 'The exported body is empty.', 'llm-friendly' ),
+					'warning_unresolved_shortcode' => __( 'A shortcode needs review; it was not expanded for analysis.', 'llm-friendly' ),
+					'warning_unknown_block' => __( 'An unsupported block needs review.', 'llm-friendly' ),
+					'warning_unresolved_seo_template' => __( 'An unresolved SEO template was skipped.', 'llm-friendly' ),
+					'warning_seo_api_unavailable' => __( 'SEO metadata could not be read through its API.', 'llm-friendly' ),
+					'warning_complex_table_html' => __( 'A complex table was kept as safe HTML to preserve its spans.', 'llm-friendly' ),
+					'warning_unavailable_reusable_block' => __( 'A reusable block is hidden, unavailable or recursive.', 'llm-friendly' ),
+					'warning_block_depth_limit' => __( 'Nested blocks exceeded the conversion depth limit.', 'llm-friendly' ),
+					'warning_block_count_limit' => __( 'The block conversion limit was reached.', 'llm-friendly' ),
+					'warning_preview_truncated' => __( 'Preview was shortened for display.', 'llm-friendly' ),
 					'searchPlaceholder' => __( 'Start typing from 2 characters…', 'llm-friendly' ),
 					'searching'         => __( 'Searching…', 'llm-friendly' ),
 					'nothingFound'      => __( 'Nothing found for this query.', 'llm-friendly' ),
@@ -1110,6 +1242,7 @@ final class Admin {
 
 		// Main Settings API form (ONLY ONE form that posts to options.php).
 		echo '<form method="post" action="options.php" class="llmf-settings-form" id="llmf-settings-form">';
+		echo '<input type="hidden" name="llmf_options[_llmf_complete]" value="1" />';
 		settings_fields('llmf');
 		$this->render_overview_panel();
 		$this->render_markdown_panel();
@@ -1223,6 +1356,88 @@ final class Admin {
 		wp_send_json_success( $this->llms->preview() );
 	}
 
+	private function mechanics_access(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Access denied.', 'llm-friendly' ) ), 403 );
+		}
+		check_ajax_referer( 'llmf_mechanics', 'nonce' );
+	}
+
+	private function mechanics_candidate(): Options {
+		$input = isset( $_POST[ Options::OPTION_KEY ] ) && is_array( $_POST[ Options::OPTION_KEY ] ) ? wp_unslash( $_POST[ Options::OPTION_KEY ] ) : array();
+		if ( ! empty( $input['_llmf_complete'] ) ) {
+			$input = $this->complete_form( $input );
+		}
+		return $this->options->candidate( $input );
+	}
+
+	public function ajax_compare_modes(): void {
+		$this->mechanics_access();
+		$options = $this->mechanics_candidate();
+		$legacy = $options->candidate( array( 'llms_index_mode' => 'legacy', 'content_profile' => 'legacy' ) );
+		$id = isset( $_POST['post_id'] ) && is_scalar( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+		$post = $id > 0 ? get_post( $id ) : null;
+		if ( ! $post ) {
+			$posts = ( new Catalog( $options, false ) )->scan()['posts'];
+			$post = $posts[0] ?? null;
+		}
+		$result = array();
+		foreach ( array( 'legacy' => $legacy, 'selected' => $options ) as $key => $config ) {
+			$root = Content::anonymous( function () use ( $config ) { return ( new Llms( $config, false ) )->preview(); } );
+			$catalog = new Catalog( $config, false );
+			$render = $post && $catalog->eligible( $post ) ? ( new Exporter( $config ) )->inspect( $post ) : array( 'markdown' => '', 'warnings' => array(), 'dependencies' => array() );
+			$bytes = strlen( $render['markdown'] );
+			if ( $bytes > 60000 ) {
+				$render['markdown'] = function_exists( 'mb_strcut' ) ? mb_strcut( $render['markdown'], 0, 60000, 'UTF-8' ) : substr( $render['markdown'], 0, 60000 );
+				$render['warnings'][] = 'preview_truncated';
+			}
+			$result[ $key ] = array( 'root' => $root['content'], 'markdown' => $render['markdown'], 'warnings' => $render['warnings'], 'indexMode' => $config->get()['llms_index_mode'], 'contentProfile' => $config->get()['content_profile'], 'largeRoot' => strlen( $root['content'] ) > 30000 );
+		}
+		wp_send_json_success( $result );
+	}
+
+	public function ajax_search_pins(): void {
+		$this->mechanics_access();
+		$options = $this->mechanics_candidate();
+		$type = isset( $_POST['post_type'] ) && is_string( $_POST['post_type'] ) ? sanitize_key( wp_unslash( $_POST['post_type'] ) ) : '';
+		$q = isset( $_POST['q'] ) && is_string( $_POST['q'] ) ? sanitize_text_field( wp_unslash( $_POST['q'] ) ) : '';
+		if ( ! in_array( $type, $options->selected_post_types( $options->get() ), true ) || ( function_exists( 'mb_strlen' ) ? mb_strlen( $q, 'UTF-8' ) : strlen( $q ) ) < 2 ) {
+			wp_send_json_error( array( 'message' => __( 'Select an exported type and enter at least two characters.', 'llm-friendly' ) ), 400 );
+		}
+		$query = new \WP_Query( array( 'post_type' => $type, 'post_status' => 'publish', 'has_password' => false, 's' => $q, 'posts_per_page' => 20, 'no_found_rows' => true, 'update_post_meta_cache' => true ) );
+		$items = array();
+		$catalog = new Catalog( $options, false );
+		foreach ( $query->posts as $post ) {
+			if ( $catalog->eligible( $post ) && ! in_array( $post->ID, $options->get()['llms_pinned_ids'], true ) ) {
+				$items[] = array( 'id' => $post->ID, 'title' => $this->post_picker_title( $post ) );
+			}
+		}
+		wp_send_json_success( array( 'items' => $items ) );
+	}
+
+	private function diagnostics_service(): Diagnostics {
+		if ( ! $this->diagnostics instanceof Diagnostics ) {
+			$this->diagnostics = new Diagnostics( $this->options, new Catalog( $this->options, false ), new Exporter( $this->options ), false );
+		}
+		return $this->diagnostics;
+	}
+
+	public function ajax_diagnostics(): void {
+		$this->mechanics_access();
+		$id = isset( $_POST['post_id'] ) && is_scalar( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+		wp_send_json_success( $this->diagnostics_service()->check( max( 0, $id ) ) );
+	}
+
+	public function ajax_coverage(): void {
+		$this->mechanics_access();
+		$operation = $_POST['operation'] ?? 'status';
+		$service = $this->diagnostics_service();
+		if ( $operation === 'start' ) {
+			$service->start();
+		}
+		wp_send_json_success( in_array( $operation, array( 'start', 'continue' ), true ) ? $service->batch() : $service->progress() );
+	}
+
 	/**
 	 * AJAX save handler for the main settings form.
 	 *
@@ -1239,7 +1454,7 @@ final class Admin {
 			wp_send_json_error( array( 'message' => __( 'Settings payload is missing.', 'llm-friendly' ) ), 400 );
 		}
 
-		$input = wp_unslash( $_POST[ Options::OPTION_KEY ] );
+		$input = $this->complete_form( wp_unslash( $_POST[ Options::OPTION_KEY ] ) );
 		$saved = $this->options->update( is_array( $input ) ? $input : array() );
 
 		wp_send_json_success(
@@ -1798,6 +2013,16 @@ final class Admin {
 
 		$val = get_post_meta( $post->ID, Exporter::META_MD_OVERRIDE, true );
 		$val = is_string( $val ) ? $val : '';
+		$state = Content::override_state( $post );
+		if ( in_array( $state, array( 'outdated', 'unconfirmed' ), true ) ) {
+			echo '<p class="notice notice-warning">' . esc_html( $state === 'outdated' ? __( 'The source content changed after this Markdown override was saved. Review the manual version.', 'llm-friendly' ) : __( 'This existing override has no source fingerprint. Review and confirm it if it still matches the source.', 'llm-friendly' ) ) . '</p>';
+		}
+		if ( $this->options->get()['content_profile'] === 'enhanced' ) {
+			$info = Content::description( $post, $this->options );
+			$sources = array( 'custom' => __( 'Custom description', 'llm-friendly' ), 'seo' => __( 'SEO description', 'llm-friendly' ), 'excerpt' => __( 'Explicit excerpt', 'llm-friendly' ), 'content' => __( 'Content paragraph', 'llm-friendly' ), 'none' => __( 'No description', 'llm-friendly' ) );
+			/* translators: %s: human-readable description source. */
+			echo '<p class="description">' . esc_html( sprintf( __( 'Description source: %s', 'llm-friendly' ), $sources[ $info['source'] ] ?? $sources['none'] ) ) . '</p>';
+		}
 		$description = get_post_meta( $post->ID, Options::META_LLMS_DESCRIPTION, true );
 		$description = is_string( $description ) ? $description : '';
 		$description_max = (int) apply_filters( 'llmf_llms_description_max_length', 500 );
@@ -1809,6 +2034,7 @@ final class Admin {
 
 		echo '<p class="description">' . esc_html__( 'If filled, this text will replace the post content in the Markdown export.', 'llm-friendly' ) . '</p>';
 		echo '<textarea style="width:100%;min-height:240px" name="llmf_md_content_override">' . esc_textarea( $val ) . '</textarea>';
+		echo '<p><label><input type="checkbox" name="llmf_confirm_override" value="1" /> ' . esc_html__( 'I reviewed this override against the current source.', 'llm-friendly' ) . '</label></p>';
 		echo '<p class="description">' . esc_html__( 'Leave empty to export the post content. You can paste plain Markdown or Gutenberg block markup (<!-- wp: ... -->).', 'llm-friendly' ) . '</p>';
 		echo '<hr />';
 		echo '<p><label for="llmf-llms-description"><strong>' . esc_html__( 'llms.txt description (overrides excerpt)', 'llm-friendly' ) . '</strong></label></p>';
@@ -1874,8 +2100,13 @@ final class Admin {
 
 		if ( $value === '' ) {
 			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
+			delete_post_meta( $post_id, Content::META_SOURCE_HASH );
 		} else {
+			$old_value = get_post_meta( $post_id, Exporter::META_MD_OVERRIDE, true );
 			update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, $value );
+			if ( $old_value !== $value || ! empty( $_POST['llmf_confirm_override'] ) ) {
+				update_post_meta( $post_id, Content::META_SOURCE_HASH, Content::fingerprint( $post ) );
+			}
 		}
 
 		$raw_description = isset( $_POST['llmf_llms_description'] )

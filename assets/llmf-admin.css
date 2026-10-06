@@ -1005,3 +1005,12 @@
 		max-width: none;
 	}
 }
+/* Mode comparison and catalog controls reuse the existing settings panels. */
+.llmf-compare-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.llmf-compare-grid > div { min-width: 0; }
+.llmf-compare-grid pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+#llmf-pins li { margin-bottom: 8px; overflow-wrap: anywhere; }
+#llmf-pins li button { margin: 2px; }
+.llmf-topic { display: inline-block; margin: 0 12px 8px 0; }
+#llmf-diagnostics input[type="number"], #llmf-compare input[type="number"] { width: 100px; }
+@media (max-width: 782px) { .llmf-compare-grid { grid-template-columns: minmax(0, 1fr); } }

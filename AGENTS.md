@@ -19,11 +19,18 @@
 - `inc/Options.php` - defaults, sanitization, export eligibility, sitemap/base path logic, content-negotiation option, description fallbacks, exclusion validation.
 - `inc/Exporter.php` - `.md` endpoint: canonical/describedby headers, metadata JSON fence, post override, Gutenberg/HTML to Markdown conversion, Markdown cache key.
 - `inc/Llms.php` - `/llms.txt`: cache, scheduled regeneration, ETag/Last-Modified, Essential links, recent post sections.
+- `inc/Catalog.php` - bounded ID-cursor queries, pins, public taxonomy/parent validation, detailed `.txt` indexes and current publication generation.
+- `inc/Content.php` - anonymous analysis, enhanced descriptions, reusable-source dependency fingerprints and canonical reference resolution.
+- `inc/Diagnostics.php` - bounded same-origin HTTP checks, override source recording and resumable coverage/topic projection.
 - `inc/Admin.php` - Settings UI, AJAX exclusion search, regenerate action, editor metabox.
 - `inc/Rewrites.php` - query vars and rewrite rules for `/llms.txt` and `/{base}/{post_type}/{path}.md`.
 - `inc/Response.php` и `inc/Markdown.php` - shared helpers for HTTP conditional responses and Markdown-safe strings/URLs.
 - `assets/llmf-admin.js` и `assets/llmf-admin.css` - plain admin JS/CSS, no bundler.
 - `tests/run.php` - lightweight regression runner with WordPress stubs; it is not PHPUnit.
+- `tests/mechanics.php`, `tests/mechanics-stubs.php`, `tests/fixtures/` - opt-in behavior, scale/caching/security checks and exact 0.2.1 legacy outputs.
+- `.gitattributes` keeps text fixtures under `tests/fixtures/` in LF format so exact output comparisons survive Windows checkouts with `core.autocrlf=true`.
+- `tests/wordpress-mechanics.php` - self-cleaning integration runner for an active local WordPress; requires explicit write guard and root path.
+- `tests/wordpress-scale.php` - 10,000 real SQL fixtures, restricted to a loopback WordPress with an isolated `llmf_` table prefix.
 - `languages/` - translation source and generated runtime files.
 - `assets-svn/` - WordPress.org plugin directory assets/blueprint; ignore for code changes unless the task is release/listing related.
 
@@ -37,10 +44,10 @@ composer run lint
 composer run test
 ```
 
-- `composer run lint` runs `php -l` on `llm-friendly.php`, every file in `inc/`, and `tests/run.php`.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 208 assertions`.
+- `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 439 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
-- There is no migration command: the plugin stores settings in one option key (`llmf_options`) and post meta, with no custom DB tables.
+- There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
 - For release work, manually keep these in sync: plugin header `Version`, `LLMF_VERSION`, `README.md` current version, `readme.txt` `Stable tag`, translation catalogs, and `assets-svn/` if WordPress.org listing assets change.
 
@@ -62,9 +69,9 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 ## Окружение
 
 - Minimum runtime from code/docs: WordPress 6.0+ and PHP 7.4+.
-- `readme.txt` currently says `Tested up to: 7.0`.
+- `readme.txt` currently says `Tested up to: 7.1.2`; the mechanics acceptance matrix is recorded in `TESTING.md`.
 - No `.env` is required for tests or local syntax checks.
-- Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `enabled_content_negotiation=0`, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
+- Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `enabled_content_negotiation=0`, `llms_index_mode=legacy`, `content_profile=legacy`, empty pins/topic overrides, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
 - Runtime rewrite changes (`enabled_markdown`, `enabled_llms_txt`, `base_path`, `post_types`) set a transient and flush rewrite rules later in admin. Manual WP testing after endpoint changes should include re-saving permalinks.
 
 ## Зависимости
@@ -92,7 +99,7 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 - Recommended POT refresh:
 
 ```bash
-wp i18n make-pot . languages/llm-friendly.pot --domain=llm-friendly --exclude=vendor,graphify-out,assets-svn,.codex,.agents
+wp i18n make-pot . languages/llm-friendly.pot --domain=llm-friendly --exclude=vendor,graphify-out,assets-svn,.codex,.agents,tests
 ```
 
 Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tooling; do not edit generated binary/runtime files manually.
@@ -114,6 +121,12 @@ Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tool
 - External sitemap URLs are rejected by default unless `llmf_allow_external_sitemap_url` opts in.
 - Users without `unfiltered_html` get custom Markdown sanitized by KSES; preserve Markdown line breaks and code fences when changing sanitization.
 - Translation/runtime files are frequently updated in history. If UI strings change, do not leave `languages/` stale.
+- New modes must remain opt-in and independent. Keep the captured 0.2.1 output fixtures unchanged; mode switchback preserves pins, topics and manual Markdown.
+- Preview candidates use `Options::candidate()` without mutation or additional runtime hooks. Full form submission explicitly supplies unchecked controls; partial settings updates retain omitted keys.
+- Catalog cursors advance by the last scanned ID, never the last accepted item. Bound queries to 100 candidates and recheck cached IDs against current visibility and the existing `llms` filter context.
+- Root manual regeneration does not freeze detailed catalogs. Invalidate catalog generation on post/meta/term/configuration changes; publish a background projection only if its generation is still current.
+- Root dependencies and Markdown cache fingerprints must include current reusable-block visibility/filter decisions. Private reusable sources cannot survive cache warming.
+- Diagnostics receives item IDs, not arbitrary URLs. Keep same-origin construction, `wp_safe_remote_get`, TLS verification, no redirects/cookies, six probes, five-second timeouts and 256 KiB limits.
 
 ## Полезные ссылки
 

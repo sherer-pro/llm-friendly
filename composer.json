@@ -10,6 +10,9 @@
 		"lint": [
 			"@php -l llm-friendly.php",
 			"@php -l inc/Admin.php",
+			"@php -l inc/Catalog.php",
+			"@php -l inc/Content.php",
+			"@php -l inc/Diagnostics.php",
 			"@php -l inc/Exporter.php",
 			"@php -l inc/Llms.php",
 			"@php -l inc/Markdown.php",
@@ -17,7 +20,11 @@
 			"@php -l inc/Plugin.php",
 			"@php -l inc/Response.php",
 			"@php -l inc/Rewrites.php",
-			"@php -l tests/run.php"
+			"@php -l tests/run.php",
+			"@php -l tests/mechanics.php",
+			"@php -l tests/mechanics-stubs.php",
+			"@php -l tests/wordpress-mechanics.php",
+			"@php -l tests/wordpress-scale.php"
 		],
 		"test": [
 			"@php tests/run.php"

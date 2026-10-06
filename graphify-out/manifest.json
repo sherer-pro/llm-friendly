@@ -1,102 +1,152 @@
 {
   "assets/llmf-admin.js": {
-    "mtime": 1787955616.5118082,
-    "ast_hash": "3fd856f5b0263e109de37fa6e9d01d62",
+    "mtime": 1791302430.403791,
+    "ast_hash": "f03badff3f79727d4a20d8387cebefd6",
     "semantic_hash": ""
   },
   "composer.json": {
-    "mtime": 1787955616.5118082,
-    "ast_hash": "719c6f9879539aedc51e8256959922eb",
+    "mtime": 1791302776.9965105,
+    "ast_hash": "df3396bd15afd307dc6b8ef0cb4dc1ba",
     "semantic_hash": ""
   },
   "inc/Admin.php": {
-    "mtime": 1791292412.1423385,
-    "ast_hash": "0796a4f04245153c8f664cbd07ea08d3",
+    "mtime": 1791302429.5947998,
+    "ast_hash": "a95d5c6e19d94751eb459d1ba2510449",
     "semantic_hash": ""
   },
   "inc/Exporter.php": {
-    "mtime": 1791291124.5166266,
-    "ast_hash": "5045afcd21a8c2ab9c720116cb12fb7f",
+    "mtime": 1791303016.0209472,
+    "ast_hash": "e9a66a0a3f84bd15d19e9b3556861420",
     "semantic_hash": ""
   },
   "inc/Llms.php": {
-    "mtime": 1791285746.6613662,
-    "ast_hash": "29fae9755a4d2fe950986b241fdcdab7",
+    "mtime": 1791302427.867426,
+    "ast_hash": "178b76ae41b3d1490396fa19b6c41dc3",
     "semantic_hash": ""
   },
   "inc/Markdown.php": {
-    "mtime": 1791285429.6716788,
-    "ast_hash": "49d2300a5d6125a75908bccfd20827fc",
+    "mtime": 1791299596.7066412,
+    "ast_hash": "b7625800e894baa038b97c2ca13d1b3f",
     "semantic_hash": ""
   },
   "inc/Options.php": {
-    "mtime": 1791285428.7826202,
-    "ast_hash": "756cb32167317c825a20771447aa9e8b",
+    "mtime": 1791299596.7031264,
+    "ast_hash": "bc198381636ae2f2e2f55ec7073a4090",
     "semantic_hash": ""
   },
   "inc/Plugin.php": {
-    "mtime": 1791285748.2598672,
-    "ast_hash": "7414612f4cbb2db4b09e56686ed6c894",
+    "mtime": 1791300161.5526812,
+    "ast_hash": "c41976f7b827904d20c20d15699dbfd1",
     "semantic_hash": ""
   },
   "inc/Response.php": {
-    "mtime": 1791292412.7346795,
-    "ast_hash": "3584742124982416e3716f253ecb2350",
+    "mtime": 1791293020.4049392,
+    "ast_hash": "fd63958bdbf047559a0010632d00badf",
     "semantic_hash": ""
   },
   "inc/Rewrites.php": {
-    "mtime": 1787955616.5159333,
-    "ast_hash": "13c8126086b4e03baed179bd5fc4a93e",
-    "semantic_hash": "13c8126086b4e03baed179bd5fc4a93e"
+    "mtime": 1791299596.7066412,
+    "ast_hash": "cd7d9839a8cc44b0fde99dd5e4e9bc36",
+    "semantic_hash": ""
   },
   "languages/llm-friendly-de_DE.l10n.php": {
-    "mtime": 1791292578.8012476,
-    "ast_hash": "6c01c99081b9e84b1bccea14a417aa7c",
+    "mtime": 1791304573.2201774,
+    "ast_hash": "cc232fdec0fe669cfe4f8040fdbb8aee",
     "semantic_hash": ""
   },
   "languages/llm-friendly-es_ES.l10n.php": {
-    "mtime": 1791292578.8022778,
-    "ast_hash": "56636ceb1658977110ccc085ad7acc93",
+    "mtime": 1791304573.2211769,
+    "ast_hash": "9369e4fe923c752968b46f9c8c88e026",
     "semantic_hash": ""
   },
   "languages/llm-friendly-fr_FR.l10n.php": {
-    "mtime": 1791292578.802791,
-    "ast_hash": "09ada9e4aee6e1339ad69d0a3652071d",
+    "mtime": 1791304573.2231784,
+    "ast_hash": "add9f54a2c21afd02e782a47f20092bd",
     "semantic_hash": ""
   },
   "languages/llm-friendly-ru_RU.l10n.php": {
-    "mtime": 1791292578.8038244,
-    "ast_hash": "4a6d17403bb0d19b950604dbd616debd",
+    "mtime": 1791304573.224177,
+    "ast_hash": "0f0b37319aec6e5fc52ded52a7afacdc",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk.l10n.php": {
-    "mtime": 1791292578.8048663,
-    "ast_hash": "77142c5f40ca7f8466f9e639958b3f74",
+    "mtime": 1791304573.2251773,
+    "ast_hash": "d38475aebe6278dec826862bcbf38891",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk_UA.l10n.php": {
-    "mtime": 1791292578.8058982,
-    "ast_hash": "918fe07a58ad04c2c552efd05b12b538",
+    "mtime": 1791304573.2261767,
+    "ast_hash": "05c30517c3c2f42e0512eb1d222ad313",
     "semantic_hash": ""
   },
   "llm-friendly.php": {
-    "mtime": 1791285860.5328598,
-    "ast_hash": "c988775293fab0023a75ecdf177468d5",
+    "mtime": 1791304561.7378204,
+    "ast_hash": "8d678b59dfb2c8ffa648c6f16087361f",
     "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1791291157.7111769,
-    "ast_hash": "36e9f14c8ca5aa91e8c58ab9a04d0628",
+    "mtime": 1791303034.7627013,
+    "ast_hash": "44cd823d41ca393d14a724bd941f5fd5",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1791285861.1617515,
-    "ast_hash": "362a63df9c21ed17cd816c0783e7e080",
+    "mtime": 1791304562.5799642,
+    "ast_hash": "4a65b6750b1fb080ebe14db1c7b2ade4",
     "semantic_hash": ""
   },
   "readme.txt": {
-    "mtime": 1791285861.8180547,
-    "ast_hash": "040eba215a12acf0365a95c27423b607",
+    "mtime": 1791304563.4142096,
+    "ast_hash": "18118a40cd0282d2cabd6b0211a37ac2",
+    "semantic_hash": ""
+  },
+  "inc/Catalog.php": {
+    "mtime": 1791302426.1884646,
+    "ast_hash": "e2a5f70e08c2af2d7cf8ab4eaef773b7",
+    "semantic_hash": ""
+  },
+  "inc/Content.php": {
+    "mtime": 1791303017.004104,
+    "ast_hash": "1e07c571c94539d88d095939d7742f0b",
+    "semantic_hash": ""
+  },
+  "inc/Diagnostics.php": {
+    "mtime": 1791302428.7077398,
+    "ast_hash": "54e73e3bf21d8d4767f6e3e3b22f7c90",
+    "semantic_hash": ""
+  },
+  "tests/mechanics-stubs.php": {
+    "mtime": 1791299102.7237115,
+    "ast_hash": "42cd4c4f1e7060c9b3afd33c7110f097",
+    "semantic_hash": ""
+  },
+  "tests/mechanics.php": {
+    "mtime": 1791303017.9875138,
+    "ast_hash": "81b9c947e3d4ce0a5301a2dc2b3ac990",
+    "semantic_hash": ""
+  },
+  "tests/wordpress-mechanics.php": {
+    "mtime": 1791303372.4275525,
+    "ast_hash": "5944619a119445d4e18428da33467ca1",
+    "semantic_hash": ""
+  },
+  "tests/wordpress-scale.php": {
+    "mtime": 1791302776.1765673,
+    "ast_hash": "b64f37f0aa04ccc9197717e4810d8260",
+    "semantic_hash": ""
+  },
+  "tests/fixtures/legacy-blocks.md": {
+    "mtime": 1791297591.1505172,
+    "ast_hash": "aa7292c64cc2be9a1163baf3b3433382",
+    "semantic_hash": ""
+  },
+  "tests/fixtures/legacy-llms.txt": {
+    "mtime": 1791297591.1495147,
+    "ast_hash": "9a7afab0cf64e33c00e083252691524a",
+    "semantic_hash": ""
+  },
+  "tests/fixtures/legacy-markdown.md": {
+    "mtime": 1791297591.1495147,
+    "ast_hash": "8959b49c2e0c8fb70a5acaf52651ca8c",
     "semantic_hash": ""
   }
 }

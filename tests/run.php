@@ -40,6 +40,7 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public string $post_modified_gmt = '2026-01-01 00:00:00';
 		public string $post_date_gmt = '2026-01-01 00:00:00';
 		public int $post_author = 1;
+		public int $post_parent = 0;
 
 		public function __construct( array $props = array() ) {
 			foreach ( $props as $key => $value ) {
@@ -52,18 +53,36 @@ if ( ! class_exists( 'WP_Post' ) ) {
 if ( ! class_exists( 'WP_Query' ) ) {
 	class WP_Query {
 		public array $posts = array();
+		public array $args = array();
+		public function get( $key ) { return $this->args[ $key ] ?? null; }
 
 		public function __construct( array $args = array() ) {
-			$post_type = isset( $args['post_type'] ) ? (string) $args['post_type'] : 'post';
+			$this->args = $args;
+			$GLOBALS['llmf_test_queries'][] = $args;
+			$post_types = (array) ( $args['post_type'] ?? 'post' );
 			$limit     = isset( $args['posts_per_page'] ) ? (int) $args['posts_per_page'] : 10;
 			$posts     = array();
 
 			foreach ( $GLOBALS['llmf_test_posts'] as $post ) {
-				if ( $post instanceof WP_Post && $post->post_type === $post_type && $post->post_status === 'publish' ) {
+				if ( $post instanceof WP_Post && in_array( $post->post_type, $post_types, true ) && $post->post_status === 'publish' ) {
+					if ( isset( $args['post__in'] ) && ! in_array( $post->ID, $args['post__in'], true ) ) { continue; }
+					if ( isset( $args['has_password'] ) && $args['has_password'] === false && $post->post_password !== '' ) { continue; }
+					if ( $post->ID <= ( $args['llmf_catalog_after'] ?? -1 ) ) { continue; }
+					if ( isset( $args['post_parent'] ) && $post->post_parent !== $args['post_parent'] ) { continue; }
+					if ( isset( $args['s'] ) && stripos( $post->post_title, $args['s'] ) === false ) { continue; }
+					if ( isset( $args['tax_query'][0] ) ) {
+						$tax = $args['tax_query'][0];
+						$terms = array_map( function ( $term ) { return $term->term_id; }, get_the_terms( $post, $tax['taxonomy'] ) ?: array() );
+						if ( ! array_intersect( $terms, $tax['terms'] ) ) { continue; }
+					}
 					$posts[] = $post;
 				}
 			}
 
+			if ( ( $args['orderby'] ?? '' ) === 'ID' ) { usort( $posts, function ( $a, $b ) { return $a->ID <=> $b->ID; } ); }
+			if ( ( $args['orderby'] ?? '' ) === 'post__in' ) { usort( $posts, function ( $a, $b ) use ( $args ) { return array_search( $a->ID, $args['post__in'], true ) <=> array_search( $b->ID, $args['post__in'], true ); } ); }
+			if ( is_array( $args['orderby'] ?? null ) && isset( $args['orderby']['modified'] ) ) { usort( $posts, function ( $a, $b ) { return strcmp( $b->post_modified_gmt, $a->post_modified_gmt ) ?: ( $b->ID <=> $a->ID ); } ); }
+			apply_filters( 'posts_where', '', $this );
 			$this->posts = array_slice( $posts, 0, max( 0, $limit ) );
 		}
 	}
@@ -101,6 +120,12 @@ function is_404() { return ! empty( $GLOBALS['llmf_test_query_state']['is_404'] 
 function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) { return true; }
 function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
 	$GLOBALS['llmf_test_filters'][ $hook ][] = $callback;
+	return true;
+}
+function remove_filter( $hook, $callback, $priority = 10 ) {
+	foreach ( $GLOBALS['llmf_test_filters'][ $hook ] ?? array() as $key => $value ) {
+		if ( $value === $callback ) { unset( $GLOBALS['llmf_test_filters'][ $hook ][ $key ] ); }
+	}
 	return true;
 }
 function apply_filters( $hook, $value, ...$args ) {
@@ -278,6 +303,7 @@ function update_option( $key, $value, $autoload = null ) {
 	return true;
 }
 function add_option( $key, $value, $deprecated = '', $autoload = null ) {
+	if ( array_key_exists( $key, $GLOBALS['llmf_test_options'] ) ) { return false; }
 	$GLOBALS['llmf_test_options'][ $key ] = $value;
 	return true;
 }
@@ -312,7 +338,7 @@ function get_post_types( $args = array(), $output = 'names' ) {
 	}
 	return $types;
 }
-function get_post( $post_id ) { return $GLOBALS['llmf_test_posts'][ (int) $post_id ] ?? null; }
+function get_post( $post_id ) { return $post_id instanceof WP_Post ? $post_id : ( $GLOBALS['llmf_test_posts'][ (int) $post_id ] ?? null ); }
 function get_the_title( $post = null ) {
 	if ( $post instanceof WP_Post ) {
 		return $post->post_title;
@@ -335,10 +361,13 @@ function get_post_meta( $post_id, $key = '', $single = false ) {
 	$meta = $GLOBALS['llmf_test_meta'][ (int) $post_id ][ $key ] ?? '';
 	return $single ? $meta : array( $meta );
 }
-function wp_parse_url( $url ) { return parse_url( (string) $url ); }
+function wp_parse_url( $url, $component = -1 ) { return parse_url( (string) $url, $component ); }
 function wp_is_post_revision( $post_id ) { return false; }
 function wp_is_post_autosave( $post_id ) { return false; }
-function parse_blocks( $content ) { return $GLOBALS['llmf_test_parsed_blocks'] ?? array(); }
+function parse_blocks( $content ) {
+	if ( isset( $GLOBALS['llmf_test_parse_blocks_callback'] ) ) { return $GLOBALS['llmf_test_parse_blocks_callback']( $content ); }
+	return $GLOBALS['llmf_test_parsed_blocks'] ?? array();
+}
 function render_block( $block ) {
 	if ( isset( $GLOBALS['llmf_test_render_block'] ) ) {
 		return call_user_func( $GLOBALS['llmf_test_render_block'], $block );
@@ -346,12 +375,16 @@ function render_block( $block ) {
 	return $block['innerHTML'] ?? '';
 }
 
+require_once __DIR__ . '/mechanics-stubs.php';
 require_once __DIR__ . '/../inc/Markdown.php';
 require_once __DIR__ . '/../inc/Options.php';
 require_once __DIR__ . '/../inc/Response.php';
+require_once __DIR__ . '/../inc/Content.php';
+require_once __DIR__ . '/../inc/Catalog.php';
 require_once __DIR__ . '/../inc/Exporter.php';
 require_once __DIR__ . '/../inc/Llms.php';
 require_once __DIR__ . '/../inc/Rewrites.php';
+require_once __DIR__ . '/../inc/Diagnostics.php';
 require_once __DIR__ . '/../inc/Admin.php';
 require_once __DIR__ . '/../inc/Plugin.php';
 
@@ -664,6 +697,7 @@ $GLOBALS['llmf_test_posts'][20] = new WP_Post( array( 'ID' => 20, 'post_type' =>
 $GLOBALS['llmf_test_meta'][20][ Options::META_LLMS_DESCRIPTION ] = "Useful summary\nfor agents";
 
 $txt  = call_private( $llms, 'build_llms_txt' );
+assert_true( $txt === file_get_contents( __DIR__ . '/fixtures/legacy-llms.txt' ), 'Legacy root matches the captured 0.2.1 body byte for byte.' );
 assert_true( strpos( $txt, '# Test Site' ) === 0, 'llms.txt starts with an H1 site title.' );
 assert_true( strpos( $txt, '> Test description' ) !== false, 'llms.txt includes site description blockquote.' );
 assert_true( strpos( $txt, '## Main links' ) < strpos( $txt, '## Essential' ), 'Essential section follows Main links.' );
@@ -710,6 +744,7 @@ $fenced_meta_md = call_private(
 	)
 );
 assert_contains_text( "````json\n", $fenced_meta_md, 'Metadata JSON fence expands when metadata contains triple backticks.' );
+assert_true( $fenced_meta_md === file_get_contents( __DIR__ . '/fixtures/legacy-markdown.md' ), 'Legacy metadata Markdown matches the captured 0.2.1 body.' );
 assert_contains_text( "\n````\n\n# Fence ``` Title", $fenced_meta_md, 'Expanded metadata fence closes before the Markdown H1.' );
 
 $blocks = array(
@@ -745,6 +780,7 @@ $blocks = array(
 );
 
 $md = call_private( $exporter, 'blocks_to_markdown', array( $blocks ) );
+assert_true( $md === file_get_contents( __DIR__ . '/fixtures/legacy-blocks.md' ), 'Legacy block conversion matches the captured 0.2.1 body.' );
 assert_contains_text( '`` foo `bar` ``', $md, 'Inline code with backticks uses a wider code span.' );
 assert_contains_text( "````\necho \"```\";\n````", $md, 'Code fences expand when content contains triple backticks.' );
 assert_contains_text( '[Download](https://example.test/download)', $md, 'Button URLs are preserved.' );
@@ -993,4 +1029,5 @@ try {
 }
 unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'] );
 
+require __DIR__ . '/mechanics.php';
 echo 'OK: ' . (int) $GLOBALS['llmf_tests_run'] . " assertions\n";
