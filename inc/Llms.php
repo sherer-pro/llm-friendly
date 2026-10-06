@@ -37,12 +37,17 @@ final class Llms {
 	 * @var Options
 	 */
 	private Options $options;
+	private array $root_ids = array();
+	private array $root_dependencies = array();
 
 	/**
 	 * @param Options $options
 	 */
-	public function __construct( Options $options ) {
+	public function __construct( Options $options, bool $hooks = true ) {
 		$this->options = $options;
+		if ( ! $hooks ) {
+			return;
+		}
 
 		add_action( 'save_post', array( $this, 'maybe_regenerate_on_save' ), 20, 3 );
 		add_action( 'transition_post_status', array( $this, 'maybe_regenerate_on_status_change' ), 20, 3 );
@@ -101,6 +106,10 @@ final class Llms {
 		if ( ! ( $post instanceof WP_Post ) || $post->post_status !== 'publish' ) {
 			return;
 		}
+		if ( $post->post_type === 'wp_block' ) {
+			$this->clear_cache();
+			return;
+		}
 		$opt = $this->options->get();
 		if ( ! empty( $opt['enabled_llms_txt'] ) && $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
 			$this->clear_cache();
@@ -145,6 +154,12 @@ final class Llms {
 	 */
 	private function maybe_regenerate_for_post( WP_Post $post ): void {
 		$opt = $this->options->get();
+		if ( $post->post_type === 'wp_block' ) {
+			if ( $post->post_status !== 'publish' || $post->post_password !== '' || $opt['llms_regen_mode'] === 'auto' ) {
+				$this->clear_cache();
+			}
+			return;
+		}
 
 		if ( empty( $opt['enabled_llms_txt'] ) ) {
 			return;
@@ -264,7 +279,7 @@ final class Llms {
 		set_transient( self::LOCK_KEY, 1, 10 );
 
 		try {
-			$content = $this->build_llms_txt();
+			$content = Content::anonymous( function () { return $this->build_llms_txt(); } );
 
 			// Update ONLY cache fields to avoid overwriting settings in concurrent requests.
 			$saved = get_option( Options::OPTION_KEY, array() );
@@ -286,6 +301,10 @@ final class Llms {
 
 			$saved['llms_cache_hash']          = sha1( (string) $content );
 			$saved['llms_cache_settings_hash'] = $this->settings_hash_from_options( $settings );
+			if ( $settings['llms_index_mode'] === 'structured' ) {
+				update_option( 'llmf_root_ids', $this->root_ids, false );
+				update_option( 'llmf_root_dependencies', $this->root_dependencies, false );
+			}
 
 			return $this->options->update_cache( $saved );
 		} finally {
@@ -301,13 +320,13 @@ final class Llms {
 	public function preview(): array {
 		$opt     = $this->options->get();
 		$enabled = ! empty( $opt['enabled_llms_txt'] );
-		$content = $enabled ? $this->build_llms_txt() : '';
+		$content = $this->generated_content();
 		$full    = rtrim( Markdown::normalize_blocks( $content ) ) . ( $content !== '' ? "\n" : '' );
 		$preview = $full;
 		$truncated = false;
 
 		if ( strlen( $preview ) > self::PREVIEW_MAX_LENGTH ) {
-			$preview   = substr( $preview, 0, self::PREVIEW_MAX_LENGTH ) . "\n\n[Preview truncated]\n";
+			$preview   = ( function_exists( 'mb_strcut' ) ? mb_strcut( $preview, 0, self::PREVIEW_MAX_LENGTH, 'UTF-8' ) : substr( $preview, 0, self::PREVIEW_MAX_LENGTH ) ) . "\n\n[Preview truncated]\n";
 			$truncated = true;
 		}
 
@@ -322,6 +341,43 @@ final class Llms {
 		);
 	}
 
+	/** Full read-only output for analysis; unlike preview(), it is never truncated. */
+	public function generated_content(): string {
+		return empty( $this->options->get()['enabled_llms_txt'] ) ? '' : Content::anonymous( function () { return $this->build_llms_txt(); } );
+	}
+
+	private function cached_root_is_public(): bool {
+		return Content::anonymous( function () {
+			$catalog = new Catalog( $this->options, false );
+			foreach ( (array) get_option( 'llmf_root_ids', array() ) as $id => $kind ) {
+				$post = get_post( $id );
+				if ( ! $post || ( $kind === 'selected' ? ! $catalog->eligible( $post ) : ! $this->options->can_export_post( $post, 'llms' ) ) ) {
+					return false;
+				}
+			}
+			foreach ( (array) get_option( 'llmf_root_dependencies', array() ) as $id ) {
+				if ( ! Content::public_reusable( get_post( $id ) ) ) {
+					return false;
+				}
+			}
+			return true;
+		} );
+	}
+
+	private function track_root_post( WP_Post $post, string $kind ): void {
+		$this->root_ids[ $post->ID ] = $kind;
+		if ( $this->options->get()['content_profile'] === 'enhanced' ) {
+			$warnings = array();
+			$dependencies = array();
+			Content::expand( parse_blocks( $post->post_content ), $warnings, $dependencies );
+			foreach ( array_keys( $dependencies ) as $id ) {
+				if ( Content::public_reusable( get_post( $id ) ) ) {
+					$this->root_dependencies[ $id ] = (int) $id;
+				}
+			}
+		}
+	}
+
 
 	/**
 	 * Output llms.txt (cached when possible).
@@ -330,6 +386,13 @@ final class Llms {
 	 */
 	public function output(): void {
 		$opt = $this->options->get();
+		if ( $opt['llms_index_mode'] === 'structured' && ! empty( $opt['llms_cache'] ) ) {
+			$safe = $this->cached_root_is_public();
+			if ( ! $safe ) {
+				$this->clear_cache();
+				$opt = $this->options->get();
+			}
+		}
 
 		if ( empty( $opt['enabled_llms_txt'] ) ) {
 			status_header( 404 );
@@ -397,7 +460,9 @@ final class Llms {
 			$etag,
 			$ts > 0 ? $ts : time()
 		);
-		echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown body is sanitized while being built.
+		if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'HEAD' ) {
+			echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown body is sanitized while being built.
+		}
 		exit;
 	}
 
@@ -434,6 +499,9 @@ final class Llms {
 	 */
 	private function build_llms_txt(): string {
 		$opt = $this->options->get();
+		if ( $opt['llms_index_mode'] === 'structured' ) {
+			return Content::anonymous( function () { return $this->build_structured(); } );
+		}
 
 		$title = Markdown::plain_text_line( $this->options->site_title() );
 		$desc  = Markdown::plain_text_line( $this->options->site_description() );
@@ -557,6 +625,93 @@ final class Llms {
 		$content = implode( "\n\n", $blocks );
 
 		return rtrim( $content, "\n" ) . "\n";
+	}
+
+	/** Short navigation map; user supplied text and links are preserved in full. */
+	private function build_structured(): string {
+		$opt = $this->options->get();
+		$catalog = new Catalog( $this->options, false );
+		$this->root_ids = array();
+		$this->root_dependencies = array();
+		$blocks = array( '# ' . Markdown::plain_text_line( $this->options->site_title() ), '> ' . Markdown::plain_text_line( $this->options->site_description() ?: __( 'LLM-friendly index of this website.', 'llm-friendly' ) ) );
+		if ( trim( $opt['llms_custom_markdown'] ) !== '' ) {
+			$blocks[] = $opt['llms_custom_markdown'];
+		}
+		$main = array(
+			Catalog::link( __( 'Home', 'llm-friendly' ), home_url( '/' ), __( 'Website home page', 'llm-friendly' ) ),
+			Catalog::link( __( 'Sitemap', 'llm-friendly' ), $this->options->sitemap_absolute_url(), __( 'XML sitemap', 'llm-friendly' ) ),
+			Catalog::link( __( 'RSS', 'llm-friendly' ), get_feed_link(), __( 'Latest updates feed', 'llm-friendly' ) ),
+			Catalog::link( __( 'Content catalog', 'llm-friendly' ), $catalog->url(), __( 'All selected public content, with topic indexes and pagination.', 'llm-friendly' ) ),
+		);
+		$seen = array();
+		$dedup = function ( array $lines ) use ( &$seen ): array {
+			return array_values( array_filter( $lines, function ( $line ) use ( &$seen ) {
+				if ( $line === '' || ! preg_match( '/\]\(([^)]+)\)/', $line, $match ) || isset( $seen[ $match[1] ] ) ) {
+					return false;
+				}
+				$seen[ $match[1] ] = true;
+				return true;
+			} ) );
+		};
+		$blocks[] = '## ' . __( 'Main links', 'llm-friendly' );
+		$blocks[] = implode( "\n", $dedup( $main ) );
+		// Reserve the three automatically generated site pages in legacy Essential.
+		$budget = 50 - count( $main ) - 3;
+		$essential = $this->get_essential_links( ! empty( $opt['enabled_markdown'] ) );
+		foreach ( $essential as $line ) {
+			if ( preg_match( '/\]\(([^)]+)\)/', $line, $match ) ) {
+				$seen[ $match[1] ] = true;
+			}
+		}
+		foreach ( array( 'page_on_front', 'page_for_posts', 'wp_page_for_privacy_policy' ) as $key ) {
+			$id = (int) get_option( $key, 0 );
+			$page = $id ? get_post( $id ) : null;
+			if ( $page && $this->options->can_export_post( $page, 'llms' ) ) {
+				$this->track_root_post( $page, 'site_page' );
+			}
+		}
+		$essential = array_merge( $essential, $dedup( array( Catalog::link( __( 'Pinned content', 'llm-friendly' ), $catalog->url( 'essential' ) ) ) ) );
+		$budget --;
+		$pins = array_slice( $catalog->pinned(), 0, 10 );
+		foreach ( $pins as $post ) {
+			$line = $catalog->line( $post );
+			$new = $dedup( array( $line ) );
+			if ( ! empty( $new ) ) {
+				$essential = array_merge( $essential, $new );
+				$this->track_root_post( $post, 'selected' );
+				$budget --;
+			}
+		}
+		$blocks[] = '## ' . __( 'Essential', 'llm-friendly' );
+		// Keep legacy/manual Essential text. Deduplicate only newly generated entries.
+		$blocks[] = implode( "\n", array_filter( $essential ) );
+		foreach ( $essential as $line ) {
+			if ( preg_match( '/\]\(([^)]+)\)/', $line, $match ) ) {
+				$seen[ $match[1] ] = true;
+			}
+		}
+		foreach ( $this->options->selected_post_types( $opt ) as $type ) {
+			if ( $budget <= 0 ) {
+				break;
+			}
+			$lines = array( Catalog::link( __( 'All content in this type', 'llm-friendly' ), $catalog->url( $type ) ) );
+			$budget --;
+			foreach ( $catalog->recent( $type ) as $post ) {
+				if ( $budget <= 0 ) {
+					break;
+				}
+				$line = $catalog->line( $post );
+				$new = $dedup( array( $line ) );
+				if ( ! empty( $new ) ) {
+					$lines[] = $line;
+					$this->track_root_post( $post, 'selected' );
+					$budget --;
+				}
+			}
+			$blocks[] = '## ' . $this->post_type_label( $type );
+			$blocks[] = implode( "\n", array_filter( $lines ) );
+		}
+		return rtrim( implode( "\n\n", array_filter( $blocks ) ) ) . "\n";
 	}
 
 	/**
@@ -766,6 +921,12 @@ final class Llms {
 	 */
 	private function settings_hash_from_options( array $settings ): string {
 		$subset = array(
+			'index_format'               => Catalog::FORMAT,
+			'content_format'             => Content::FORMAT,
+			'llms_index_mode'            => $settings['llms_index_mode'] ?? 'legacy',
+			'content_profile'            => $settings['content_profile'] ?? 'legacy',
+			'llms_pinned_ids'            => $settings['llms_pinned_ids'] ?? array(),
+			'catalog_taxonomies'         => $settings['catalog_taxonomies'] ?? array(),
 			'enabled_markdown'          => ! empty( $settings['enabled_markdown'] ) ? 1 : 0,
 			'enabled_llms_txt'          => ! empty( $settings['enabled_llms_txt'] ) ? 1 : 0,
 			'base_path'                 => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',

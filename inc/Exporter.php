@@ -21,6 +21,10 @@ final class Exporter {
 	 * @var Options
 	 */
 	private Options $options;
+	private bool $enhanced = false;
+	private string $canonical = '';
+	private array $warnings = array();
+	private array $dependencies = array();
 
 	/**
 	 * @param Options $options
@@ -87,7 +91,9 @@ final class Exporter {
 			$metadata      = $this->markdown_metadata_for_post( $post );
 			$metadata_hash = $this->metadata_hash( $metadata );
 
-			$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash . '_' . $metadata_hash;
+			$profile = $this->options->get()['content_profile'];
+			$source_hash = Content::fingerprint( $post );
+			$key = 'llmf_md_' . md5( $ver . '|' . Content::FORMAT . '|' . $profile . '|' . $post->ID . '|' . $modified . '|' . $override_hash . '|' . $metadata_hash . '|' . $source_hash );
 			$md  = get_transient( $key );
 			if ( ! is_string( $md ) || $md === '' ) {
 				$md  = $this->post_to_markdown( $post, $override, $metadata );
@@ -107,6 +113,17 @@ final class Exporter {
 			}
 			wp_set_current_user( $user_id );
 		}
+	}
+
+	/** Editor diagnostics and previews always use the same anonymous representation. */
+	public function inspect( WP_Post $post ): array {
+		return Content::anonymous( function () use ( $post ) {
+			if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
+				return array( 'markdown' => '', 'warnings' => array( 'not_exportable' ), 'dependencies' => array() );
+			}
+			$md = $this->post_to_markdown( $post, $this->get_markdown_override( $post ) );
+			return array( 'markdown' => $md, 'warnings' => array_values( array_unique( $this->warnings ) ), 'dependencies' => array_keys( $this->dependencies ) );
+		} );
 	}
 
 	/**
@@ -218,6 +235,10 @@ final class Exporter {
 	 * @return string
 	 */
 	private function post_to_markdown( WP_Post $post, string $override_md = '', array $meta = array() ): string {
+		$this->enhanced = $this->options->get()['content_profile'] === 'enhanced';
+		$this->canonical = (string) get_permalink( $post );
+		$this->warnings = array();
+		$this->dependencies = array();
 		$title = Markdown::plain_text_line( get_the_title( $post ) );
 		if ( empty( $meta ) ) {
 			$meta = $this->markdown_metadata_for_post( $post );
@@ -231,14 +252,17 @@ final class Exporter {
 		if ( $override_md !== '' ) {
 			// If override contains Gutenberg block markup, convert it; otherwise treat as Markdown body.
 			if ( strpos( $override_md, '<!-- wp:' ) !== false ) {
-				$blocks = parse_blocks( $override_md );
+				$blocks = $this->content_blocks( $override_md );
 				$body   = trim( $this->blocks_to_markdown( $blocks ) );
 			} else {
 				$body = $override_md;
 			}
 		} else {
-			$blocks = parse_blocks( (string) $post->post_content );
+			$blocks = $this->content_blocks( (string) $post->post_content );
 			$body   = trim( $this->blocks_to_markdown( $blocks ) );
+		}
+		if ( trim( $body ) === '' ) {
+			$this->warnings[] = 'empty_markdown';
 		}
 		$out   = array();
 		$out[] = $this->code_fence( $meta_json ? $meta_json : '{}', 'json' );
@@ -247,7 +271,26 @@ final class Exporter {
 		$out[] = '';
 		$out[] = $body;
 
-		return rtrim( Markdown::normalize_blocks( implode( "\n", $out ) ) ) . "\n";
+		return rtrim( Markdown::normalize_blocks( implode( "\n", $out ), $this->enhanced ) ) . "\n";
+	}
+
+	private function content_blocks( string $content ): array {
+		$blocks = parse_blocks( $content );
+		$expanded = Content::expand( $blocks, $this->warnings, $this->dependencies );
+		if ( $this->enhanced ) {
+			$blocks = $expanded;
+		}
+		return $blocks;
+	}
+
+	private function enhanced_html( string $html ): string {
+		if ( ! $this->enhanced ) {
+			return $html;
+		}
+		return preg_replace_callback( '~\b(href|src)\s*=\s*(["\'])(.*?)\2~is', function ( $match ) {
+			$url = Content::absolute_url( $match[3], $this->canonical );
+			return $match[1] . '=' . $match[2] . esc_attr( $url ) . $match[2];
+		}, $html );
 	}
 
 	/**
@@ -284,6 +327,10 @@ final class Exporter {
 			$inner        = isset( $b['innerBlocks'] ) && is_array( $b['innerBlocks'] ) ? $b['innerBlocks'] : array();
 			$innerHTML    = isset( $b['innerHTML'] ) ? (string) $b['innerHTML'] : '';
 			$innerContent = isset( $b['innerContent'] ) && is_array( $b['innerContent'] ) ? $b['innerContent'] : array();
+			if ( $this->enhanced && $name === 'core/shortcode' ) {
+				$out[] = wp_strip_all_tags( $innerHTML );
+				continue;
+			}
 
 			if ( $name === 'core/heading' ) {
 				$level = isset( $attrs['level'] ) ? (int) $attrs['level'] : 2;
@@ -307,6 +354,9 @@ final class Exporter {
 				$ordered = ! empty( $attrs['ordered'] );
 				$start   = isset( $attrs['start'] ) ? (int) $attrs['start'] : 1;
 				$lines   = $this->list_blocks_to_md( $inner, $ordered, $start, $list_depth );
+				if ( $this->enhanced && empty( $inner ) ) {
+					$lines = $this->html_block_to_md( $innerHTML );
+				}
 				if ( $lines !== '' ) {
 					$out[] = $lines;
 					$out[] = '';
@@ -402,7 +452,7 @@ final class Exporter {
 			}
 
 			if ( $name === 'core/preformatted' || $name === 'core/verse' ) {
-				$text = $this->html_inline_to_md( $innerHTML );
+				$text = $this->enhanced ? html_entity_decode( wp_strip_all_tags( $innerHTML ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : $this->html_inline_to_md( $innerHTML );
 				if ( $text !== '' ) {
 					$out[] = $this->code_fence( $text );
 					$out[] = '';
@@ -464,7 +514,7 @@ final class Exporter {
 					$out[] = '';
 				}
 			} else {
-				$txt = trim( $this->html_block_to_md( implode( '', $innerContent ) ) );
+				$txt = trim( $this->html_block_to_md( $this->enhanced && empty( $innerContent ) ? $innerHTML : implode( '', $innerContent ) ) );
 				if ( $txt !== '' ) {
 					$out[] = $txt;
 					$out[] = '';
@@ -487,7 +537,20 @@ final class Exporter {
 	 * @return string
 	 */
 	private function html_inline_to_md( $html ) {
+		$html = $this->enhanced_html( (string) $html );
 		$html = wp_kses_post( (string) $html );
+		if ( $this->enhanced ) {
+			$converted = $this->enhanced_inline_to_md( $html );
+			if ( $converted !== null ) {
+				return $converted;
+			}
+		}
+		if ( $this->enhanced ) {
+			$html = preg_replace_callback( '~<img\b[^>]*>~is', function ( $match ) {
+				$image = $this->extract_image_data_from_html( $match[0] );
+				return $this->build_image_markdown( $image['url'], $image['alt'], '' );
+			}, $html );
+		}
 
 		$html = preg_replace_callback(
 			'~<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>~is',
@@ -550,6 +613,74 @@ final class Exporter {
 		return trim( (string) $text );
 	}
 
+	/** DOM values are already decoded once; keep code spans out of text normalization. */
+	private function enhanced_inline_to_md( string $html ): ?string {
+		$doc = $this->dom_from_html_fragment( '<body>' . $html . '</body>' );
+		if ( ! $doc ) {
+			return null;
+		}
+		$root = $doc->getElementsByTagName( 'body' )->item( 0 );
+		if ( ! $root ) {
+			return null;
+		}
+		$protected = array();
+		$prefix = 'LLMF_INLINE_' . hash( 'sha256', $html ) . '_';
+		$walk = function ( $node ) use ( &$walk, &$protected, $prefix ): string {
+			if ( $node instanceof \DOMText ) {
+				return (string) $node->nodeValue;
+			}
+			if ( ! ( $node instanceof \DOMElement ) ) {
+				return '';
+			}
+			$tag = strtolower( $node->tagName );
+			if ( $tag === 'code' || $tag === 'kbd' ) {
+				$key = $prefix . count( $protected ) . '_END';
+				$protected[ $key ] = $this->inline_code( (string) $node->textContent );
+				return $key;
+			}
+			if ( $tag === 'br' ) {
+				return "\n";
+			}
+			if ( $tag === 'img' ) {
+				return $this->build_image_markdown( (string) $node->getAttribute( 'src' ), (string) $node->getAttribute( 'alt' ), '' );
+			}
+			if ( $tag === 'audio' || $tag === 'video' ) {
+				$urls = array( (string) $node->getAttribute( 'src' ) );
+				foreach ( $node->getElementsByTagName( 'source' ) as $source ) { $urls[] = (string) $source->getAttribute( 'src' ); }
+				$links = array();
+				foreach ( $urls as $url ) {
+					$url = Content::absolute_url( $url, $this->canonical );
+					if ( $url !== '' ) {
+						$label = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+						$links[] = '[' . Markdown::link_text( $label !== '' ? $label : $url ) . '](' . $url . ')';
+					}
+				}
+				return implode( "\n", array_unique( $links ) );
+			}
+			$text = '';
+			foreach ( $node->childNodes as $child ) {
+				$text .= $walk( $child );
+			}
+			if ( $tag === 'a' ) {
+				$href = Content::absolute_url( (string) $node->getAttribute( 'href' ), $this->canonical );
+				$label = trim( str_replace( array( '[', ']' ), array( '\\[', '\\]' ), $text ) );
+				return $href === '' ? $text : '[' . ( $label !== '' ? $label : $href ) . '](' . $href . ')';
+			}
+			if ( in_array( $tag, array( 'strong', 'b', 'em', 'i', 'del', 's' ), true ) ) {
+				$marker = in_array( $tag, array( 'strong', 'b' ), true ) ? '**' : ( in_array( $tag, array( 'del', 's' ), true ) ? '~~' : '*' );
+				return $marker . $text . $marker;
+			}
+			return $text . ( in_array( $tag, array( 'p', 'div', 'li' ), true ) ? "\n\n" : '' );
+		};
+		$text = '';
+		foreach ( $root->childNodes as $child ) {
+			$text .= $walk( $child );
+		}
+		$text = preg_replace( '/[ \t]+/', ' ', $this->normalize_newlines( $text ) );
+		$text = preg_replace( '/\n{3,}/', "\n\n", $text );
+		return strtr( trim( $text ), $protected );
+	}
+
 	/**
 	 * Minimal escaping for Markdown.
 	 *
@@ -579,6 +710,16 @@ final class Exporter {
 	 * @return string HTML fragment.
 	 */
 	private function block_html( array $block ): string {
+		if ( $this->enhanced ) {
+			// Analysis cannot execute dynamic blocks after their children were filtered.
+			return (string) ( $block['innerHTML'] ?? '' );
+		}
+		$warnings = array();
+		$dependencies = array();
+		Content::expand( array( $block ), $warnings, $dependencies );
+		if ( in_array( 'unavailable_reusable_block', $warnings, true ) ) {
+			return '';
+		}
 		$html = '';
 		if ( function_exists( 'render_block' ) ) {
 			$html = (string) render_block( $block );
@@ -609,7 +750,7 @@ final class Exporter {
 	 * @return string Markdown fenced code block.
 	 */
 	private function code_fence( string $code, string $language = '' ): string {
-		$code = html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$code = $this->enhanced ? $code : html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$code = $this->normalize_newlines( $code );
 
 		$max_ticks = 2;
@@ -622,7 +763,7 @@ final class Exporter {
 		$fence    = str_repeat( '`', max( 3, $max_ticks + 1 ) );
 		$language = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $language );
 
-		return $fence . $language . "\n" . rtrim( $code ) . "\n" . $fence;
+		return $fence . $language . "\n" . ( $this->enhanced ? rtrim( $code, "\n" ) : rtrim( $code ) ) . "\n" . $fence;
 	}
 
 	/**
@@ -763,7 +904,7 @@ final class Exporter {
 	 *
 	 * @return string
 	 */
-	private function list_blocks_to_md( $innerBlocks, $ordered, $start, $depth ) {
+	private function list_blocks_to_md( $innerBlocks, $ordered, $start, $depth, int $indent_width = 0 ) {
 		$lines = array();
 		$i     = 0;
 
@@ -784,7 +925,7 @@ final class Exporter {
 					$txt = trim( $this->html_block_to_md( $innerHTML ) );
 				}
 				if ( $txt !== '' ) {
-					$indent  = str_repeat( '  ', max( 0, (int) $depth ) );
+					$indent  = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
 					$prefix  = $ordered ? ( (int) $start + $i ) . '. ' : '- ';
 					$lines[] = $indent . $prefix . $txt;
 					$i ++;
@@ -794,7 +935,7 @@ final class Exporter {
 
 			$itemText = trim( $this->html_inline_to_md( $innerHTML ) );
 
-			$indent  = str_repeat( '  ', max( 0, (int) $depth ) );
+			$indent  = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
 			$prefix  = $ordered ? ( (int) $start + $i ) . '. ' : '- ';
 			$lines[] = $indent . $prefix . $itemText;
 
@@ -804,7 +945,7 @@ final class Exporter {
 					$childOrdered = ! empty( $childAttrs['ordered'] );
 					$childStart   = isset( $childAttrs['start'] ) ? (int) $childAttrs['start'] : 1;
 					$childInner   = isset( $child['innerBlocks'] ) && is_array( $child['innerBlocks'] ) ? $child['innerBlocks'] : array();
-					$nested       = $this->list_blocks_to_md( $childInner, $childOrdered, $childStart, (int) $depth + 1 );
+					$nested       = $this->list_blocks_to_md( $childInner, $childOrdered, $childStart, (int) $depth + 1, $indent_width + strlen( $prefix ) );
 					if ( $nested !== '' ) {
 						$lines[] = $nested;
 					}
@@ -814,7 +955,7 @@ final class Exporter {
 			$i ++;
 		}
 
-		return trim( implode( "\n", $lines ) );
+		return $this->enhanced ? rtrim( implode( "\n", $lines ) ) : trim( implode( "\n", $lines ) );
 	}
 
 	/**
@@ -828,7 +969,7 @@ final class Exporter {
 	 * @return string
 	 */
 	private function html_block_to_md( $html ) {
-		$html = (string) $html;
+		$html = $this->enhanced_html( (string) $html );
 		if ( trim( $html ) === '' ) {
 			return '';
 		}
@@ -872,6 +1013,14 @@ final class Exporter {
 			}
 
 			$tag = strtolower( $node->tagName );
+			if ( $this->enhanced && in_array( $tag, array( 'div', 'section', 'article' ), true ) ) {
+				$parts[] = $this->html_block_to_md( $this->dom_inner_html( $node ) );
+				continue;
+			}
+			if ( $this->enhanced && $tag === 'table' ) {
+				$parts[] = $this->core_table_to_markdown( array( 'innerHTML' => $doc->saveHTML( $node ) ) );
+				continue;
+			}
 
 			if ( preg_match( '~^h([1-6])$~', $tag, $mm ) ) {
 				$lvl = (int) $mm[1];
@@ -908,8 +1057,8 @@ final class Exporter {
 
 			if ( $tag === 'pre' ) {
 				$code = (string) $node->textContent;
-				$code = html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-				$code = rtrim( $code );
+				$code = $this->enhanced ? $code : html_entity_decode( $code, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+				$code = $this->enhanced ? rtrim( $code, "\n" ) : rtrim( $code );
 				if ( $code !== '' ) {
 					$parts[] = $this->code_fence( $code );
 				}
@@ -1021,6 +1170,19 @@ final class Exporter {
 		}
 
 		$class = (string) $fig->getAttribute( 'class' );
+		if ( $this->enhanced && $fig->getElementsByTagName( 'table' )->length > 0 ) {
+			return $this->core_table_to_markdown( array( 'innerHTML' => $fig->ownerDocument->saveHTML( $fig ) ) );
+		}
+		if ( $this->enhanced && $fig->getElementsByTagName( 'img' )->length > 1 ) {
+			$images = array();
+			foreach ( $fig->getElementsByTagName( 'img' ) as $img ) {
+				$images[] = $this->build_image_markdown( (string) $img->getAttribute( 'src' ), (string) $img->getAttribute( 'alt' ), '' );
+			}
+			foreach ( $fig->getElementsByTagName( 'figcaption' ) as $caption ) {
+				$images[] = $this->html_inline_to_md( $this->dom_inner_html( $caption ) );
+			}
+			return implode( "\n\n", array_filter( $images ) );
+		}
 
 		// Pullquote: <figure class="wp-block-pullquote"><blockquote>..</blockquote><figcaption>..</figcaption></figure>
 		if ( strpos( $class, 'wp-block-pullquote' ) !== false ) {
@@ -1087,6 +1249,9 @@ final class Exporter {
 	 * @return string Markdown fragment with the image.
 	 */
 	private function build_image_markdown( string $url, string $alt, string $caption ): string {
+		if ( $this->enhanced ) {
+			$url = Content::absolute_url( $url, $this->canonical );
+		}
 		$url     = Markdown::url_destination( $url, array( 'http', 'https' ), true );
 		$alt     = Markdown::plain_text_line( $alt );
 		$caption = Markdown::plain_text_line( $caption );
@@ -1419,13 +1584,13 @@ final class Exporter {
 	 *
 	 * @return string
 	 */
-	private function dom_list_to_md( $list, $ordered, $depth ) {
+	private function dom_list_to_md( $list, $ordered, $depth, int $indent_width = 0 ) {
 		if ( ! ( $list instanceof \DOMElement ) ) {
 			return '';
 		}
 
 		$lines = array();
-		$i     = 1;
+		$i     = $this->enhanced && $list->hasAttribute( 'start' ) ? (int) $list->getAttribute( 'start' ) : 1;
 
 		foreach ( $list->childNodes as $child ) {
 			if ( ! ( $child instanceof \DOMElement ) ) {
@@ -1435,7 +1600,7 @@ final class Exporter {
 				continue;
 			}
 
-			$indent = str_repeat( '  ', max( 0, (int) $depth ) );
+			$indent = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
 			$prefix = $ordered ? ( $i . '. ' ) : '- ';
 
 			$li_text_parts = array();
@@ -1458,7 +1623,7 @@ final class Exporter {
 				}
 				$t = strtolower( $li_child->tagName );
 				if ( $t === 'ul' || $t === 'ol' ) {
-					$nested = $this->dom_list_to_md( $li_child, $t === 'ol', (int) $depth + 1 );
+					$nested = $this->dom_list_to_md( $li_child, $t === 'ol', (int) $depth + 1, $indent_width + strlen( $prefix ) );
 					if ( trim( $nested ) !== '' ) {
 						$lines[] = $nested;
 					}
@@ -1468,7 +1633,7 @@ final class Exporter {
 			$i ++;
 		}
 
-		return trim( implode( "\n", $lines ) );
+		return $this->enhanced ? rtrim( implode( "\n", $lines ) ) : trim( implode( "\n", $lines ) );
 	}
 
 	/**
@@ -1480,7 +1645,7 @@ final class Exporter {
 	 */
 	private function core_table_to_markdown( $block ) {
 		$html = '';
-		if ( function_exists( 'render_block' ) ) {
+		if ( function_exists( 'render_block' ) && ! empty( $block['blockName'] ) ) {
 			$html = (string) render_block( $block );
 		}
 		if ( trim( $html ) === '' && isset( $block['innerHTML'] ) ) {
@@ -1494,7 +1659,19 @@ final class Exporter {
 			return $this->fallback_plain_table( $html );
 		}
 
-		$table_html = $m[0];
+		$table_html = $this->enhanced_html( $m[0] );
+		if ( $this->enhanced && preg_match( '~\b(?:rowspan|colspan)\s*=\s*["\']?(?:[2-9]|[1-9][0-9]+)~i', $table_html ) ) {
+			$this->warnings[] = 'complex_table_html';
+			$result = wp_kses( $table_html, array(
+				'table' => array(), 'caption' => array(), 'thead' => array(), 'tbody' => array(), 'tfoot' => array(), 'tr' => array(),
+				'th' => array( 'rowspan' => true, 'colspan' => true, 'scope' => true ), 'td' => array( 'rowspan' => true, 'colspan' => true ),
+				'a' => array( 'href' => true ), 'strong' => array(), 'em' => array(), 'code' => array(), 'br' => array(),
+			) );
+			if ( preg_match( '~<figcaption\b[^>]*>(.*?)</figcaption>~is', $html, $caption ) ) {
+				$result .= "\n\n" . $this->html_inline_to_md( $caption[1] );
+			}
+			return $result;
+		}
 
 		$doc = $this->dom_from_html_fragment( $table_html );
 		if ( ! ( $doc instanceof \DOMDocument ) ) {
@@ -1573,7 +1750,11 @@ final class Exporter {
 			$out[] = '| ' . implode( ' | ', array_map( array( $this, 'md_table_cell' ), $r ) ) . ' |';
 		}
 
-		return implode( "\n", $out );
+		$result = implode( "\n", $out );
+		if ( $this->enhanced && preg_match( '~<(?:figcaption|caption)\b[^>]*>(.*?)</(?:figcaption|caption)>~is', $html, $caption ) ) {
+			$result .= "\n\n" . $this->html_inline_to_md( $caption[1] );
+		}
+		return $result;
 	}
 
 	/**
@@ -1614,8 +1795,8 @@ final class Exporter {
 				continue;
 			}
 
-			$text = (string) ( $node->textContent ? $node->textContent : '' );
-			$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$text = $this->enhanced ? $this->html_inline_to_md( $this->dom_inner_html( $node ) ) : (string) ( $node->textContent ? $node->textContent : '' );
+			$text = $this->enhanced ? $text : html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			$text = preg_replace( "/\s+/u", " ", $text );
 			$text = trim( $text );
 

@@ -41,6 +41,8 @@ final class Plugin {
 	 * @var Admin Admin UI service.
 	 */
 	private Admin $admin;
+	private Catalog $catalog;
+	private Diagnostics $diagnostics;
 
 	/**
 	 * Get singleton instance.
@@ -65,10 +67,12 @@ final class Plugin {
 	 */
 	private function boot(): void {
 		$this->options  = new Options();
+		$this->catalog = new Catalog( $this->options );
 		$this->rewrites = new Rewrites( $this->options );
 		$this->exporter = new Exporter( $this->options );
 		$this->llms     = new Llms( $this->options );
-		$this->admin    = new Admin( $this->options, $this->llms );
+		$this->diagnostics = new Diagnostics( $this->options, $this->catalog, $this->exporter );
+		$this->admin    = new Admin( $this->options, $this->llms, $this->diagnostics );
 
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'template_redirect', array( $this, 'template_redirect' ), 0 );
@@ -99,6 +103,7 @@ final class Plugin {
 	 * @return void
 	 */
 	public static function deactivate(): void {
+		wp_clear_scheduled_hook( 'llmf_catalog_scan' );
 		flush_rewrite_rules();
 	}
 
@@ -222,6 +227,11 @@ final class Plugin {
 	public function init(): void {
 		$this->rewrites->add_rules();
 		$this->register_editor_meta();
+		$opt = $this->options->get();
+		$job = get_option( Catalog::JOB_KEY, array() );
+		if ( ! empty( $opt['enabled_llms_txt'] ) && $opt['llms_index_mode'] === 'structured' && ( empty( $job['complete'] ) || ( $job['generation'] ?? '' ) !== $this->catalog->generation() ) && ! wp_next_scheduled( 'llmf_catalog_scan' ) ) {
+			wp_schedule_single_event( time() + 10, 'llmf_catalog_scan' );
+		}
 	}
 
 	/**
@@ -230,6 +240,9 @@ final class Plugin {
 	 * @return void
 	 */
 	public function template_redirect(): void {
+		if ( get_query_var( Rewrites::QV_CATALOG ) === '1' || get_query_var( Rewrites::QV_CATALOG ) === 1 ) {
+			$this->catalog->output( array( 'type' => get_query_var( 'llmf_pt' ), 'taxonomy' => get_query_var( 'llmf_tax' ), 'term' => get_query_var( 'llmf_term' ), 'after' => get_query_var( 'llmf_after' ), 'parent' => get_query_var( 'llmf_parent' ) ) );
+		}
 		if ( (int) get_query_var( Rewrites::QV_LLMS ) === 1 ) {
 			$this->llms->output();
 			exit;
@@ -252,7 +265,7 @@ final class Plugin {
 				return;
 			}
 
-			$this->exporter->output_markdown( $post );
+			$this->exporter->output_markdown( $post, $this->request_method() !== 'HEAD' );
 			exit;
 		}
 

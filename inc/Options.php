@@ -24,6 +24,13 @@ final class Options {
 	/** @var bool Whether a trusted internal cache update is being saved. */
 	private static bool $saving_cache = false;
 
+	/** @var array|null Validated, read-only settings used by previews. */
+	private ?array $snapshot = null;
+
+	public function __construct( ?array $snapshot = null ) {
+		$this->snapshot = $snapshot;
+	}
+
 	/**
 	 * Maximum length for the custom Markdown block in llms.txt (in characters).
 	 */
@@ -77,6 +84,9 @@ final class Options {
 	 * @return array<string,mixed>
 	 */
 	public function get() {
+		if ( $this->snapshot !== null ) {
+			return array_merge( $this->defaults(), $this->snapshot );
+		}
 		$defaults = $this->defaults();
 		$saved    = get_option( self::OPTION_KEY, array() );
 
@@ -129,31 +139,37 @@ final class Options {
 	 * @param array<string,mixed> $input
 	 * @return array<string,mixed>
 	 */
-	public function sanitize( $input ) {
+	public function sanitize( $input, bool $effects = true ) {
 		$input = is_array( $input ) ? $input : array();
 		if ( self::$saving_cache ) {
 			return $input;
 		}
 		$prev  = $this->get();
+		foreach ( array( 'site_title_override', 'site_description_override', 'site_author_override', 'sitemap_url', 'llms_custom_markdown', 'llms_essential_links' ) as $key ) {
+			if ( isset( $input[ $key ] ) && ! is_scalar( $input[ $key ] ) ) {
+				unset( $input[ $key ] );
+			}
+		}
 
 		$out = $prev;
 
-		$out['enabled_markdown'] = ! empty( $input['enabled_markdown'] ) ? 1 : 0;
-		$out['enabled_llms_txt'] = ! empty( $input['enabled_llms_txt'] ) ? 1 : 0;
-		$out['enabled_content_negotiation'] = ! empty( $input['enabled_content_negotiation'] ) ? 1 : 0;
+		foreach ( array( 'enabled_markdown', 'enabled_llms_txt', 'enabled_content_negotiation', 'llms_send_noindex', 'md_send_noindex', 'llms_show_excerpt' ) as $key ) {
+			$out[ $key ] = array_key_exists( $key, $input ) ? ( is_scalar( $input[ $key ] ) && ! empty( $input[ $key ] ) ? 1 : 0 ) : $prev[ $key ];
+		}
+		$out['llms_index_mode'] = isset( $input['llms_index_mode'] ) ? ( $input['llms_index_mode'] === 'structured' ? 'structured' : 'legacy' ) : $prev['llms_index_mode'];
+		$out['content_profile'] = isset( $input['content_profile'] ) ? ( $input['content_profile'] === 'enhanced' ? 'enhanced' : 'legacy' ) : $prev['content_profile'];
+		$out['llms_pinned_ids'] = array_key_exists( 'llms_pinned_ids', $input ) ? $this->sanitize_pinned_ids( $input['llms_pinned_ids'] ) : $prev['llms_pinned_ids'];
+		$out['catalog_taxonomies'] = array_key_exists( 'catalog_taxonomies', $input ) ? $this->sanitize_catalog_taxonomies( $input['catalog_taxonomies'] ) : $prev['catalog_taxonomies'];
 
-		$out['base_path'] = $this->sanitize_base_path( isset( $input['base_path'] ) ? (string) $input['base_path'] : $prev['base_path'] );
+		$out['base_path'] = $this->sanitize_base_path( isset( $input['base_path'] ) && is_scalar( $input['base_path'] ) ? (string) $input['base_path'] : $prev['base_path'] );
 
-		$out['post_types'] = $this->sanitize_post_types( isset( $input['post_types'] ) ? $input['post_types'] : array() );
+		$out['post_types'] = $this->sanitize_post_types( isset( $input['post_types'] ) ? $input['post_types'] : $prev['post_types'] );
 
-		$out['llms_send_noindex'] = ! empty( $input['llms_send_noindex'] ) ? 1 : 0;
-		$out['md_send_noindex']   = ! empty( $input['md_send_noindex'] ) ? 1 : 0;
-
-		$mode = isset( $input['llms_regen_mode'] ) ? (string) $input['llms_regen_mode'] : (string) $prev['llms_regen_mode'];
+		$mode = isset( $input['llms_regen_mode'] ) && is_scalar( $input['llms_regen_mode'] ) ? (string) $input['llms_regen_mode'] : (string) $prev['llms_regen_mode'];
 		$mode = $mode === 'manual' ? 'manual' : 'auto';
 		$out['llms_regen_mode'] = $mode;
 
-		$limit = isset( $input['llms_recent_limit'] ) ? (int) $input['llms_recent_limit'] : (int) $prev['llms_recent_limit'];
+		$limit = isset( $input['llms_recent_limit'] ) && is_scalar( $input['llms_recent_limit'] ) ? (int) $input['llms_recent_limit'] : (int) $prev['llms_recent_limit'];
 		if ( $limit < 1 ) {
 			$limit = 1;
 		}
@@ -176,9 +192,7 @@ final class Options {
 			? $this->sanitize_essential_links( (string) $input['llms_essential_links'] )
 			: (string) $prev['llms_essential_links'];
 
-		$out['llms_show_excerpt'] = ! empty( $input['llms_show_excerpt'] ) ? 1 : 0;
-
-		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : array() );
+		$out['excluded_posts'] = $this->sanitize_excluded_posts( isset( $input['excluded_posts'] ) ? $input['excluded_posts'] : $prev['excluded_posts'] );
 
 		// Drop exclusions for post types that are no longer exported,
 		// so we do not keep stale IDs or show them in the UI.
@@ -204,6 +218,7 @@ final class Options {
 
 		// These keys affect llms.txt output, so clear the cache when they change.
 		$affect_keys = array(
+			'llms_index_mode', 'content_profile', 'llms_pinned_ids', 'catalog_taxonomies',
 			'enabled_markdown',
 			'enabled_llms_txt',
 			'base_path',
@@ -249,7 +264,7 @@ final class Options {
 		}
 
 		// These settings affect URLs, so set a transient to flush rewrite rules later.
-		$rewrite_keys     = array( 'enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types' );
+		$rewrite_keys     = array( 'enabled_markdown', 'enabled_llms_txt', 'base_path', 'post_types', 'llms_index_mode' );
 		$rewrite_changed = false;
 		foreach ( $rewrite_keys as $k ) {
 			$prev_v = isset( $prev[ $k ] ) ? $prev[ $k ] : null;
@@ -260,11 +275,54 @@ final class Options {
 			}
 		}
 
-		if ( $rewrite_changed ) {
+		if ( $effects && $rewrite_changed ) {
 			// Defer flush to admin_init to avoid repeated flushes during option saves.
 			set_transient( 'llmf_flush_rewrite_rules', 1, 10 * MINUTE_IN_SECONDS );
 		}
 
+		return $out;
+	}
+
+	/** Validate unsaved fields without writes, jobs, cache invalidation or rewrite flushes. */
+	public function candidate( array $input ): Options {
+		return new self( $this->sanitize( array_merge( $this->get(), $input ), false ) );
+	}
+
+	public function sanitize_pinned_ids( $value ): array {
+		$value = is_string( $value ) ? preg_split( '/[\s,]+/', trim( $value ) ) : $value;
+		$ids = array();
+		foreach ( is_array( $value ) ? $value : array() as $id ) {
+			if ( ! is_scalar( $id ) || ! preg_match( '/^[1-9][0-9]*$/D', (string) $id ) ) {
+				continue;
+			}
+			$id = (int) $id;
+			if ( $id > 0 && ! in_array( $id, $ids, true ) ) {
+				$ids[] = $id;
+			}
+			if ( count( $ids ) >= 100 ) {
+				break;
+			}
+		}
+		return $ids;
+	}
+
+	private function sanitize_catalog_taxonomies( $value ): array {
+		$out = array();
+		foreach ( is_array( $value ) ? $value : array() as $type => $taxonomies ) {
+			$type = sanitize_key( (string) $type );
+			foreach ( is_array( $taxonomies ) ? $taxonomies : array() as $taxonomy ) {
+				if ( ! is_string( $taxonomy ) ) {
+					continue;
+				}
+				$taxonomy = sanitize_key( $taxonomy );
+				$obj = function_exists( 'get_taxonomy' ) ? get_taxonomy( $taxonomy ) : null;
+				if ( $obj && ! empty( $obj->public ) && ! empty( $obj->publicly_queryable ) && in_array( $type, (array) $obj->object_type, true ) ) {
+					$out[ $type ][] = $taxonomy;
+				}
+			}
+			// An explicit empty selection differs from the category default.
+			$out[ $type ] = array_values( array_unique( $out[ $type ] ?? array() ) );
+		}
 		return $out;
 	}
 
@@ -275,6 +333,10 @@ final class Options {
 	 */
 	public function defaults() {
 		return array(
+			'llms_index_mode'             => 'legacy',
+			'content_profile'             => 'legacy',
+			'llms_pinned_ids'             => array(),
+			'catalog_taxonomies'          => array(),
 			'enabled_markdown'            => 1,
 			'enabled_llms_txt'            => 1,
 			'enabled_content_negotiation' => 0,
@@ -683,6 +745,9 @@ final class Options {
 	 * @return string
 	 */
 	public function llms_description_for_post( WP_Post $post ): string {
+		if ( $this->get()['content_profile'] === 'enhanced' ) {
+			return Content::description( $post, $this )['text'];
+		}
 		if ( ! ( $post instanceof WP_Post ) ) {
 			return '';
 		}

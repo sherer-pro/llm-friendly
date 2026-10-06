@@ -5,7 +5,9 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.2.1**
+Current version: **0.3.0**
+
+Version 0.3.0 adds an optional structured catalog, enhanced content processing and diagnostics. Existing and new installations keep legacy behavior by default; enable either new mode independently after comparing its output.
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 
@@ -49,6 +51,55 @@ If requirements are not met, the plugin shows an admin warning and does not run.
 
 ## Usage
 
+### Opt-in mechanics and compatibility
+
+Two independent settings control the new behavior. Both default to `legacy`, including when an existing installation has no new keys:
+
+| Setting | Legacy behavior | Opt-in behavior |
+| --- | --- | --- |
+| `llms_index_mode` | Existing recent-content `/llms.txt` | `structured`: a short navigation map with detailed catalog indexes |
+| `content_profile` | Existing descriptions and Markdown conversion | `enhanced`: paragraph-based descriptions, improved static conversion and reusable-source tracking |
+
+Existing `.md` URLs, custom base paths, the `/blog/` alias, content negotiation, JSON metadata fields, developer filters and existing AJAX response shapes remain supported. No content is rewritten on update. Switching either mode back preserves pinned IDs, taxonomy selections, Essential links and manual Markdown. Partial settings updates retain omitted values; the complete admin form still clears unchecked controls deliberately.
+
+Use **Compare modes before saving** to compare the existing output with the current unsaved form values. The comparison does not save plugin settings, rebuild public caches, change rewrite rules or start background jobs. Select an item ID to inspect a particular Markdown export. Long previews are truncated for display without truncating the actual output.
+
+### Structured catalog
+
+The root map keeps the existing section order: site metadata, custom notes, Main links, Essential, then content-type sections. It adds no more than 50 automatic links, including up to 10 pinned items and up to five recently modified items per type. Duplicate automatically added destinations are omitted. Existing notes and manually curated Essential links keep their existing limits and are not shortened to fit the automatic-link budget; the comparison warns when the resulting root is large. The legacy item-count and excerpt controls continue to apply to legacy mode.
+
+Select and order up to 100 pinned public items in settings. Only items in selected types that pass existing export eligibility and the `llms` filter context are listed publicly. Hidden, excluded or deleted pins remain harmless stored selections and are skipped. The full pinned list and all selected content types remain reachable through the catalog.
+
+Catalog routes use the current base path and require both `enabled_llms_txt` and `llms_index_mode=structured`:
+
+```text
+/{base}/catalog/index.txt
+/{base}/catalog/essential.txt
+/{base}/catalog/{post_type}/index.txt
+/{base}/catalog/{post_type}/{taxonomy}/index.txt
+/{base}/catalog/{post_type}/{taxonomy}/{term_id}.txt
+```
+
+Each content page scans at most 100 published, password-free candidates in ascending ID order. Follow the generated Next page link: its `llmf_after` cursor advances past the last scanned candidate even when filters reject an entire page. An empty filtered page can therefore still have a next page. Hierarchical types support `llmf_parent=0` for root items or a valid public parent ID for its direct children. Topic routes use numeric term IDs; only explicitly selected public, publicly queryable taxonomies are accepted. Categories are selected by default where applicable; an explicitly empty selection disables topics for that type.
+
+Nonempty topic indexes are projected by a resumable background job in batches of 100. Until the projection completes, topic indexes link to the immediately available type index. The job resumes through WP-Cron or the Continue scan button. Detailed indexes update automatically even in manual root-regeneration mode. First content pages cache IDs for five minutes; arbitrary cursor pages are not cached. Every cached ID is checked against current visibility and filters before rendering. When Markdown is disabled, catalog entries link to canonical HTML.
+
+Catalog responses support GET/HEAD, ETags, nosniff and the existing llms.txt noindex setting. Use ETags for conditional validation; metadata changes are not hidden by date-only validation. Route `.txt` catalog paths through WordPress alongside `.md` and `/llms.txt`, and re-save Permalinks if custom server routing requires it.
+
+### Enhanced content and diagnostics
+
+Enhanced description priority is custom LLM description, a resolved Yoast SEO description, explicit excerpt, then the first meaningful content paragraph or list item. Derived summaries use up to 30 words within the existing description cap. Code, service markup and unexecuted shortcodes are skipped. The Yoast API is optional; unresolved template tokens are skipped with a warning. The editor and diagnostics show the chosen description source.
+
+Enhanced Markdown preserves older/newer Gutenberg lists and Classic HTML lists, nested numbering, simple table cells, media source URLs, images, captions, links and code. Relative references resolve against the canonical post URL. Complex table spans remain as restricted safe HTML with a warning. Published reusable `core/block` references are tracked with bounded traversal, cycle detection and current visibility/filter checks. Changed or hidden dependencies select a fresh Markdown cache entry without requiring a parent edit. Analysis does not execute shortcodes or arbitrary dynamic blocks; unsupported content is reported for review. DOM-based HTML conversion requires PHP's DOM extension; environments without it retain the existing fallback.
+
+Manual Markdown remains authoritative. Saving a changed override or checking **I reviewed this override against the current source** records a source fingerprint. An older override without a fingerprint is shown as unconfirmed; changes to the source or reusable dependencies mark it as needing review. Nothing overwrites a manual version automatically. The fingerprint is internal post meta and is not a new public REST field. Rendering, comparison and analysis use an anonymous context and restore the caller and password cookie, including exception paths.
+
+**Diagnostics and coverage** requires an administrator capability and a valid nonce. Availability checks use saved settings and at most six anonymous same-origin GET/HEAD requests constructed by the plugin: five seconds and 256 KiB per request, with TLS verification and no redirects, cookies or supplied credentials. A blocked local environment is reported as Unable to check, not as an available endpoint. Coverage distinguishes exportable content from content absent from the short map and reports description sources, conversion warnings, override review states and progress. It scans only published, password-free candidates of selected types; it is not an inventory of private or draft content. Technical details are available separately.
+
+Settings remain in `llmf_options`. Internal root publication IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options; there are no custom tables or destructive migrations. Privacy revocations apply synchronously in auto and manual modes. Manual regeneration controls the root file; detailed catalog pages and Markdown remain current independently.
+
+### Existing controls
+
 - Open `https://example.com/llms.txt`
 - Open a Markdown export, for example:
   - `https://example.com/llm/post/hello-world.md`
@@ -72,7 +123,7 @@ If requirements are not met, the plugin shows an admin warning and does not run.
 - Use a site-relative or same-site absolute sitemap URL. External sitemap URLs are rejected by default unless a site owner opts in with the `llmf_allow_external_sitemap_url` filter.
 - To change the base path for exports (default `llm`), update "Base path" and re-save Permalinks if your server uses custom rewrites.
 
-Note: if you are running Nginx in front of Apache (or have aggressive static rules), make sure `.md` and `/llms.txt` requests are routed to WordPress (not treated as static files).
+Note: if you are running Nginx in front of Apache (or have aggressive static rules), make sure `.md`, `/llms.txt` and structured catalog `.txt` requests are routed to WordPress (not treated as static files).
 
 If Markdown endpoints return 404 after changing the base path, flush permalinks and confirm that your web server does not short-circuit `.md` requests. On Nginx, ensure the PHP location block handles `.md` and `/llms.txt` before static file rules.
 

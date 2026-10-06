@@ -2,9 +2,9 @@
 Contributors: skreep
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 0.2.1
+Stable tag: 0.3.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -43,6 +43,14 @@ An optional content-negotiation mode can return the same representation from can
 * Review practical AI crawler policy guidance for OAI-SearchBot, GPTBot, ChatGPT-User, Googlebot/Search AI features, and Google-Extended.
 
 = Key features =
+
+Version 0.3.0 adds the following optional mechanics. Both new modes default to the previous behavior for new and existing installations.
+
+* Independent index structure (legacy/structured) and content processing (legacy/enhanced) controls, with an unsaved comparison before applying changes.
+* A short structured root map, up to 100 ordered pinned selections, detailed content-type/topic indexes and bounded cursor pagination under /{base}/catalog/.
+* Paragraph-based enhanced summaries, improved lists/tables/media/code conversion, published reusable-block dependency tracking and manual override review status.
+* Administrator-only HTTP availability checks and a resumable coverage scan, with conversion warnings and a clear distinction between exportable content and inclusion in the short map.
+* Switching back retains new selections and manual content. Existing export URLs, JSON metadata and Essential links remain supported.
 
 * llms.txt endpoint with cached generation, ETag/Last-Modified support, v2-compatible linked lists, main links, sitemap/RSS references, an Essential section, selected post-type sections, optional item descriptions, and an optional custom Markdown notes block.
 * Markdown exports for selected public, publicly queryable post types with Gutenberg/HTML-to-Markdown conversion, plugin-defined JSON metadata, canonical/describedby Link headers, alternate Markdown discovery links, and transient-based body caching.
@@ -84,6 +92,18 @@ Run `composer run test` to execute lightweight regression tests for Markdown con
 See `TESTING.md` for WordPress integration scenarios.
 
 == Frequently Asked Questions ==
+
+= Will these mechanics change existing installations automatically? =
+
+No. Index structure and content processing both default to legacy. Enable them independently in Settings -> LLM Friendly after comparing the unsaved output. Switching back preserves pins, topic selections and manual Markdown. There is no destructive data migration.
+
+= How do I reach the complete structured catalog? =
+
+Enable structured index mode and llms.txt. Follow Content catalog from /llms.txt, or open /{base}/catalog/index.txt. Follow Next page links even when a filtered page has no items. Topic indexes are built in background batches; type indexes remain available while the scan runs. Catalog entries use canonical HTML when Markdown is disabled.
+
+= Why can diagnostics say Unable to check? =
+
+WordPress may block its own HTTP requests or fail local TLS/DNS checks. The plugin retains TLS verification and reports that limit honestly. It does not accept arbitrary probe URLs or send authentication cookies. Confirm actual endpoint availability separately when the environment blocks a probe.
 
 = Where is llms.txt stored? =
 
@@ -138,6 +158,16 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 
 == Changelog ==
 
+= 0.3.0 =
+
+* Add independent opt-in structured catalog and enhanced content processing modes; legacy behavior remains the default.
+* Add ordered pinned materials, public topic indexes and complete content catalogs with bounded cursor pagination.
+* Improve descriptions and Markdown conversion for lists, tables, captions, media, links and code; track reusable source changes.
+* Show manual Markdown review status without replacing existing overrides.
+* Add unsaved output comparison, administrator-only HTTP diagnostics and resumable coverage scans.
+* Revalidate cached catalog entries and reusable dependencies against current public access rules.
+* Update all six translations and verify WordPress 6.0/7.1.2 with PHP 7.4/8.4.
+
 = 0.2.1 =
 
 * Restrict editor metadata to authenticated REST edit contexts.
@@ -154,6 +184,12 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Add opt-in `Accept: text/markdown` content negotiation with `Vary: Accept`.
 * Update crawler guidance for ChatGPT-User and current Google/OpenAI documentation.
 * Clarify that JSON metadata is plugin-defined and that discovery, indexing, crawler access, and usage rights are separate controls.
+
+== Upgrade Notice ==
+
+= 0.3.0 =
+
+New catalog and enhanced content modes are optional. Existing installations retain legacy behavior, settings, export URLs and manual Markdown. Compare output before enabling either mode.
 
 == Screenshots ==
 

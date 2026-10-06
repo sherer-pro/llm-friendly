@@ -71,3 +71,72 @@ Verified on 2026-10-06 with WordPress 7.1.2, PHP 8.4.19 and Apache/FastCGI at th
 The run restored the exact raw settings baseline before refreshing cache, preserved every user setting during that refresh, restored rewrite rules and related cron events, and removed all fixture posts/users and their Markdown caches. The final public llms.txt response returned 200 without fixture markers.
 
 The lightweight suite also passed 208 assertions on PHP 7.4.33. Production caches/CDNs, Nginx routing and other WordPress versions remain outside this integration verification.
+
+## Opt-in Mechanics Verification
+
+Version 0.3.0 adds independent `legacy/structured` index and `legacy/enhanced` content modes. Run the required reproducible gates:
+
+```bash
+composer validate --strict
+composer run lint
+composer run test
+node --check assets/llmf-admin.js
+```
+
+The lightweight suite includes exact synthetic 0.2.1 output fixtures for the root map, Markdown metadata/body and Gutenberg conversion. It checks missing-key defaults without migration writes, partial settings preservation, mode switchback, pinned ordering/caps, public taxonomy and parent validation, forged query values, filtered cursor progression, current privacy/filter checks on cached IDs/dependencies, reusable-block changes and override review states. It also covers description priority, multibyte preview limits, tables/captions/media/code, anonymous exception restoration, new action capabilities/nonces and bounded HTTP checks. Its 10,000-record traversal is separate from the real SQL test below.
+
+### Active WordPress integration
+
+Run `tests/wordpress-mechanics.php` against a disposable/local WordPress with this checkout active. PHP cURL must be available. PowerShell example:
+
+```powershell
+$env:LLMF_WP_ROOT = 'D:/OSPanel/home/sherer.loc/public'
+$env:LLMF_TEST_ALLOW_WRITES = '1'
+$env:LLMF_HTTP_RESOLVE = 'sherer.loc:443:127.0.1.11' # Optional local DNS override
+php -d "sys_temp_dir=$env:TEMP" tests/wordpress-mechanics.php
+```
+
+The script temporarily changes plugin configuration/rewrite rules and creates only uniquely named fixture posts, categories and users. It never changes existing posts/users. It snapshots raw plugin options, internal publication/job state, rewrite rules and plugin cron events, restores them in `finally`, deletes owned fixtures/caches, refreshes the original root without altering user settings and checks the clean public response. On a local Sherer Site Core installation requiring 2FA, only newly created fixture users are enrolled through its existing service; fixture recovery/enrollment notices are deleted on cleanup. Credentials are not printed or written to fixture files. TLS verification remains enabled.
+
+The fixture set contains ten fixed content questions with identifiable facts and sources: Classic paragraphs, headings, an older Gutenberg list, nested lists, a simple table, code, an image/caption, a relative link, a complex table and a reusable block. All ten source URLs must be found through the type index and must preserve their answer fact in Markdown. This is deterministic content/navigation acceptance, not an evaluation of a third-party LLM's answers.
+
+| Scope | Evidence from the runner |
+| --- | --- |
+| Content discovery | Ten source/fact checks, pretty catalog routes, numeric term routes, nonempty topic projection and hierarchical parent scope |
+| HTTP | GET/HEAD equivalence, ETag 304, IMS-only metadata refresh and explicit Accept/Vary negotiation |
+| Public boundaries | Private/draft/password/excluded items, forged direct query vars, warmed catalog/root revocation in manual mode |
+| Dependencies | Changed/hidden reusable sources, filtered nested container fallback and manual override source state |
+| Permissions | Anonymous and five standard roles; valid comparison access only for administrators and invalid diagnostic nonces denied |
+| Compatibility | Switchback preserves pins, disables direct catalog access and repeated activation hooks preserve settings/historical overrides |
+| Cleanup | Fixture post/user/term deletion, exact raw settings/rewrite/plugin-cron restoration, setting-preserving cache refresh and clean root |
+
+### Real 10,000-record SQL traversal
+
+`tests/wordpress-scale.php` requires a separate loopback WordPress with an isolated table prefix beginning `llmf_`. It deliberately refuses the normal local site's prefix. Configure `LLMF_WP_ROOT` and `LLMF_TEST_ALLOW_WRITES=1` as above, then run:
+
+```bash
+php tests/wordpress-scale.php
+```
+
+The runner inserts 10,000 uniquely marked records of a temporary process-local public type, walks real `WP_Query` ID cursors, rejects the entire first page and every thirteenth later record, checks SQL LIMIT/no count queries, and deletes only its marked rows in `finally`. Plugin settings and scan jobs are not saved. Expected result: 101 bounded pages, 9,138 eligible records, no gaps/duplicates, completed cleanup. This tests query shape and complete traversal; it is not a production latency benchmark or a simulation of concurrent writes during pagination.
+
+### Browser acceptance
+
+On an isolated site, verify new mode choices, pin search/add/reorder/removal, unsaved comparison, complete form save, switchback and coverage start/continue. Check that disabled buttons recover after errors, result text is inserted through safe DOM APIs, and endpoint errors remain distinct from an environment unable to complete a check. Compare desktop and 390 px layouts for horizontal overflow and access to the controls. Live local TLS or an unusual loopback port may prevent WordPress's own safe HTTP probes; cURL endpoint success does not turn that diagnostic limitation into an availability pass.
+
+Verified on 2026-10-06:
+
+| Environment / check | Result |
+| --- | --- |
+| PHP 8.4.19 | Composer strict validation, complete PHP lint, 439 assertions and admin JavaScript syntax passed |
+| PHP 7.4.33 | 439 assertions and PHP lint, including generated translation runtime files, passed |
+| WordPress 7.1.2 / PHP 8.4.19 / Apache FastCGI / HTTPS | 89 integration checks passed; TLS verification retained |
+| WordPress 6.0 / PHP 7.4.33 / built-in loopback HTTP server | 89 integration checks passed |
+| WordPress 6.0 real SQL traversal | 10,000 fixture records, 101 bounded pages and 9,138 eligible records, without gaps/duplicates; fixture rows removed |
+| Six plugin locales | New strings translated; placeholder consistency and generated catalog/runtime files checked |
+| WordPress 6.0 browser UI | Search/add/reorder/remove pins, unsaved comparison, save/reload, mode switchback with retained pin order and coverage start/continue passed |
+| Responsive layout | Desktop comparison has two columns; the 390 px viewport has one. Document scroll width equals client width in both layouts (1,265 px desktop, 375 px mobile, excluding the scrollbar) |
+
+All ten fixed source/fact questions passed in each WordPress integration environment. Browser diagnostics correctly reported an inability to complete the safe HTTP probes on the isolated loopback port; those probes were not recorded as availability passes. The integration runners restored the local site's original settings/rewrite/plugin-cron state and removed their fixture data. The separate minimum-version site and its twelve isolated database tables were removed after browser acceptance; its loopback server was stopped.
+
+Production page caches/CDNs, Nginx/static-file routing, multisite, a live Yoast installation and other PHP/WordPress combinations remain outside this run. The real SQL test does not establish production latency or behavior under concurrent writes.
