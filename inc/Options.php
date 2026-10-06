@@ -21,6 +21,9 @@ final class Options {
 	 */
 	public const META_LLMS_DESCRIPTION = '_llmf_llms_description';
 
+	/** @var bool Whether a trusted internal cache update is being saved. */
+	private static bool $saving_cache = false;
+
 	/**
 	 * Maximum length for the custom Markdown block in llms.txt (in characters).
 	 */
@@ -97,6 +100,30 @@ final class Options {
 	}
 
 	/**
+	 * Save internal cache fields without re-sanitizing or changing user settings.
+	 *
+	 * @param array<string,mixed> $fields Trusted cache values.
+	 * @return bool Whether the option changed.
+	 */
+	public function update_cache( array $fields ): bool {
+		$saved = get_option( self::OPTION_KEY, array() );
+		$saved = is_array( $saved ) ? $saved : array();
+		foreach ( array( 'llms_cache', 'llms_cache_ts', 'llms_cache_rev', 'llms_cache_hash', 'llms_cache_settings_hash' ) as $key ) {
+			if ( array_key_exists( $key, $fields ) ) {
+				$saved[ $key ] = $fields[ $key ];
+			}
+		}
+
+		$was_saving_cache = self::$saving_cache;
+		self::$saving_cache = true;
+		try {
+			return update_option( self::OPTION_KEY, $saved, false );
+		} finally {
+			self::$saving_cache = $was_saving_cache;
+		}
+	}
+
+	/**
 	 * Sanitize options for Settings API.
 	 *
 	 * @param array<string,mixed> $input
@@ -104,6 +131,9 @@ final class Options {
 	 */
 	public function sanitize( $input ) {
 		$input = is_array( $input ) ? $input : array();
+		if ( self::$saving_cache ) {
+			return $input;
+		}
 		$prev  = $this->get();
 
 		$out = $prev;
@@ -703,6 +733,10 @@ final class Options {
 			$url = esc_url_raw( $value, array( 'http', 'https' ) );
 
 			if ( $url === '' ) {
+				return '/sitemap.xml';
+			}
+			$parts = wp_parse_url( $url );
+			if ( ! is_array( $parts ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
 				return '/sitemap.xml';
 			}
 

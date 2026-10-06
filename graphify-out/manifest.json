@@ -10,38 +10,38 @@
     "semantic_hash": ""
   },
   "inc/Admin.php": {
-    "mtime": 1787956801.2627082,
-    "ast_hash": "442a15a04d56f6fbd4c6c933e813da50",
+    "mtime": 1791292412.1423385,
+    "ast_hash": "0796a4f04245153c8f664cbd07ea08d3",
     "semantic_hash": ""
   },
   "inc/Exporter.php": {
-    "mtime": 1787957302.775218,
-    "ast_hash": "238f30e5bfa0a1ddbb5a6f8f0d678f19",
+    "mtime": 1791291124.5166266,
+    "ast_hash": "5045afcd21a8c2ab9c720116cb12fb7f",
     "semantic_hash": ""
   },
   "inc/Llms.php": {
-    "mtime": 1787957304.3723679,
-    "ast_hash": "7f11f5a53dbcfcbafe79814cdcc207da",
+    "mtime": 1791285746.6613662,
+    "ast_hash": "29fae9755a4d2fe950986b241fdcdab7",
     "semantic_hash": ""
   },
   "inc/Markdown.php": {
-    "mtime": 1787955616.5159333,
-    "ast_hash": "8a2c8d2439e3402a59e90633d45e90df",
+    "mtime": 1791285429.6716788,
+    "ast_hash": "49d2300a5d6125a75908bccfd20827fc",
     "semantic_hash": ""
   },
   "inc/Options.php": {
-    "mtime": 1787956714.6465833,
-    "ast_hash": "ca4bfae4d36a8d01c98361bc1ba9f207",
+    "mtime": 1791285428.7826202,
+    "ast_hash": "756cb32167317c825a20771447aa9e8b",
     "semantic_hash": ""
   },
   "inc/Plugin.php": {
-    "mtime": 1787957303.581436,
-    "ast_hash": "d9e6bff2e24f5b5588b35467b2a02d14",
+    "mtime": 1791285748.2598672,
+    "ast_hash": "7414612f4cbb2db4b09e56686ed6c894",
     "semantic_hash": ""
   },
   "inc/Response.php": {
-    "mtime": 1787955616.5159333,
-    "ast_hash": "b5cf47b7645bcf935efca913f6067c2d",
+    "mtime": 1791292412.7346795,
+    "ast_hash": "3584742124982416e3716f253ecb2350",
     "semantic_hash": ""
   },
   "inc/Rewrites.php": {
@@ -50,53 +50,53 @@
     "semantic_hash": "13c8126086b4e03baed179bd5fc4a93e"
   },
   "languages/llm-friendly-de_DE.l10n.php": {
-    "mtime": 1787957202.81584,
-    "ast_hash": "8186b4c906193502c65f2afc843dc881",
+    "mtime": 1791292578.8012476,
+    "ast_hash": "6c01c99081b9e84b1bccea14a417aa7c",
     "semantic_hash": ""
   },
   "languages/llm-friendly-es_ES.l10n.php": {
-    "mtime": 1787957202.8173368,
-    "ast_hash": "7156d0bc255b9ec731b8a45267d6751a",
+    "mtime": 1791292578.8022778,
+    "ast_hash": "56636ceb1658977110ccc085ad7acc93",
     "semantic_hash": ""
   },
   "languages/llm-friendly-fr_FR.l10n.php": {
-    "mtime": 1787957202.8183424,
-    "ast_hash": "7dc7f2d41972147bd9c957c9c20f474b",
+    "mtime": 1791292578.802791,
+    "ast_hash": "09ada9e4aee6e1339ad69d0a3652071d",
     "semantic_hash": ""
   },
   "languages/llm-friendly-ru_RU.l10n.php": {
-    "mtime": 1787957202.8198466,
-    "ast_hash": "6b42b5108803c5160b4a3c096389351e",
+    "mtime": 1791292578.8038244,
+    "ast_hash": "4a6d17403bb0d19b950604dbd616debd",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk.l10n.php": {
-    "mtime": 1787957202.820851,
-    "ast_hash": "9b5544cbbde3f0d7da4ef1a4fa8b7306",
+    "mtime": 1791292578.8048663,
+    "ast_hash": "77142c5f40ca7f8466f9e639958b3f74",
     "semantic_hash": ""
   },
   "languages/llm-friendly-uk_UA.l10n.php": {
-    "mtime": 1787957202.8218508,
-    "ast_hash": "506ff11899ef5db4585edb4046593b66",
+    "mtime": 1791292578.8058982,
+    "ast_hash": "918fe07a58ad04c2c552efd05b12b538",
     "semantic_hash": ""
   },
   "llm-friendly.php": {
-    "mtime": 1787957017.315984,
-    "ast_hash": "97a895d47dd15dddd89cb78e8e0f844d",
+    "mtime": 1791285860.5328598,
+    "ast_hash": "c988775293fab0023a75ecdf177468d5",
     "semantic_hash": ""
   },
   "tests/run.php": {
-    "mtime": 1787957305.1351986,
-    "ast_hash": "062c63a22c17fbc6e3e8e231f5523de2",
+    "mtime": 1791291157.7111769,
+    "ast_hash": "36e9f14c8ca5aa91e8c58ab9a04d0628",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1787957018.1002629,
-    "ast_hash": "7ba53c4c77b4a9f939b5461659fe9623",
+    "mtime": 1791285861.1617515,
+    "ast_hash": "362a63df9c21ed17cd816c0783e7e080",
     "semantic_hash": ""
   },
   "readme.txt": {
-    "mtime": 1787957018.8431726,
-    "ast_hash": "14e54b8c32bf8799d8d427db03483a7a",
+    "mtime": 1791285861.8180547,
+    "ast_hash": "040eba215a12acf0365a95c27423b607",
     "semantic_hash": ""
   }
 }

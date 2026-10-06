@@ -165,7 +165,8 @@ final class Plugin {
 					'auth_callback'     => $auth_callback,
 					'show_in_rest'      => array(
 						'schema' => array(
-							'type' => 'string',
+							'type'    => 'string',
+							'context' => array( 'edit' ),
 						),
 					),
 				)
@@ -183,6 +184,7 @@ final class Plugin {
 						'schema' => array(
 							'type'      => 'string',
 							'maxLength' => 500,
+							'context'   => array( 'edit' ),
 						),
 					),
 				)

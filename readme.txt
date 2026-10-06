@@ -4,7 +4,7 @@ Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -137,6 +137,15 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES. Heading markers are removed from the custom llms.txt notes block so user-provided notes cannot break the required llms.txt section order.
 
 == Changelog ==
+
+= 0.2.1 =
+
+* Restrict editor metadata to authenticated REST edit contexts.
+* Render shared Markdown without visitor privileges or post password cookies.
+* Immediately revoke cached llms.txt entries when posts become non-public, password-protected, or deleted, including manual mode.
+* Fix administrative cache regeneration and report a held regeneration lock as a retryable error.
+* Prevent metadata updates from being hidden by Apache/FastCGI conditional responses.
+* Reject credentials in sitemap and other published URLs.
 
 = 0.2.0 =
 

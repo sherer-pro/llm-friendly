@@ -3,6 +3,7 @@
   "1": "Options",
   "2": "run.php",
   "3": "Exporter",
+  "4": "Llms",
   "5": "LLM Friendly",
   "6": "Plugin",
   "7": "lint",
@@ -13,5 +14,6 @@
   "12": "llm-friendly-ru_RU.l10n.php",
   "13": "llm-friendly-uk.l10n.php",
   "14": "llm-friendly-uk_UA.l10n.php",
-  "15": "current_user_can"
+  "15": "current_user_can",
+  "16": "llm-friendly.php"
 }
