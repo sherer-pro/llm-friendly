@@ -32,6 +32,7 @@ Verify in a local WordPress 6.0+ install with PHP 7.4+:
 - Per-post descriptions: save `_llmf_llms_description` through the editor metabox, verify the 500-character default cap, and confirm it appears on the same linked line in `llms.txt` and in the plugin-defined Markdown export JSON metadata.
 - Exclusion validation: submit forged IDs for another post type, draft/private/password-protected posts, duplicate IDs, and more than 500 IDs; confirm only valid exportable published posts remain.
 - REST/editor permissions: a user can save `_llmf_md_content_override` and `_llmf_llms_description` only for posts they can edit.
+- Public REST reads: overrides and descriptions are absent from normal and `_fields=meta` responses, including password-protected/excluded posts and disabled Markdown exports. Authenticated `context=edit` reads and writes remain available to permitted editors.
 - Markdown override preservation: multiline Markdown, fenced code blocks, blank lines, headings, lists, and escaped Markdown characters survive Classic Editor and Gutenberg metabox saves.
 - Admin click zones: in post type selection and excluded item lists, clicking empty space to the right of a checkbox label does not toggle the checkbox; clicking the checkbox or label text does toggle it.
 - Markdown metadata: `.md` exports include `description`, `author`, and `publisher`; description falls back from per-post LLM description to Yoast SEO meta, explicit excerpt, then generated content summary; author uses `site_author_override` before post author display name.
@@ -41,6 +42,8 @@ Verify in a local WordPress 6.0+ install with PHP 7.4+:
 - Content negotiation: with `enabled_content_negotiation` disabled, canonical URLs always keep their normal HTML behavior. With it enabled, explicit `Accept: text/markdown` GET and HEAD requests for eligible singular posts return the same representation and validators as `.md`; `q=0`, wildcard-only Accept, POST, REST, feeds, previews, 404s, attachments, drafts, private/password-protected/excluded posts, and unselected post types do not negotiate Markdown.
 - Cache variation: when content negotiation is enabled, verify `Vary: Accept` is merged with existing values on HTML and Markdown responses. Test the actual page cache, reverse proxy, and CDN with alternating HTML and Markdown requests to the same URL and confirm neither variant leaks into the other cache key.
 - Conditional responses: negotiated and explicit `.md` responses return `304` for matching ETags; metadata-only changes are not hidden by `If-Modified-Since`.
+- Apache/FastCGI conditional responses: after a metadata-only update, an IMS-only request returns `200` with the new body and no Last-Modified header; an old ETag also returns `200`, while the current ETag returns `304`. Ordinary GET/HEAD responses retain Last-Modified.
+- Shared Markdown context: use a public Query Loop containing post titles/excerpts and synthetic private/password-protected records. Warm the Markdown cache first as an editor and then anonymously; neither result may contain protected content. Repeat with a valid post password cookie, and confirm the original user/cookie is restored after a render exception.
 - Developer filters: verify `llmf_markdown_cache_ttl` changes Markdown transient lifetime and `llmf_debug_headers_enabled` adds the expected `X-LLMF-*` diagnostics to `/llms.txt` responses only when enabled.
 - AI crawler diagnostics: verify the settings page shows OAI-SearchBot, GPTBot, ChatGPT-User without a robots.txt snippet, Googlebot/Search AI features, Google-Extended, and the configured sitemap URL. Confirm the UI separates discovery, indexing, crawler access, and training/licensing permissions and does not modify `robots.txt` automatically.
 - Server routing: test pretty permalinks on Apache and Nginx, ensure `.md` and `/llms.txt` reach WordPress before static-file rules, and re-save Permalinks after endpoint/base-path changes.
@@ -48,3 +51,23 @@ Verify in a local WordPress 6.0+ install with PHP 7.4+:
 - Markdown conversion: verify buttons, file/download blocks, embeds, details blocks, group/columns/media-text containers, nested lists, and code containing backticks preserve useful text and URLs.
 - AJAX exclusions: verify missing/invalid nonce, insufficient capability, invalid post type, duplicate/excluded results, and one-character multibyte searches return the expected errors or filtered results. Check that a newly checked exportable post type can be searched before saving the settings form.
 - Cache behavior: manual regeneration, auto regeneration on publish/update, description meta changes, Yoast description meta changes, trash/delete/untrash/status changes, stale cache serving, and no-cache `503` during an active regeneration lock. Confirm Markdown transient keys change when metadata changes.
+- Privacy invalidation: warm llms.txt, then make a listed post private, draft, password-protected, trashed, or deleted. Verify immediate removal and rejection of the old ETag in both auto/manual modes, including real admin requests with Settings API sanitization registered.
+- Administrative regeneration: verify a valid administrator nonce rebuilds cache/revision without changing user settings. An active lock returns a retryable `503` instead of a success redirect. Reject forged cache fields in settings input.
+- Credential-bearing URLs: reject userinfo in sitemap URLs, including with the external sitemap opt-in filter enabled, and omit userinfo URLs from Markdown links/images and Essential links.
+
+## Security Hardening Verification: 0.2.1
+
+Verified on 2026-10-06 with WordPress 7.1.2, PHP 8.4.19 and Apache/FastCGI at the local test site. PHP cURL retained TLS verification. The integration run passed 65 checks, including setup and cleanup checks.
+
+| Finding | Confirmed behavior |
+| --- | --- |
+| SEC-01 | Public REST responses omit editor metadata for public, password-protected and excluded posts, including `_fields=meta` and disabled exports. Permitted editor reads and writes still work; subscriber edit-context reads return 403. |
+| SEC-02 | A privileged Query Loop control can read synthetic private/password-protected excerpts, but editor-first Markdown cache warming cannot publish either excerpt. User and password-cookie state is restored after exceptions, including an initially absent cookie. |
+| SEC-03 | Private, draft, password, trash, delete and exclusion changes immediately remove warmed content in both auto and manual modes. Old llms.txt ETags return the new 200 response, and the revoked Markdown endpoint returns 404. |
+| SEC-04 | Missing/invalid nonces and insufficient capability return 403. Successful administrator regeneration advances the cache revision without changing user settings; a held lock returns 503. Ordinary settings cannot inject cache contents. |
+| SEC-05 | Metadata-only changes update ETags. IMS-only GET/HEAD requests return 200 without Last-Modified; an explicit CGI Status prevents Apache's fallback condition handling and stays internal. Matching ETags return empty 304 responses and take precedence over IMS. HTML and negotiated Markdown retain Vary: Accept. |
+| SEC-06 | WordPress-backed URL sanitization rejects userinfo, including with external sitemap opt-in. Generated sitemap and Markdown link destinations omit it. Safe opted-in external URLs remain supported. |
+
+The run restored the exact raw settings baseline before refreshing cache, preserved every user setting during that refresh, restored rewrite rules and related cron events, and removed all fixture posts/users and their Markdown caches. The final public llms.txt response returned 200 without fixture markers.
+
+The lightweight suite also passed 208 assertions on PHP 7.4.33. Production caches/CDNs, Nginx routing and other WordPress versions remain outside this integration verification.

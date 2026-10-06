@@ -17,6 +17,7 @@ $GLOBALS['llmf_test_meta']    = array();
 $GLOBALS['llmf_test_filters'] = array();
 $GLOBALS['llmf_test_scheduled_events'] = array();
 $GLOBALS['llmf_test_current_user_can'] = true;
+$GLOBALS['llmf_test_user_id'] = 0;
 $GLOBALS['llmf_test_query_state'] = array(
 	'singular'   => false,
 	'feed'       => false,
@@ -132,6 +133,9 @@ function wp_strip_all_tags( $text, $remove_breaks = false ) { return strip_tags(
 function sanitize_text_field( $value ) { return trim( preg_replace( '/\s+/', ' ', strip_tags( (string) $value ) ) ); }
 function sanitize_key( $key ) { return strtolower( preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $key ) ); }
 function current_user_can( $capability, ...$args ) { return ! empty( $GLOBALS['llmf_test_current_user_can'] ); }
+function get_current_user_id() { return $GLOBALS['llmf_test_user_id']; }
+function wp_set_current_user( $id ) { $GLOBALS['llmf_test_user_id'] = (int) $id; }
+function register_post_meta( $type, $key, $args ) { $GLOBALS['llmf_test_registered_meta'][ $type ][ $key ] = $args; return true; }
 function wp_json_encode( $value, $flags = 0, $depth = 512 ) { return json_encode( $value, $flags ); }
 function admin_url( $path = '' ) { return 'https://example.test/wp-admin/' . ltrim( (string) $path, '/' ); }
 function wp_create_nonce( $action = -1 ) { return 'test-nonce'; }
@@ -270,7 +274,7 @@ function get_option( $key, $default = false ) {
 	return array_key_exists( $key, $GLOBALS['llmf_test_options'] ) ? $GLOBALS['llmf_test_options'][ $key ] : $default;
 }
 function update_option( $key, $value, $autoload = null ) {
-	$GLOBALS['llmf_test_options'][ $key ] = $value;
+	$GLOBALS['llmf_test_options'][ $key ] = apply_filters( 'sanitize_option_' . $key, $value );
 	return true;
 }
 function add_option( $key, $value, $deprecated = '', $autoload = null ) {
@@ -334,7 +338,13 @@ function get_post_meta( $post_id, $key = '', $single = false ) {
 function wp_parse_url( $url ) { return parse_url( (string) $url ); }
 function wp_is_post_revision( $post_id ) { return false; }
 function wp_is_post_autosave( $post_id ) { return false; }
-function parse_blocks( $content ) { return array(); }
+function parse_blocks( $content ) { return $GLOBALS['llmf_test_parsed_blocks'] ?? array(); }
+function render_block( $block ) {
+	if ( isset( $GLOBALS['llmf_test_render_block'] ) ) {
+		return call_user_func( $GLOBALS['llmf_test_render_block'], $block );
+	}
+	return $block['innerHTML'] ?? '';
+}
 
 require_once __DIR__ . '/../inc/Markdown.php';
 require_once __DIR__ . '/../inc/Options.php';
@@ -404,6 +414,12 @@ assert_true( $options->sanitize_sitemap_url( 'https://evil.test/sitemap.xml' ) =
 assert_true( $options->sanitize_sitemap_url( '//evil.test/sitemap.xml' ) === '/sitemap.xml', 'Protocol-relative sitemap URLs are rejected.' );
 assert_true( $options->sanitize_sitemap_url( "/sitemap.xml\r\nBad: yes" ) === '/sitemap.xml', 'Sitemap URLs with control characters fall back to default.' );
 assert_true( $options->absolute_http_url( '/docs' ) === 'https://example.test/docs', 'Site-relative URLs are normalized to absolute HTTP URLs.' );
+assert_true( $options->sanitize_sitemap_url( 'https://test-user:test-only@example.test/sitemap.xml' ) === '/sitemap.xml', 'Sitemap URLs cannot publish credentials.' );
+assert_true( Markdown::url_destination( 'https://test-user:test-only@example.test/docs' ) === '', 'Shared URL formatting rejects userinfo.' );
+add_filter( 'llmf_allow_external_sitemap_url', function () { return true; } );
+assert_true( $options->sanitize_sitemap_url( 'https://test-user:test-only@external.test/sitemap.xml' ) === '/sitemap.xml', 'External sitemap opt-in cannot permit userinfo.' );
+assert_true( $options->sanitize_sitemap_url( 'https://external.test/sitemap.xml' ) === 'https://external.test/sitemap.xml', 'External sitemap opt-in still permits a safe URL.' );
+remove_all_filters( 'llmf_allow_external_sitemap_url' );
 
 assert_true( $options->is_exportable_post_type( 'post' ), 'Public queryable posts are exportable.' );
 assert_true( $options->is_exportable_post_type( 'page' ), 'Built-in pages are exportable even though they are not publicly queryable.' );
@@ -892,5 +908,89 @@ $llms->regenerate( false );
 $after_stale_regen = get_option( Options::OPTION_KEY, array() );
 $expected_hash = call_private( $llms, 'settings_hash_from_options', array( $after_stale_regen ) );
 assert_true( $after_stale_regen['llms_cache_settings_hash'] === $expected_hash, 'Regeneration stores the current settings hash.' );
+
+// Settings API sanitization must not discard trusted internal cache writes.
+add_filter( 'sanitize_option_' . Options::OPTION_KEY, array( $admin, 'sanitize_options' ) );
+$settings_before_cache_write = get_option( Options::OPTION_KEY );
+assert_true( $llms->regenerate( true ), 'Internal regeneration succeeds with the Settings API sanitizer installed.' );
+$cache_after_write = get_option( Options::OPTION_KEY );
+assert_true( $cache_after_write['llms_cache_rev'] > $settings_before_cache_write['llms_cache_rev'], 'Administrative regeneration advances the cache revision.' );
+$options->update_cache( array( 'enabled_markdown' => 0 ) );
+assert_true( get_option( Options::OPTION_KEY )['enabled_markdown'] === $settings_before_cache_write['enabled_markdown'], 'The internal cache writer cannot change user settings.' );
+foreach ( $settings_before_cache_write as $key => $value ) {
+	if ( strpos( $key, 'llms_cache' ) !== 0 ) {
+		assert_true( $cache_after_write[ $key ] === $value, 'Cache writes preserve user setting ' . $key . '.' );
+	}
+}
+$forged_input = $options->get();
+$forged_input['llms_cache'] = 'forged-cache';
+$options->update( $forged_input );
+assert_true( get_option( Options::OPTION_KEY )['llms_cache'] !== 'forged-cache', 'Ordinary settings input cannot inject cache contents after an internal write.' );
+set_transient( 'llmf_llms_regen_lock', 1, 10 );
+assert_true( ! $llms->regenerate( true ), 'A held lock reports unsuccessful regeneration.' );
+delete_transient( 'llmf_llms_regen_lock' );
+
+foreach ( array( 'auto', 'manual' ) as $mode ) {
+	foreach ( array( 'private', 'draft', 'trash', 'password', 'delete' ) as $change ) {
+		$fixture = new WP_Post( array( 'ID' => 50, 'post_type' => 'post', 'post_name' => 'privacy-change', 'post_title' => 'Privacy change' ) );
+		$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = array_merge( $options->defaults(), array( 'llms_regen_mode' => $mode, 'llms_cache' => 'previous-public-content' ) );
+		if ( $change === 'password' ) {
+			$fixture->post_password = 'test-only';
+			$llms->maybe_regenerate_on_save( 50, $fixture, true );
+		} elseif ( $change === 'delete' ) {
+			$llms->maybe_regenerate_on_delete( 50, $fixture );
+		} else {
+			$fixture->post_status = $change;
+			$llms->maybe_regenerate_on_status_change( $change, 'publish', $fixture );
+		}
+		assert_true( get_option( Options::OPTION_KEY )['llms_cache'] === '', 'Privacy change ' . $change . ' immediately invalidates cache in ' . $mode . ' mode.' );
+	}
+}
+remove_all_filters( 'sanitize_option_' . Options::OPTION_KEY );
+
+$GLOBALS['llmf_test_options'][ Options::OPTION_KEY ] = $options->defaults();
+$plugin->register_editor_meta();
+foreach ( array( Exporter::META_MD_OVERRIDE, Options::META_LLMS_DESCRIPTION ) as $key ) {
+	assert_true( $GLOBALS['llmf_test_registered_meta']['post'][ $key ]['show_in_rest']['schema']['context'] === array( 'edit' ), 'Editor meta ' . $key . ' is excluded from public REST contexts.' );
+}
+
+define( 'COOKIEHASH', 'llmf-test' );
+$_COOKIE['wp-postpass_' . COOKIEHASH] = 'test-only-cookie';
+$GLOBALS['llmf_test_user_id'] = 7;
+$GLOBALS['llmf_test_parsed_blocks'] = array( array( 'blockName' => 'llmf/test-dynamic', 'innerHTML' => '' ) );
+$GLOBALS['llmf_test_render_block'] = function () {
+	return '<p>' . ( get_current_user_id() || isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ) ? 'private-rendered-content' : 'public-rendered-content' ) . '</p>';
+};
+$dynamic_post = new WP_Post( array( 'ID' => 51, 'post_name' => 'dynamic', 'post_title' => 'Dynamic' ) );
+$public_md = call_private( $exporter, 'public_markdown_for_post', array( $dynamic_post ) );
+assert_contains_text( 'public-rendered-content', $public_md, 'Shared Markdown is rendered with anonymous capabilities and no post password cookie.' );
+assert_not_contains_text( 'private-rendered-content', $public_md, 'Privileged dynamic content cannot enter the public cache.' );
+assert_true( get_current_user_id() === 7 && $_COOKIE['wp-postpass_' . COOKIEHASH] === 'test-only-cookie', 'Public rendering restores the caller and password cookie.' );
+$GLOBALS['llmf_test_user_id'] = 0;
+$cached_public_md = call_private( $exporter, 'public_markdown_for_post', array( $dynamic_post ) );
+assert_true( $cached_public_md === $public_md, 'Anonymous readers receive the same public representation after privileged cache warming.' );
+
+$GLOBALS['llmf_test_user_id'] = 7;
+$GLOBALS['llmf_test_render_block'] = function () { throw new RuntimeException( 'Synthetic render failure.' ); };
+try {
+	call_private( $exporter, 'public_markdown_for_post', array( new WP_Post( array( 'ID' => 52, 'post_title' => 'Failure' ) ) ) );
+	assert_true( false, 'The synthetic render failure must be propagated.' );
+} catch ( RuntimeException $error ) {
+	assert_true( get_current_user_id() === 7 && $_COOKIE['wp-postpass_' . COOKIEHASH] === 'test-only-cookie', 'Public context is restored even when dynamic rendering throws.' );
+}
+unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'], $_COOKIE['wp-postpass_' . COOKIEHASH] );
+
+$GLOBALS['llmf_test_parsed_blocks'] = array( array( 'blockName' => 'llmf/test-dynamic', 'innerHTML' => '' ) );
+$GLOBALS['llmf_test_render_block'] = function () {
+	$_COOKIE['wp-postpass_' . COOKIEHASH] = 'synthetic-render-cookie';
+	throw new RuntimeException( 'Synthetic render failure.' );
+};
+try {
+	call_private( $exporter, 'public_markdown_for_post', array( new WP_Post( array( 'ID' => 53, 'post_title' => 'Failure without cookie' ) ) ) );
+	assert_true( false, 'The synthetic render failure must be propagated.' );
+} catch ( RuntimeException $error ) {
+	assert_true( get_current_user_id() === 7 && ! isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ), 'Public context restores cookie absence when a failing render callback creates a cookie.' );
+}
+unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'] );
 
 echo 'OK: ' . (int) $GLOBALS['llmf_tests_run'] . " assertions\n";

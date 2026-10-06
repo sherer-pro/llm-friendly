@@ -67,10 +67,6 @@ final class Llms {
 			return;
 		}
 
-		if ( $post->post_status !== 'publish' ) {
-			return;
-		}
-
 		$this->maybe_regenerate_for_post( $post );
 	}
 
@@ -104,6 +100,10 @@ final class Llms {
 	public function maybe_regenerate_on_delete( int $post_id, WP_Post $post ): void {
 		if ( ! ( $post instanceof WP_Post ) || $post->post_status !== 'publish' ) {
 			return;
+		}
+		$opt = $this->options->get();
+		if ( ! empty( $opt['enabled_llms_txt'] ) && $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
+			$this->clear_cache();
 		}
 
 		$this->maybe_regenerate_for_post( $post );
@@ -146,11 +146,19 @@ final class Llms {
 	private function maybe_regenerate_for_post( WP_Post $post ): void {
 		$opt = $this->options->get();
 
-		if ( empty( $opt['enabled_llms_txt'] ) || (string) $opt['llms_regen_mode'] !== 'auto' ) {
+		if ( empty( $opt['enabled_llms_txt'] ) ) {
 			return;
 		}
 
 		if ( ! $this->options->is_selected_post_type( (string) $post->post_type, $opt ) ) {
+			return;
+		}
+
+		// Privacy changes revoke cached publication even in manual mode.
+		if ( ! $this->options->can_export_post( $post, 'llms' ) ) {
+			$this->clear_cache();
+		}
+		if ( (string) $opt['llms_regen_mode'] !== 'auto' ) {
 			return;
 		}
 
@@ -198,7 +206,7 @@ final class Llms {
 		$saved['llms_cache_hash']          = '';
 		$saved['llms_cache_settings_hash'] = '';
 
-		update_option( Options::OPTION_KEY, $saved, false );
+		$this->options->update_cache( $saved );
 	}
 
 	/**
@@ -245,13 +253,13 @@ final class Llms {
 	/**
 	 * Force regeneration of cached llms.txt.
 	 *
-	 * @return void
+	 * @return bool Whether the rebuilt cache was saved.
 	 */
-	public function regenerate( bool $force = false ): void {
+	public function regenerate( bool $force = false ): bool {
 		// Manual regeneration must work regardless of the selected regeneration mode.
 		// The mode controls only automatic regeneration on publish/update.
 		if ( get_transient( self::LOCK_KEY ) ) {
-			return;
+			return false;
 		}
 		set_transient( self::LOCK_KEY, 1, 10 );
 
@@ -279,7 +287,7 @@ final class Llms {
 			$saved['llms_cache_hash']          = sha1( (string) $content );
 			$saved['llms_cache_settings_hash'] = $this->settings_hash_from_options( $settings );
 
-			update_option( Options::OPTION_KEY, $saved, false );
+			return $this->options->update_cache( $saved );
 		} finally {
 			delete_transient( self::LOCK_KEY );
 		}

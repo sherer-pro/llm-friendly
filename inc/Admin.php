@@ -1257,12 +1257,14 @@ final class Admin {
 	 */
 	public function handle_regenerate_llms() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Access denied.', 'llm-friendly' ) );
+			wp_die( esc_html__( 'Access denied.', 'llm-friendly' ), '', array( 'response' => 403 ) );
 		}
 
 		check_admin_referer( 'llmf_regenerate_llms', 'llmf_regenerate_nonce' );
 
-		$this->llms->regenerate( true );
+		if ( ! $this->llms->regenerate( true ) ) {
+			wp_die( esc_html__( 'llms.txt regeneration could not be completed. Please try again.', 'llm-friendly' ), '', array( 'response' => 503 ) );
+		}
 
 		$back = wp_get_referer();
 		if ( ! $back ) {

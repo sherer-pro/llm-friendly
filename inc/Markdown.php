@@ -93,6 +93,10 @@ final class Markdown {
 		if ( $clean === '' ) {
 			return '';
 		}
+		$parts = wp_parse_url( $clean );
+		if ( ! is_array( $parts ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
+			return '';
+		}
 
 		$clean = str_replace( array( ' ', '(', ')' ), array( '%20', '%28', '%29' ), $clean );
 

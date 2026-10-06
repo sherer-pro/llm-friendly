@@ -35,11 +35,18 @@ final class Response {
 		$last_modified    = gmdate( 'D, d M Y H:i:s', $last_modified_ts ) . ' GMT';
 
 		header( 'ETag: ' . self::clean_header_value( $etag ) );
-		header( 'Last-Modified: ' . $last_modified );
 		header( 'Cache-Control: public, max-age=0, must-revalidate' );
 
 		$if_none_match     = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
 		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
+
+		// Apache/FastCGI can evaluate IMS again after PHP sends its response.
+		// Omit this validator when it cannot describe the complete representation.
+		if ( ! $allow_last_modified_conditional && $if_none_match === '' && $if_modified_since !== '' ) {
+			header_remove( 'Last-Modified' );
+		} else {
+			header( 'Last-Modified: ' . $last_modified );
+		}
 
 		if ( $if_none_match !== '' && self::etag_matches( $if_none_match, $etag ) ) {
 			status_header( 304 );
@@ -52,6 +59,12 @@ final class Response {
 				status_header( 304 );
 				exit;
 			}
+		}
+
+		// Without an explicit CGI status, Apache can evaluate IMS against its
+		// fallback mtime even when Last-Modified is absent. Keep PHP's decision.
+		if ( ! $allow_last_modified_conditional && $if_none_match === '' && $if_modified_since !== '' && in_array( PHP_SAPI, array( 'cgi-fcgi', 'fpm-fcgi' ), true ) ) {
+			header( 'Status: 200 OK' );
 		}
 	}
 

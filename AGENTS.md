@@ -38,7 +38,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on `llm-friendly.php`, every file in `inc/`, and `tests/run.php`.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 164 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 208 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command: the plugin stores settings in one option key (`llmf_options`) and post meta, with no custom DB tables.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
@@ -103,6 +103,12 @@ Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tool
 - Content negotiation must remain opt-in, require an explicit acceptable `text/markdown` media range, and merge (not replace) `Vary: Accept`; verify page-cache/CDN separation of HTML and Markdown variants.
 - Changing `/llms.txt` output usually touches `Llms`, `Options`, docs, translations, and tests. Preserve section order: site heading/meta, optional custom notes, `Main links`, `Essential`, then post-type sections.
 - Metadata-only changes must not be hidden by `If-Modified-Since`; ETags/settings hashes are intentionally part of cache behavior.
+- IMS-only Markdown responses omit `Last-Modified` and send an explicit CGI status on FastCGI because Apache can evaluate its fallback mtime after PHP. Ordinary and ETag requests retain the header.
+- Editor metadata REST schemas use `context=edit`. Preserve authenticated editor access and keep values absent from public REST responses.
+- Public Markdown rendering temporarily clears the current user and post password cookie, restoring both in `finally` before sending the response.
+- Write internal llms.txt cache fields through `Options::update_cache()` so Settings API sanitization cannot discard them or alter user settings. `Llms::regenerate()` reports success as a boolean; a held lock must not show a success notice.
+- Privacy changes invalidate llms.txt synchronously in both regeneration modes. Routine public updates can still use deferred auto regeneration.
+- Public URL helpers reject username/password components, including explicitly allowed external sitemap URLs.
 - Markdown override and llms description meta changes affect cache invalidation. Keep `_llmf_md_content_override` and `_llmf_llms_description` behavior covered.
 - Admin AJAX for exclusions must reject missing/invalid nonce, insufficient capability, invalid post type, duplicates, excluded results, and too-short multibyte searches.
 - External sitemap URLs are rejected by default unless `llmf_allow_external_sitemap_url` opts in.

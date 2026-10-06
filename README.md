@@ -5,7 +5,7 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.2.0**
+Current version: **0.2.1**
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 
@@ -90,6 +90,11 @@ The JSON block at the top of each Markdown export is a stable, plugin-defined me
 
 - Post types must be public and publicly queryable by default. Attachments are never exportable, and custom post types with `publicly_queryable => false` must be explicitly opted in with `llmf_exportable_post_type`.
 - Password-protected content should not be exported.
+- Editor override and description metadata are available only in REST `context=edit` to users who can edit the post.
+- Shared Markdown is rendered as an anonymous visitor without a post password cookie, even when requested by a logged-in editor.
+- Closing access or deleting a published post immediately invalidates llms.txt, including manual regeneration mode.
+- URLs containing username/password information are rejected before public output.
+- Markdown uses ETags for conditional validation. IMS-only Markdown requests omit Last-Modified to prevent Apache/FastCGI from hiding metadata changes behind a 304 response.
 - Custom Markdown in `llms.txt` is capped at 20,000 characters, per-post Markdown overrides are capped at 200,000 characters, and per-post llms.txt descriptions are capped at 500 characters by default.
 - Length-related filters are bounded defensively: Markdown overrides cannot exceed 500,000 characters, llms.txt descriptions cannot exceed 2,000 characters, and exclusion lists cannot exceed 5,000 items per post type.
 - Heading markers are removed from the custom `llms.txt` notes block so user-provided notes cannot break the required `llms.txt` section order.

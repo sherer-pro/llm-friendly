@@ -38,28 +38,9 @@ final class Exporter {
 	 * @return void
 	 */
 	public function output_markdown( WP_Post $post, bool $send_body = true ): void {
-		if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
+		$md = $this->public_markdown_for_post( $post );
+		if ( $md === null ) {
 			$this->send_not_found();
-		}
-
-		$modified = $this->post_modified_timestamp( $post );
-		$ver      = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : '0';
-
-		// Markdown override affects cache key (post meta updates don't change post_modified).
-		$override      = $this->get_markdown_override( $post );
-		$override_hash = $override !== '' ? md5( $override ) : '0';
-		$metadata      = $this->markdown_metadata_for_post( $post );
-		$metadata_hash = $this->metadata_hash( $metadata );
-
-		$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash . '_' . $metadata_hash;
-		$md       = get_transient( $key );
-		if ( ! is_string( $md ) || $md === '' ) {
-			$md = $this->post_to_markdown( $post, $override, $metadata );
-			$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
-			if ( $ttl < 0 ) {
-				$ttl = 0;
-			}
-			set_transient( $key, $md, $ttl );
 		}
 
 		$headers = $this->markdown_headers_for_post( $post );
@@ -75,6 +56,57 @@ final class Exporter {
 			echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown output is sanitized while being built.
 		}
 		exit;
+	}
+
+	/**
+	 * Build the shared public representation without visitor privileges or passwords.
+	 *
+	 * @param WP_Post $post Post being exported.
+	 * @return string|null Public Markdown, or null when export is forbidden.
+	 */
+	private function public_markdown_for_post( WP_Post $post ): ?string {
+		$user_id     = get_current_user_id();
+		$cookie_name = defined( 'COOKIEHASH' ) ? 'wp-postpass_' . COOKIEHASH : '';
+		$had_cookie  = $cookie_name !== '' && array_key_exists( $cookie_name, $_COOKIE );
+		$cookie      = $had_cookie ? $_COOKIE[ $cookie_name ] : null;
+		if ( $cookie_name !== '' ) {
+			unset( $_COOKIE[ $cookie_name ] );
+		}
+		wp_set_current_user( 0 );
+		try {
+			if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
+				return null;
+			}
+
+			$modified = $this->post_modified_timestamp( $post );
+			$ver      = defined( 'LLMF_VERSION' ) ? (string) LLMF_VERSION : '0';
+
+			// Markdown override affects cache key (post meta updates don't change post_modified).
+			$override      = $this->get_markdown_override( $post );
+			$override_hash = $override !== '' ? md5( $override ) : '0';
+			$metadata      = $this->markdown_metadata_for_post( $post );
+			$metadata_hash = $this->metadata_hash( $metadata );
+
+			$key = 'llmf_md_' . $ver . '_' . (int) $post->ID . '_' . (int) $modified . '_' . $override_hash . '_' . $metadata_hash;
+			$md  = get_transient( $key );
+			if ( ! is_string( $md ) || $md === '' ) {
+				$md  = $this->post_to_markdown( $post, $override, $metadata );
+				$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
+				if ( $ttl < 0 ) {
+					$ttl = 0;
+				}
+				set_transient( $key, $md, $ttl );
+			}
+
+			return $md;
+		} finally {
+			if ( $had_cookie ) {
+				$_COOKIE[ $cookie_name ] = $cookie;
+			} elseif ( $cookie_name !== '' ) {
+				unset( $_COOKIE[ $cookie_name ] );
+			}
+			wp_set_current_user( $user_id );
+		}
 	}
 
 	/**
