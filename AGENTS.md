@@ -148,3 +148,11 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Локальные результаты и графы
+
+Сгенерированные графы `graphify-out/`, отчёты, captures и результаты прогонов
+хранятся локально в игнорируемых каталогах. Не добавляйте их в Git, включая
+`git add -f`. Исходники, необходимые тестовые данные и эталоны остаются в Git.
+После нового клонирования создайте граф штатной командой проекта перед его
+использованием; наличие сохранённого графа в истории Git не требуется.
