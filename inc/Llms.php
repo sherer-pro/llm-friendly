@@ -279,7 +279,19 @@ final class Llms {
 		set_transient( self::LOCK_KEY, 1, 10 );
 
 		try {
+			$generation = ( new Catalog( $this->options, false ) )->generation();
+			$settings_hash = $this->settings_hash_from_options( $this->options->get() );
 			$content = Content::anonymous( function () { return $this->build_llms_txt(); } );
+			// An edit may revoke publication while this worker is building an old snapshot.
+			// Bypass the request-local option cache when comparing with another worker.
+			if ( function_exists( 'wp_cache_delete' ) ) {
+				wp_cache_delete( 'llmf_catalog_generation', 'options' );
+				wp_cache_delete( Options::OPTION_KEY, 'options' );
+				wp_cache_delete( 'alloptions', 'options' );
+			}
+			if ( $generation !== ( new Catalog( $this->options, false ) )->generation() || $settings_hash !== $this->settings_hash_from_options( $this->options->get() ) ) {
+				return false;
+			}
 
 			// Update ONLY cache fields to avoid overwriting settings in concurrent requests.
 			$saved = get_option( Options::OPTION_KEY, array() );
@@ -301,10 +313,8 @@ final class Llms {
 
 			$saved['llms_cache_hash']          = sha1( (string) $content );
 			$saved['llms_cache_settings_hash'] = $this->settings_hash_from_options( $settings );
-			if ( $settings['llms_index_mode'] === 'structured' ) {
-				update_option( 'llmf_root_ids', $this->root_ids, false );
-				update_option( 'llmf_root_dependencies', $this->root_dependencies, false );
-			}
+			update_option( 'llmf_root_ids', $this->root_ids, false );
+			update_option( 'llmf_root_dependencies', $this->root_dependencies, false );
 
 			return $this->options->update_cache( $saved );
 		} finally {
@@ -349,13 +359,21 @@ final class Llms {
 	private function cached_root_is_public(): bool {
 		return Content::anonymous( function () {
 			$catalog = new Catalog( $this->options, false );
-			foreach ( (array) get_option( 'llmf_root_ids', array() ) as $id => $kind ) {
+			$ids = (array) get_option( 'llmf_root_ids', array() );
+			$dependencies = (array) get_option( 'llmf_root_dependencies', array() );
+			// Avoid one SQL query per root item when no persistent object cache is installed.
+			if ( function_exists( '_prime_post_caches' ) ) {
+				foreach ( array_chunk( array_unique( array_merge( array_keys( $ids ), $dependencies ) ), Catalog::BATCH_SIZE ) as $batch ) {
+					_prime_post_caches( $batch, false, false );
+				}
+			}
+			foreach ( $ids as $id => $kind ) {
 				$post = get_post( $id );
 				if ( ! $post || ( $kind === 'selected' ? ! $catalog->eligible( $post ) : ! $this->options->can_export_post( $post, 'llms' ) ) ) {
 					return false;
 				}
 			}
-			foreach ( (array) get_option( 'llmf_root_dependencies', array() ) as $id ) {
+			foreach ( $dependencies as $id ) {
 				if ( ! Content::public_reusable( get_post( $id ) ) ) {
 					return false;
 				}
@@ -386,7 +404,7 @@ final class Llms {
 	 */
 	public function output(): void {
 		$opt = $this->options->get();
-		if ( $opt['llms_index_mode'] === 'structured' && ! empty( $opt['llms_cache'] ) ) {
+		if ( ! empty( $opt['llms_cache'] ) ) {
 			$safe = $this->cached_root_is_public();
 			if ( ! $safe ) {
 				$this->clear_cache();
@@ -498,6 +516,8 @@ final class Llms {
 	 * @return string
 	 */
 	private function build_llms_txt(): string {
+		$this->root_ids = array();
+		$this->root_dependencies = array();
 		$opt = $this->options->get();
 		if ( $opt['llms_index_mode'] === 'structured' ) {
 			return Content::anonymous( function () { return $this->build_structured(); } );
@@ -778,6 +798,7 @@ final class Llms {
 				'modified'  => Markdown::plain_text_line( get_the_modified_date( 'Y-m-d', $p ) ),
 				'excerpt'   => Markdown::plain_text_line( $this->options->llms_description_for_post( $p ) ),
 			);
+			$this->track_root_post( $p, 'selected' );
 
 			if ( count( $items ) >= $max_items ) {
 				break;
@@ -831,6 +852,7 @@ final class Llms {
 			}
 
 			$seen[ $post_id ] = true;
+			$this->track_root_post( $post, 'site_page' );
 			$title            = Markdown::plain_text_line( get_the_title( $post ) );
 			if ( $title === '' ) {
 				$title = Markdown::plain_text_line( $label );
@@ -921,6 +943,7 @@ final class Llms {
 	 */
 	private function settings_hash_from_options( array $settings ): string {
 		$subset = array(
+			'root_visibility_format'     => '2',
 			'index_format'               => Catalog::FORMAT,
 			'content_format'             => Content::FORMAT,
 			'llms_index_mode'            => $settings['llms_index_mode'] ?? 'legacy',

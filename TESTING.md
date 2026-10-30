@@ -144,3 +144,27 @@ Production page caches/CDNs, Nginx/static-file routing, multisite, a live Yoast 
 ## Unavailable representations
 
 The independent `tests/unavailable-markdown.php` provider checks no-provider behavior, the neutral context, anonymous validation, Markdown/HTML selection, withdrawal, invalid results and forbidden destinations. In WordPress, verify GET/HEAD, an unknown historical base, current routes, the legacy blog alias, disabled/excluded exports, stale conditional requests and a self-targeting provider. Available exports must bypass the hook. Verify server routing of historical `.md` paths before treating an HTTP 404 as a plugin result. A site integration should separately verify its own rule storage, lifecycle and cache invalidation.
+
+## Release 0.4.1 verification
+
+With the same local write guard used above, run `php tests/wordpress-unavailable-markdown.php`. This runner accepts only loopback hosts or the explicitly authorized `sherer.loc`. It temporarily installs a uniquely named MU provider for one exact fixture path at a time, then removes its provider, records and options and restores original plugin settings, rewrite rules and plugin cron events. Run local integration suites sequentially.
+
+The audit reproduced two defects: a same-host HTTPS-to-HTTP destination was accepted, and withdrawing a post during legacy root generation could be overwritten by that worker publishing its stale snapshot. The fixes enforce the site's origin, reject browser-normalized path escapes, abort outdated root generation, and revalidate cached root IDs/dependencies in both modes. The root settings hash changes once to rebuild caches created before visibility tracking was enabled for legacy output. The public filter signature, legacy output fixtures and saved user settings are preserved.
+
+For a cold request-local object cache with 51 tracked posts on sherer.loc, the added visibility check initially required 52 SQL queries. The final implementation required two queries, including one batched post lookup; each post batch is limited to 100 IDs. This is a query-count comparison, not a production latency benchmark.
+
+Verified on 2026-10-30:
+
+| Environment / check | Result |
+| --- | --- |
+| Final PHP 8.4.19 / PHP 7.4.33 gates | 520 assertions on each; Composer strict validation/lint, PHP 7.4 lint of all 26 PHP files including generated translations, JavaScript syntax and Git whitespace checks passed |
+| Independent WordPress 6.0 / PHP 7.4.32 / standard Twenty Twenty-Two theme | 89 mechanics checks and 49 unavailable-URL HTTP checks passed; no Site Core or custom theme installed |
+| Independent WordPress home in `/subsite` | The same 49 HTTP checks passed with the WordPress base-path boundary enabled |
+| Isolated `llmf_audit_` SQL tables | 10,000 records, 101 bounded pages, 9,138 eligible records, no gaps/duplicates; fixture cleanup completed |
+| WordPress 7.1.4 / PHP 8.4.19 / sherer.loc | 89 mechanics and 50 unavailable-URL HTTP checks passed, including HTTPS downgrade rejection and publication-withdrawal interleavings |
+| Site Core integration | Its 69 lifecycle checks passed with LLM Friendly 0.4.1 |
+| Browser / authenticated administrator | Settings change survived reload; Gutenberg preserved multiline Markdown, a fenced PHP block and the description after save/reload; fixture removed and original settings restored |
+
+HTTP acceptance covers missing providers, available-export bypass, current/historical/legacy/encoded paths, tracking queries, GET/HEAD, Markdown/HTML fallback, forbidden destinations, malformed provider responses, 410 privacy, no-store headers, stale validators, and interrupted publication in both index modes. Existing mechanics acceptance covers authenticated/public REST, role/nonce failures, warmed-cache revocation, opt-in negotiation and content conversion.
+
+Production caches/CDNs, Nginx routing, multisite and third-party redirect providers other than the independent fixture and Site Core were not exercised. The controlled publication interleaving does not constitute an exhaustive stress test of all concurrent writes.

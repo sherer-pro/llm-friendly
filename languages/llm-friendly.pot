@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: LLM Friendly 0.4.0\n"
+"Project-Id-Version: LLM Friendly 0.4.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/llm-friendly-git\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-30T11:46:18+03:00\n"
+"POT-Creation-Date: 2026-10-30T13:29:08+03:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: llm-friendly\n"
@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: llm-friendly.php
-msgid "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access."
+msgid "Publishes llms.txt, structured catalogs and Markdown for public WordPress content, with optional unavailable-URL integrations."
 msgstr ""
 
 #. Author of the plugin
@@ -348,8 +348,8 @@ msgstr ""
 
 #: inc/Admin.php:739
 #: inc/Admin.php:1744
-#: inc/Llms.php:543
-#: inc/Llms.php:642
+#: inc/Llms.php:563
+#: inc/Llms.php:662
 msgid "Sitemap"
 msgstr ""
 
@@ -424,7 +424,7 @@ msgstr ""
 #: inc/Admin.php:851
 #: inc/Catalog.php:247
 #: inc/Catalog.php:249
-#: inc/Llms.php:673
+#: inc/Llms.php:693
 msgid "Pinned content"
 msgstr ""
 
@@ -638,7 +638,7 @@ msgstr ""
 #: inc/Admin.php:1153
 #: inc/Catalog.php:239
 #: inc/Catalog.php:301
-#: inc/Llms.php:644
+#: inc/Llms.php:664
 msgid "Content catalog"
 msgstr ""
 
@@ -1185,7 +1185,7 @@ msgid "Canonical URL: %s"
 msgstr ""
 
 #: inc/Catalog.php:268
-#: inc/Llms.php:697
+#: inc/Llms.php:717
 msgid "All content in this type"
 msgstr ""
 
@@ -1214,7 +1214,7 @@ msgid "The site could not complete the HTTP check."
 msgstr ""
 
 #: inc/Exporter.php:177
-#: inc/Llms.php:399
+#: inc/Llms.php:417
 #: inc/Plugin.php:473
 msgid "Not Found"
 msgstr ""
@@ -1234,76 +1234,76 @@ msgstr ""
 msgid "image"
 msgstr ""
 
-#: inc/Llms.php:510
-#: inc/Llms.php:636
+#: inc/Llms.php:530
+#: inc/Llms.php:656
 msgid "LLM-friendly index of this website."
 msgstr ""
 
-#: inc/Llms.php:538
-#: inc/Llms.php:656
+#: inc/Llms.php:558
+#: inc/Llms.php:676
 msgid "Main links"
 msgstr ""
 
-#: inc/Llms.php:542
-#: inc/Llms.php:641
+#: inc/Llms.php:562
+#: inc/Llms.php:661
 msgid "Home"
 msgstr ""
 
-#: inc/Llms.php:542
-#: inc/Llms.php:641
+#: inc/Llms.php:562
+#: inc/Llms.php:661
 msgid "Website home page"
 msgstr ""
 
-#: inc/Llms.php:543
-#: inc/Llms.php:642
+#: inc/Llms.php:563
+#: inc/Llms.php:662
 msgid "XML sitemap"
 msgstr ""
 
-#: inc/Llms.php:544
-#: inc/Llms.php:643
+#: inc/Llms.php:564
+#: inc/Llms.php:663
 msgid "RSS"
 msgstr ""
 
-#: inc/Llms.php:544
-#: inc/Llms.php:643
+#: inc/Llms.php:564
+#: inc/Llms.php:663
 msgid "Latest updates feed"
 msgstr ""
 
-#: inc/Llms.php:550
-#: inc/Llms.php:685
+#: inc/Llms.php:570
+#: inc/Llms.php:705
 msgid "Essential"
 msgstr ""
 
 #. translators: 1: modified date, 2: canonical url
-#: inc/Llms.php:582
+#: inc/Llms.php:602
 #, php-format
 msgid "Updated %1$s. Canonical URL: %2$s"
 msgstr ""
 
 #. translators: 1: modified date
-#: inc/Llms.php:592
+#: inc/Llms.php:612
 #, php-format
 msgid "Updated %1$s."
 msgstr ""
 
-#: inc/Llms.php:644
+#: inc/Llms.php:664
 msgid "All selected public content, with topic indexes and pagination."
 msgstr ""
 
-#: inc/Llms.php:818
+#: inc/Llms.php:839
 msgid "Front page content"
 msgstr ""
 
-#: inc/Llms.php:819
+#: inc/Llms.php:840
 msgid "Posts page"
 msgstr ""
 
-#: inc/Llms.php:820
+#: inc/Llms.php:841
 msgid "Privacy policy"
 msgstr ""
 
 #. translators: 1: label for the special page, 2: canonical URL
-#: inc/Llms.php:849
+#: inc/Llms.php:871
 #, php-format
 msgid "%1$s. Canonical URL: %2$s"
 msgstr ""
@@ -1313,25 +1313,25 @@ msgid "Gone"
 msgstr ""
 
 #. translators: 1: Current PHP version, 2: Required PHP version
-#: llm-friendly.php:66
+#: llm-friendly.php:68
 #, php-format
 msgid "PHP version %1$s detected. Required: %2$s+"
 msgstr ""
 
 #. translators: 1: Current WP version, 2: Required WP version
-#: llm-friendly.php:75
+#: llm-friendly.php:77
 #, php-format
 msgid "WordPress version %1$s detected. Required: %2$s+"
 msgstr ""
 
-#: llm-friendly.php:85
+#: llm-friendly.php:87
 msgid "LLM Friendly is disabled due to unmet requirements:"
 msgstr ""
 
-#: llm-friendly.php:106
+#: llm-friendly.php:108
 msgid "LLM Friendly cannot be activated because the environment does not meet the minimum requirements."
 msgstr ""
 
-#: llm-friendly.php:181
+#: llm-friendly.php:183
 msgid "Settings"
 msgstr ""

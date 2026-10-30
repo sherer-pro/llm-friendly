@@ -1,6 +1,6 @@
 {
 	"name": "sherer-pro/llm-friendly",
-	"description": "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access.",
+	"description": "Publishes llms.txt, structured catalogs and Markdown for public WordPress content, with optional unavailable-URL integrations.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"require": {
@@ -26,6 +26,7 @@
 			"@php -l tests/mechanics.php",
 			"@php -l tests/mechanics-stubs.php",
 			"@php -l tests/wordpress-mechanics.php",
+			"@php -l tests/wordpress-unavailable-markdown.php",
 			"@php -l tests/wordpress-scale.php"
 		],
 		"test": [

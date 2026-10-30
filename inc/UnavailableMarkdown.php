@@ -46,7 +46,12 @@ final class UnavailableMarkdown {
 			$parts = is_string( $url ) ? wp_parse_url( $url ) : false;
 			$home = wp_parse_url( home_url( '/' ) );
 			$base = rtrim( $home['path'] ?? '', '/' );
-			if ( ! is_array( $parts ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || ! in_array( $parts['scheme'] ?? '', array( 'http', 'https' ), true ) || strtolower( $parts['host'] ?? '' ) !== strtolower( $home['host'] ) || (int) ( $parts['port'] ?? 0 ) !== (int) ( $home['port'] ?? 0 ) || ( $base && 0 !== strpos( $parts['path'] ?? '', $base . '/' ) ) || preg_match( '/[\x00-\x20\x7f]/', $url ) ) {
+			$decoded_path = rawurldecode( $parts['path'] ?? '' );
+			if ( ! is_array( $home ) || ! is_array( $parts ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || ! in_array( $parts['scheme'] ?? '', array( 'http', 'https' ), true ) || ( $parts['scheme'] ?? '' ) !== ( $home['scheme'] ?? '' ) || strtolower( $parts['host'] ?? '' ) !== strtolower( $home['host'] ?? '' ) || (int) ( $parts['port'] ?? 0 ) !== (int) ( $home['port'] ?? 0 ) || ( $base && 0 !== strpos( $parts['path'] ?? '', $base . '/' ) ) || preg_match( '/[\x00-\x20\x7f]/', $url ) ) {
+				return null;
+			}
+			// Browsers normalize dot segments and backslashes before following Location.
+			if ( strpos( $decoded_path, '\\' ) !== false || preg_match( '~(?:^|/)\.{1,2}(?:/|$)~', $decoded_path ) ) {
 				return null;
 			}
 			$request_path = wp_parse_url( $context['request_url'] ?? '', PHP_URL_PATH );

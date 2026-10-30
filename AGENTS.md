@@ -31,6 +31,7 @@
 - `tests/mechanics.php`, `tests/mechanics-stubs.php`, `tests/fixtures/` - opt-in behavior, scale/caching/security checks and exact 0.2.1 legacy outputs.
 - `.gitattributes` keeps text fixtures under `tests/fixtures/` in LF format so exact output comparisons survive Windows checkouts with `core.autocrlf=true`.
 - `tests/wordpress-mechanics.php` - self-cleaning integration runner for an active local WordPress; requires explicit write guard and root path.
+- `tests/wordpress-unavailable-markdown.php` - local HTTP acceptance for neutral providers, GET/HEAD, historical paths, URL safety and interrupted root publication; temporarily installs its own exact-path MU provider and restores settings.
 - `tests/wordpress-scale.php` - 10,000 real SQL fixtures, restricted to a loopback WordPress with an isolated `llmf_` table prefix.
 - `languages/` - translation source and generated runtime files.
 - `assets-svn/` - WordPress.org plugin directory assets/blueprint; ignore for code changes unless the task is release/listing related.
@@ -46,7 +47,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 485 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 520 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
@@ -70,7 +71,7 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 ## Окружение
 
 - Minimum runtime from code/docs: WordPress 6.0+ and PHP 7.4+.
-- `readme.txt` currently says `Tested up to: 7.1.2`; the mechanics acceptance matrix is recorded in `TESTING.md`.
+- `readme.txt` currently says `Tested up to: 7.1`; exact tested versions are recorded in `TESTING.md`.
 - No `.env` is required for tests or local syntax checks.
 - Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `enabled_content_negotiation=0`, `llms_index_mode=legacy`, `content_profile=legacy`, empty pins/topic overrides, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
 - Runtime rewrite changes (`enabled_markdown`, `enabled_llms_txt`, `base_path`, `post_types`) set a transient and flush rewrite rules later in admin. Manual WP testing after endpoint changes should include re-saving permalinks.
@@ -116,6 +117,7 @@ Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tool
 - Public Markdown rendering temporarily clears the current user and post password cookie, restoring both in `finally` before sending the response.
 - Write internal llms.txt cache fields through `Options::update_cache()` so Settings API sanitization cannot discard them or alter user settings. `Llms::regenerate()` reports success as a boolean; a held lock must not show a success notice.
 - Privacy changes invalidate llms.txt synchronously in both regeneration modes. Routine public updates can still use deferred auto regeneration.
+- Root generation must reject a changed catalog generation/settings snapshot before publishing. Both index modes track root IDs/dependencies and recheck current public access before serving a warmed cache.
 - Public URL helpers reject username/password components, including explicitly allowed external sitemap URLs.
 - Markdown override and llms description meta changes affect cache invalidation. Keep `_llmf_md_content_override` and `_llmf_llms_description` behavior covered.
 - Admin AJAX for exclusions must reject missing/invalid nonce, insufficient capability, invalid post type, duplicates, excluded results, and too-short multibyte searches.

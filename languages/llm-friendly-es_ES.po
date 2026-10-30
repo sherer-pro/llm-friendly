@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: LLM Friendly 0.4.0\n"
+"Project-Id-Version: LLM Friendly 0.4.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/llm-friendly-git\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -267,8 +267,8 @@ msgstr "https://github.com/sherer-pro/llm-friendly"
 
 #. Description of the plugin
 #: llm-friendly.php
-msgid "Adds llms.txt and Markdown endpoints to WordPress for LLM-friendly content access."
-msgstr "Añade llms.txt y endpoints Markdown a WordPress para un acceso al contenido compatible con LLM."
+msgid "Publishes llms.txt, structured catalogs and Markdown for public WordPress content, with optional unavailable-URL integrations."
+msgstr "Publica llms.txt, catálogos estructurados y Markdown para contenido público de WordPress, con integraciones opcionales para URL no disponibles."
 
 #. Author of the plugin
 #: llm-friendly.php

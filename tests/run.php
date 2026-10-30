@@ -277,7 +277,7 @@ function esc_url_raw( $url, $protocols = null ) {
 	return $url;
 }
 function home_url( $path = '' ) {
-	return 'https://example.test' . ( $path !== '' && $path[0] === '/' ? $path : '/' . ltrim( (string) $path, '/' ) );
+	return apply_filters( 'home_url', 'https://example.test' . ( $path !== '' && $path[0] === '/' ? $path : '/' . ltrim( (string) $path, '/' ) ), $path );
 }
 function get_feed_link() { return 'https://example.test/feed/'; }
 function get_bloginfo( $show = '' ) {
@@ -341,14 +341,14 @@ function get_post_types( $args = array(), $output = 'names' ) {
 function get_post( $post_id ) { return $post_id instanceof WP_Post ? $post_id : ( $GLOBALS['llmf_test_posts'][ (int) $post_id ] ?? null ); }
 function get_the_title( $post = null ) {
 	if ( $post instanceof WP_Post ) {
-		return $post->post_title;
+		return apply_filters( 'the_title', $post->post_title, $post->ID );
 	}
 	$post = get_post( (int) $post );
 	return $post instanceof WP_Post ? $post->post_title : '';
 }
 function get_permalink( $post ) {
 	if ( $post instanceof WP_Post ) {
-		return 'https://example.test/' . ( $post->post_type === 'page' ? '' : 'post/' ) . $post->post_name . '/';
+		return apply_filters( 'post_link', 'https://example.test/' . ( $post->post_type === 'page' ? '' : 'post/' ) . $post->post_name . '/', $post );
 	}
 	return 'https://example.test/';
 }

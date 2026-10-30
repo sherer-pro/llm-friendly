@@ -2,17 +2,19 @@
 Contributors: skreep
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
-Tested up to: 7.1.2
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Create a clean /llms.txt and Markdown exports for WordPress content, with controls for AI crawlers, metadata, excerpts, exclusions, and cache regeneration.
+Publish llms.txt, structured catalogs and Markdown for public WordPress content, with optional integrations for unavailable URLs.
 
 == Description ==
 
 LLM Friendly gives your WordPress site predictable, machine-readable entry points for AI assistants, search/indexing bots, internal knowledge tools, and readers who prefer plain text.
+
+The plugin works without a specific theme, archive status or redirect plugin. Independent integrations can supply replacements for unavailable Markdown URLs: the plugin validates the destination and returns a permanent redirect or a generic 410 response. It does not include a redirect manager or store redirect rules.
 
 Instead of asking crawlers to infer your site structure from HTML alone, the plugin publishes a focused `/llms.txt` index and optional Markdown versions of selected public content. You stay in control of what is exposed, how dense the index should be, which endpoints should be noindexed, and which posts or pages should be excluded.
 
@@ -144,6 +146,7 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 
 == Developer Notes ==
 
+* `llmf_resolve_unavailable_markdown` accepts `null`, `array( 'status' => 410 )`, or `array( 'status' => 301, 'target_post_id' => 123 )` for unavailable Markdown URLs. Available exports bypass it. Destinations are validated anonymously and must remain public, password-free and on the same origin; eligible Markdown is preferred over HTML. Providers own their rules and lifecycle. Historical URLs must reach WordPress through the web server.
 * `llmf_can_export_post` can deny a post for `markdown`, `llms`, or `llms_search` contexts.
 * `llmf_exportable_post_type` can explicitly opt in a public edge-case post type that is safe to expose even though WordPress marks it as not publicly queryable.
 * `llmf_markdown_override_max_length` changes the per-post Markdown override length cap. Default: 200000 characters; absolute maximum: 500000.
@@ -157,6 +160,12 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES. Heading markers are removed from the custom llms.txt notes block so user-provided notes cannot break the required llms.txt section order.
 
 == Changelog ==
+
+= 0.4.1 =
+* Prevent an interrupted llms.txt generation from restoring content withdrawn during that generation; recheck cached visibility in both index modes.
+* Batch cached visibility lookups to avoid a separate SQL query for every indexed item.
+* Require redirect destinations to retain the site's origin and reject paths that can escape a WordPress subdirectory after URL normalization.
+* Expand independent provider and real HTTP regression coverage, document optional redirect integrations, and declare minimum requirements in plugin headers.
 
 = 0.4.0 =
 * Add a provider-neutral hook for unavailable Markdown URLs, validated permanent redirects and withdrawal responses.
@@ -190,6 +199,9 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Clarify that JSON metadata is plugin-defined and that discovery, indexing, crawler access, and usage rights are separate controls.
 
 == Upgrade Notice ==
+
+= 0.4.1 =
+Privacy hardening for cached llms.txt and validated optional redirects. Works independently of themes and redirect providers; existing settings and legacy output are preserved.
 
 = 0.3.0 =
 

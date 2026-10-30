@@ -5,14 +5,15 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.4.0**
+Current version: **0.4.1**
 
-Version 0.3.0 adds an optional structured catalog, enhanced content processing and diagnostics. Existing and new installations keep legacy behavior by default; enable either new mode independently after comparing its output.
+Version 0.4.1 hardens optional integrations for unavailable Markdown URLs and cached publication after privacy changes. Optional structured catalogs, enhanced content processing and diagnostics remain available. Existing and new installations keep legacy output by default; enable either content/index mode independently after comparing its output.
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 
 ## Features
 
+- Works independently of your theme and site-specific plugins. Optional providers can resolve unavailable Markdown URLs to validated permanent redirects or generic withdrawal responses; LLM Friendly does not store redirect rules or provide a redirect manager.
 - Generates a compact `llms.txt` v2-compatible index with main links, an Essential section for key site resources, latest content, optional LLM descriptions, and an optional custom Markdown notes block.
 - Exposes `.md` endpoints for selected public, publicly queryable post types (posts, pages, custom post types) with Gutenberg-to-Markdown conversion, plugin-defined JSON metadata, canonical and `describedby` `Link` relations, and per-post Markdown overrides through the "Markdown override (LLM Friendly)" editor metabox.
 - Optionally returns the same Markdown representation from canonical singular URLs when a client explicitly sends `Accept: text/markdown`; this mode is disabled by default and sends `Vary: Accept` when enabled.
@@ -183,6 +184,6 @@ GPL-3.0-or-later
 
 The context contains `request_url` (origin-relative request URI), `post_type`, `path` and `source_post_id` (zero when unknown). Recognized endpoints provide the parsed type/path; historical endpoints may leave them empty. Providers return `null`, `array( 'status' => 410 )`, or `array( 'status' => 301, 'target_post_id' => 123 )`, with integer values. Valid available exports bypass this hook.
 
-Resolution and validation run anonymously. A destination must be published, password-free and publicly exportable. Enabled, selected and eligible Markdown is preferred; otherwise its public HTML permalink is used. Destinations must stay on the current site and within its WordPress base path. Invalid responses, missing/private destinations and self redirects are ignored. No HTTP lookups are performed.
+Resolution and validation run anonymously. A destination must be published, password-free and publicly exportable. Enabled, selected and eligible Markdown is preferred; otherwise its public HTML permalink is used. Destinations must keep the site's scheme, host and port and remain within its WordPress base path; dot-segment and backslash paths are rejected. Invalid responses, missing/private destinations and self redirects are ignored. No HTTP lookups are performed.
 
 Only GET/HEAD are handled. Redirect and withdrawal responses send `Cache-Control: no-store, max-age=0`; HEAD omits the body. A 410 has a generic Markdown body without source titles or content. Existing content-negotiation, index generation and export eligibility remain unchanged.
