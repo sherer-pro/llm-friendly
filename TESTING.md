@@ -140,3 +140,7 @@ Verified on 2026-10-06:
 All ten fixed source/fact questions passed in each WordPress integration environment. Browser diagnostics correctly reported an inability to complete the safe HTTP probes on the isolated loopback port; those probes were not recorded as availability passes. The integration runners restored the local site's original settings/rewrite/plugin-cron state and removed their fixture data. The separate minimum-version site and its twelve isolated database tables were removed after browser acceptance; its loopback server was stopped.
 
 Production page caches/CDNs, Nginx/static-file routing, multisite, a live Yoast installation and other PHP/WordPress combinations remain outside this run. The real SQL test does not establish production latency or behavior under concurrent writes.
+
+## Unavailable representations
+
+The independent `tests/unavailable-markdown.php` provider checks no-provider behavior, the neutral context, anonymous validation, Markdown/HTML selection, withdrawal, invalid results and forbidden destinations. In WordPress, verify GET/HEAD, an unknown historical base, current routes, the legacy blog alias, disabled/excluded exports, stale conditional requests and a self-targeting provider. Available exports must bypass the hook. Verify server routing of historical `.md` paths before treating an HTTP 404 as a plugin result. A site integration should separately verify its own rule storage, lifecycle and cache invalidation.

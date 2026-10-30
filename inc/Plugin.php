@@ -251,6 +251,7 @@ final class Plugin {
 		if ( (int) get_query_var( Rewrites::QV_MD ) === 1 ) {
 			$opt = $this->options->get();
 			if ( empty( $opt['enabled_markdown'] ) ) {
+				$this->serve_unavailable_markdown();
 				$this->send_404();
 				return;
 			}
@@ -261,12 +262,19 @@ final class Plugin {
 			$post = $this->find_post_by_path( $post_type, $path );
 
 			if ( ! ( $post instanceof WP_Post ) ) {
+				$source = post_type_exists( $post_type ) ? get_page_by_path( $path, OBJECT, $post_type ) : null;
+				$this->serve_unavailable_markdown( $post_type, $path, $source instanceof WP_Post ? $source->ID : 0 );
 				$this->send_404();
 				return;
 			}
 
 			$this->exporter->output_markdown( $post, $this->request_method() !== 'HEAD' );
 			exit;
+		}
+
+		// Historical bases no longer have a rewrite rule. Providers may still resolve an exact .md URL.
+		if ( is_404() ) {
+			$this->serve_unavailable_markdown();
 		}
 
 		if ( $this->should_negotiate_markdown_request() ) {
@@ -276,6 +284,38 @@ final class Plugin {
 			$send_body = $method !== 'HEAD';
 			$this->exporter->output_markdown( $post, $send_body );
 		}
+	}
+
+	/** Serve only validated provider results; leave ordinary 404 handling untouched. */
+	private function serve_unavailable_markdown( string $post_type = '', string $path = '', int $source_id = 0 ): void {
+		if ( ! in_array( $this->request_method(), array( 'GET', 'HEAD' ), true ) || is_admin() || is_preview() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return;
+		}
+		$uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		if ( ! preg_match( '/\.md(?:\?|$)/i', $uri ) || preg_match( '/[\x00-\x20\x7f]/', $uri ) ) {
+			return;
+		}
+		$resolver = new UnavailableMarkdown( $this->options );
+		$result = $resolver->resolve( array( 'request_url' => $uri, 'post_type' => $post_type, 'path' => $path, 'source_post_id' => $source_id ) );
+		if ( null === $result ) {
+			return;
+		}
+		nocache_headers();
+		header( 'Cache-Control: no-store, max-age=0', true );
+		if ( 301 === $result['status'] ) {
+			if ( wp_safe_redirect( $result['url'], 301, 'LLM Friendly' ) ) {
+				exit;
+			}
+			return;
+		}
+		status_header( 410 );
+		header( 'Content-Type: text/markdown; charset=UTF-8', true );
+		header( 'X-Content-Type-Options: nosniff', true );
+		header( 'X-Robots-Tag: noindex', true );
+		if ( 'HEAD' !== $this->request_method() ) {
+			echo esc_html__( 'Gone', 'llm-friendly' ) . "\n";
+		}
+		exit;
 	}
 
 	/**

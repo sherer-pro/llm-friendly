@@ -4,7 +4,7 @@ Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
 Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -157,6 +157,10 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Users without `unfiltered_html` have custom Markdown sanitized with WordPress KSES. Heading markers are removed from the custom llms.txt notes block so user-provided notes cannot break the required llms.txt section order.
 
 == Changelog ==
+
+= 0.4.0 =
+* Add a provider-neutral hook for unavailable Markdown URLs, validated permanent redirects and withdrawal responses.
+
 
 = 0.3.0 =
 

@@ -24,6 +24,7 @@
 - `inc/Diagnostics.php` - bounded same-origin HTTP checks, override source recording and resumable coverage/topic projection.
 - `inc/Admin.php` - Settings UI, AJAX exclusion search, regenerate action, editor metabox.
 - `inc/Rewrites.php` - query vars and rewrite rules for `/llms.txt` and `/{base}/{post_type}/{path}.md`.
+- `inc/UnavailableMarkdown.php` — независимый контракт провайдера недоступных Markdown URL, анонимная проверка назначений, без собственной базы правил.
 - `inc/Response.php` и `inc/Markdown.php` - shared helpers for HTTP conditional responses and Markdown-safe strings/URLs.
 - `assets/llmf-admin.js` и `assets/llmf-admin.css` - plain admin JS/CSS, no bundler.
 - `tests/run.php` - lightweight regression runner with WordPress stubs; it is not PHPUnit.
@@ -45,7 +46,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 439 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 485 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.

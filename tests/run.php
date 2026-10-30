@@ -386,6 +386,7 @@ require_once __DIR__ . '/../inc/Llms.php';
 require_once __DIR__ . '/../inc/Rewrites.php';
 require_once __DIR__ . '/../inc/Diagnostics.php';
 require_once __DIR__ . '/../inc/Admin.php';
+require_once __DIR__ . '/../inc/UnavailableMarkdown.php';
 require_once __DIR__ . '/../inc/Plugin.php';
 
 use LLMFriendly\Admin;
@@ -1030,4 +1031,5 @@ try {
 unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'] );
 
 require __DIR__ . '/mechanics.php';
+require __DIR__ . '/unavailable-markdown.php';
 echo 'OK: ' . (int) $GLOBALS['llmf_tests_run'] . " assertions\n";

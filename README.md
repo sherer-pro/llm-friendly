@@ -5,7 +5,7 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.3.0**
+Current version: **0.4.0**
 
 Version 0.3.0 adds an optional structured catalog, enhanced content processing and diagnostics. Existing and new installations keep legacy behavior by default; enable either new mode independently after comparing its output.
 
@@ -176,3 +176,13 @@ GPL-3.0-or-later
 `git add -f`. Исходники, необходимые тестовые данные и эталоны остаются в Git.
 После нового клонирования создайте граф штатной командой проекта перед его
 использованием; наличие сохранённого графа в истории Git не требуется.
+
+## Unavailable Markdown URL resolution
+
+`llmf_resolve_unavailable_markdown( $resolution, $context )` lets independent integrations supply a replacement for an unavailable `.md` URL. LLM Friendly stores no redirect rules and assumes no custom post status. Without a provider, responses are unchanged. The hook also covers historical base paths returning a WordPress 404; the server must route these requests to WordPress.
+
+The context contains `request_url` (origin-relative request URI), `post_type`, `path` and `source_post_id` (zero when unknown). Recognized endpoints provide the parsed type/path; historical endpoints may leave them empty. Providers return `null`, `array( 'status' => 410 )`, or `array( 'status' => 301, 'target_post_id' => 123 )`, with integer values. Valid available exports bypass this hook.
+
+Resolution and validation run anonymously. A destination must be published, password-free and publicly exportable. Enabled, selected and eligible Markdown is preferred; otherwise its public HTML permalink is used. Destinations must stay on the current site and within its WordPress base path. Invalid responses, missing/private destinations and self redirects are ignored. No HTTP lookups are performed.
+
+Only GET/HEAD are handled. Redirect and withdrawal responses send `Cache-Control: no-store, max-age=0`; HEAD omits the body. A 410 has a generic Markdown body without source titles or content. Existing content-negotiation, index generation and export eligibility remain unchanged.

@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: LLM Friendly 0.3.0\n"
+"Project-Id-Version: LLM Friendly 0.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/llm-friendly-git\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -1248,3 +1248,6 @@ msgstr "Tous les contenus publics sélectionnés, avec index thématiques et pag
 #: inc/Admin.php:827
 msgid "Item count and excerpt controls below apply to legacy mode. Structured mode lists up to five recently modified items per type with descriptions."
 msgstr "Les réglages du nombre de contenus et des extraits ci-dessous s’appliquent au mode précédent. Le mode structuré affiche jusqu’à cinq contenus récemment modifiés par type, avec leurs descriptions."
+#: inc/Plugin.php
+msgid "Gone"
+msgstr "Contenu retiré"
