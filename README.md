@@ -163,6 +163,7 @@ The JSON block at the top of each Markdown export is a stable, plugin-defined me
 - `llmf_llms_description_max_length` changes the per-post llms.txt description length cap.
 - `llmf_markdown_metadata` filters the JSON metadata array emitted at the top of each Markdown export.
 - `llmf_markdown_cache_ttl` changes the transient TTL for cached Markdown export bodies.
+- `llmf_markdown_fallback_html( $html, $post )` lets a provider supply public HTML when the post content and Markdown override are both empty. The callback runs anonymously with the source post in block context. The sanitized fragment participates in the cache key. Supply HTML that can be converted directly without running shortcodes or block templates.
 - `llmf_llms_essential_links` filters curated link items emitted in the `llms.txt` Essential section.
 - `llmf_debug_headers_enabled` enables diagnostic `X-LLMF-*` headers for `llms.txt` responses when returning `true`.
 - `llmf_max_excluded_posts_per_type` changes the per-post-type exclusion cap.

@@ -995,8 +995,11 @@ define( 'COOKIEHASH', 'llmf-test' );
 $_COOKIE['wp-postpass_' . COOKIEHASH] = 'test-only-cookie';
 $GLOBALS['llmf_test_user_id'] = 7;
 $GLOBALS['llmf_test_parsed_blocks'] = array( array( 'blockName' => 'llmf/test-dynamic', 'innerHTML' => '' ) );
+$original_post = new WP_Post( array( 'ID' => 50 ) );
+$GLOBALS['post'] = $original_post;
 $GLOBALS['llmf_test_render_block'] = function () {
-	return '<p>' . ( get_current_user_id() || isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ) ? 'private-rendered-content' : 'public-rendered-content' ) . '</p>';
+	$text = get_current_user_id() || isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ) ? 'private-rendered-content' : 'public-rendered-content';
+	return '<p>' . $text . ' for ' . $GLOBALS['post']->ID . '</p>';
 };
 $dynamic_post = new WP_Post( array( 'ID' => 51, 'post_name' => 'dynamic', 'post_title' => 'Dynamic' ) );
 $public_md = call_private( $exporter, 'public_markdown_for_post', array( $dynamic_post ) );
@@ -1006,16 +1009,24 @@ assert_true( get_current_user_id() === 7 && $_COOKIE['wp-postpass_' . COOKIEHASH
 $GLOBALS['llmf_test_user_id'] = 0;
 $cached_public_md = call_private( $exporter, 'public_markdown_for_post', array( $dynamic_post ) );
 assert_true( $cached_public_md === $public_md, 'Anonymous readers receive the same public representation after privileged cache warming.' );
+assert_contains_text( 'public-rendered-content for 51', $public_md, 'The renderer receives the source post.' );
+$second_post = new WP_Post( array( 'ID' => 54, 'post_name' => 'another-dynamic' ) );
+assert_contains_text( 'public-rendered-content for 54', $exporter->inspect( $second_post )['markdown'], 'The next export renders with its own source post.' );
+assert_true( $GLOBALS['post'] === $original_post, 'Public responses and previews restore the caller post.' );
 
 $GLOBALS['llmf_test_user_id'] = 7;
-$GLOBALS['llmf_test_render_block'] = function () { throw new RuntimeException( 'Synthetic render failure.' ); };
+$GLOBALS['llmf_test_render_block'] = function () {
+	$GLOBALS['post'] = null;
+	throw new RuntimeException( 'Synthetic render failure.' );
+};
 try {
 	call_private( $exporter, 'public_markdown_for_post', array( new WP_Post( array( 'ID' => 52, 'post_title' => 'Failure' ) ) ) );
 	assert_true( false, 'The synthetic render failure must be propagated.' );
 } catch ( RuntimeException $error ) {
 	assert_true( get_current_user_id() === 7 && $_COOKIE['wp-postpass_' . COOKIEHASH] === 'test-only-cookie', 'Public context is restored even when dynamic rendering throws.' );
+	assert_true( $GLOBALS['post'] === $original_post, 'The caller post is restored when rendering throws.' );
 }
-unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'], $_COOKIE['wp-postpass_' . COOKIEHASH] );
+unset( $GLOBALS['post'], $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'], $_COOKIE['wp-postpass_' . COOKIEHASH] );
 
 $GLOBALS['llmf_test_parsed_blocks'] = array( array( 'blockName' => 'llmf/test-dynamic', 'innerHTML' => '' ) );
 $GLOBALS['llmf_test_render_block'] = function () {
@@ -1029,6 +1040,26 @@ try {
 	assert_true( get_current_user_id() === 7 && ! isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ), 'Public context restores cookie absence when a failing render callback creates a cookie.' );
 }
 unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'] );
+
+$fallback_post = new WP_Post( array( 'ID' => 55, 'post_type' => 'page', 'post_name' => 'catalog' ) );
+$fallback_html = '<p>Public catalog item</p>';
+$fallback_filter = function ( $html, $post ) use ( $fallback_post, &$fallback_html ) {
+	return $post === $fallback_post && get_current_user_id() === 0 ? $fallback_html : $html;
+};
+add_filter( 'llmf_markdown_fallback_html', $fallback_filter, 10, 2 );
+$catalog_md = call_private( $exporter, 'public_markdown_for_post', array( $fallback_post ) );
+assert_contains_text( 'Public catalog item', $catalog_md, 'The empty source accepts an anonymous HTML fragment.' );
+assert_true( $catalog_md === call_private( $exporter, 'public_markdown_for_post', array( $fallback_post ) ), 'The fallback fragment is stable on a repeat export.' );
+$fallback_html = '<p>Updated catalog</p>';
+$updated_md = call_private( $exporter, 'public_markdown_for_post', array( $fallback_post ) );
+assert_not_contains_text( 'Public catalog item', $updated_md, 'A removed catalog item cannot survive a warm body cache.' );
+assert_contains_text( 'Updated catalog', $updated_md, 'Provider updates reach the public response without editing the page.' );
+$GLOBALS['llmf_test_meta'][55][ Exporter::META_MD_OVERRIDE ] = 'Manual Markdown';
+$override_md = $exporter->inspect( $fallback_post )['markdown'];
+assert_not_contains_text( 'Updated catalog', $override_md, 'Catalog providers do not replace a manual override.' );
+assert_contains_text( 'Manual Markdown', $override_md, 'Manual Markdown remains the active source.' );
+remove_filter( 'llmf_markdown_fallback_html', $fallback_filter );
+unset( $GLOBALS['llmf_test_meta'][55] );
 
 require __DIR__ . '/mechanics.php';
 require __DIR__ . '/unavailable-markdown.php';

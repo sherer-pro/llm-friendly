@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Exporter {
 	/** Invalidate cached representations when conversion rules change. */
-	private const FORMAT = 'markdown-2';
+	private const FORMAT = 'markdown-3';
 	/**
 	 * Post meta key used to override Markdown body.
 	 */
@@ -71,15 +71,7 @@ final class Exporter {
 	 * @return string|null Public Markdown, or null when export is forbidden.
 	 */
 	private function public_markdown_for_post( WP_Post $post ): ?string {
-		$user_id     = get_current_user_id();
-		$cookie_name = defined( 'COOKIEHASH' ) ? 'wp-postpass_' . COOKIEHASH : '';
-		$had_cookie  = $cookie_name !== '' && array_key_exists( $cookie_name, $_COOKIE );
-		$cookie      = $had_cookie ? $_COOKIE[ $cookie_name ] : null;
-		if ( $cookie_name !== '' ) {
-			unset( $_COOKIE[ $cookie_name ] );
-		}
-		wp_set_current_user( 0 );
-		try {
+		return $this->with_render_context( $post, function () use ( $post ) {
 			if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
 				return null;
 			}
@@ -90,15 +82,17 @@ final class Exporter {
 			// Markdown override affects cache key (post meta updates don't change post_modified).
 			$override      = $this->get_markdown_override( $post );
 			$override_hash = $override !== '' ? md5( $override ) : '0';
+			$fallback_html = $this->fallback_html( $post, $override );
+			$fallback_hash = hash( 'sha256', $fallback_html );
 			$metadata      = $this->markdown_metadata_for_post( $post );
 			$metadata_hash = $this->metadata_hash( $metadata );
 
 			$profile = $this->options->get()['content_profile'];
 			$source_hash = Content::fingerprint( $post );
-			$key = 'llmf_md_' . md5( $ver . '|' . Content::FORMAT . '|' . self::FORMAT . '|' . $profile . '|' . $post->ID . '|' . $modified . '|' . $override_hash . '|' . $metadata_hash . '|' . $source_hash );
+			$key = 'llmf_md_' . md5( $ver . '|' . Content::FORMAT . '|' . self::FORMAT . '|' . $profile . '|' . $post->ID . '|' . $modified . '|' . $override_hash . '|' . $metadata_hash . '|' . $source_hash . '|' . $fallback_hash );
 			$md  = get_transient( $key );
 			if ( ! is_string( $md ) || $md === '' ) {
-				$md  = $this->post_to_markdown( $post, $override, $metadata );
+				$md  = $this->post_to_markdown( $post, $override, $metadata, $fallback_html );
 				$ttl = (int) apply_filters( 'llmf_markdown_cache_ttl', 3600, $post );
 				if ( $ttl < 0 ) {
 					$ttl = 0;
@@ -107,25 +101,66 @@ final class Exporter {
 			}
 
 			return $md;
-		} finally {
-			if ( $had_cookie ) {
-				$_COOKIE[ $cookie_name ] = $cookie;
-			} elseif ( $cookie_name !== '' ) {
-				unset( $_COOKIE[ $cookie_name ] );
-			}
-			wp_set_current_user( $user_id );
-		}
+		} );
 	}
 
 	/** Editor diagnostics and previews always use the same anonymous representation. */
 	public function inspect( WP_Post $post ): array {
-		return Content::anonymous( function () use ( $post ) {
+		return $this->with_render_context( $post, function () use ( $post ) {
 			if ( ! $this->options->can_export_post( $post, 'markdown' ) ) {
 				return array( 'markdown' => '', 'warnings' => array( 'not_exportable' ), 'dependencies' => array() );
 			}
-			$md = $this->post_to_markdown( $post, $this->get_markdown_override( $post ) );
+			$override = $this->get_markdown_override( $post );
+			$md = $this->post_to_markdown( $post, $override, array(), $this->fallback_html( $post, $override ) );
 			return array( 'markdown' => $md, 'warnings' => array_values( array_unique( $this->warnings ) ), 'dependencies' => array_keys( $this->dependencies ) );
 		} );
+	}
+
+	/** Supply the source post to render_block() and template tags without changing the main query. */
+	private function with_render_context( WP_Post $post, callable $render ) {
+		$loop_globals = array( 'post', 'id', 'authordata', 'currentday', 'currentmonth', 'page', 'pages', 'multipage', 'more', 'numpages' );
+		$saved = array();
+		foreach ( $loop_globals as $key ) {
+			if ( array_key_exists( $key, $GLOBALS ) ) {
+				$saved[ $key ] = $GLOBALS[ $key ];
+			}
+		}
+		$has_supports = class_exists( '\WP_Block_Supports' );
+		$block_to_render = $has_supports ? \WP_Block_Supports::$block_to_render : null;
+		$GLOBALS['post'] = $post;
+		try {
+			return Content::anonymous( $render );
+		} finally {
+			foreach ( $loop_globals as $key ) {
+				if ( array_key_exists( $key, $saved ) ) {
+					$GLOBALS[ $key ] = $saved[ $key ];
+				} else {
+					unset( $GLOBALS[ $key ] );
+				}
+			}
+			if ( $has_supports ) {
+				\WP_Block_Supports::$block_to_render = $block_to_render;
+			}
+		}
+	}
+
+	private function fallback_html( WP_Post $post, string $override ): string {
+		if ( trim( $override ) !== '' || trim( $post->post_content ) !== '' ) {
+			return '';
+		}
+
+		/**
+		 * Provide public HTML for a post with empty stored content and no Markdown override.
+		 *
+		 * Evaluated anonymously before cache lookup. The sanitized fragment is part of the cache key.
+		 * Return ready-to-convert HTML. WordPress blocks and shortcodes are not executed in it.
+		 *
+		 * @param string  $html Public HTML fragment, empty by default.
+		 * @param WP_Post $post Post being exported.
+		 */
+		$html = apply_filters( 'llmf_markdown_fallback_html', '', $post );
+
+		return is_string( $html ) ? wp_kses_post( $html ) : '';
 	}
 
 	/**
@@ -233,10 +268,11 @@ final class Exporter {
 	 * @param WP_Post             $post Post object.
 	 * @param string              $override_md Custom Markdown that should replace post content.
 	 * @param array<string,mixed> $meta Metadata for the JSON block.
+	 * @param string              $fallback_html Public HTML supplied for empty content.
 	 *
 	 * @return string
 	 */
-	private function post_to_markdown( WP_Post $post, string $override_md = '', array $meta = array() ): string {
+	private function post_to_markdown( WP_Post $post, string $override_md = '', array $meta = array(), string $fallback_html = '' ): string {
 		$this->enhanced = $this->options->get()['content_profile'] === 'enhanced';
 		$this->canonical = (string) get_permalink( $post );
 		$this->warnings = array();
@@ -259,6 +295,8 @@ final class Exporter {
 			} else {
 				$body = $override_md;
 			}
+		} elseif ( $fallback_html !== '' ) {
+			$body = $this->html_block_to_md( $fallback_html );
 		} else {
 			$blocks = $this->content_blocks( (string) $post->post_content );
 			$body   = trim( $this->blocks_to_markdown( $blocks ) );

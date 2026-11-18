@@ -48,7 +48,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 593 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 603 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
