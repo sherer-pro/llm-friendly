@@ -22,6 +22,7 @@
 			"@php -l inc/Response.php",
 			"@php -l inc/Rewrites.php",
 			"@php -l tests/run.php",
+			"@php -l tests/markdown-conversion.php",
 			"@php -l tests/unavailable-markdown.php",
 			"@php -l tests/mechanics.php",
 			"@php -l tests/mechanics-stubs.php",

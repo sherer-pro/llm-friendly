@@ -28,6 +28,7 @@
 - `inc/Response.php` и `inc/Markdown.php` - shared helpers for HTTP conditional responses and Markdown-safe strings/URLs.
 - `assets/llmf-admin.js` и `assets/llmf-admin.css` - plain admin JS/CSS, no bundler.
 - `tests/run.php` - lightweight regression runner with WordPress stubs; it is not PHPUnit.
+- `tests/markdown-conversion.php` - isolated shared converter regressions for both profiles, including list serialization, quote attribution, inline formatting and canonical-relative URLs.
 - `tests/mechanics.php`, `tests/mechanics-stubs.php`, `tests/fixtures/` - opt-in behavior, scale/caching/security checks and exact 0.2.1 legacy outputs.
 - `.gitattributes` keeps text fixtures under `tests/fixtures/` in LF format so exact output comparisons survive Windows checkouts with `core.autocrlf=true`.
 - `tests/wordpress-mechanics.php` - self-cleaning integration runner for an active local WordPress; requires explicit write guard and root path.
@@ -47,7 +48,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 520 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 593 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.

@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Converts WP content into LLM-friendly Markdown.
  */
 final class Exporter {
+	/** Invalidate cached representations when conversion rules change. */
+	private const FORMAT = 'markdown-2';
 	/**
 	 * Post meta key used to override Markdown body.
 	 */
@@ -93,7 +95,7 @@ final class Exporter {
 
 			$profile = $this->options->get()['content_profile'];
 			$source_hash = Content::fingerprint( $post );
-			$key = 'llmf_md_' . md5( $ver . '|' . Content::FORMAT . '|' . $profile . '|' . $post->ID . '|' . $modified . '|' . $override_hash . '|' . $metadata_hash . '|' . $source_hash );
+			$key = 'llmf_md_' . md5( $ver . '|' . Content::FORMAT . '|' . self::FORMAT . '|' . $profile . '|' . $post->ID . '|' . $modified . '|' . $override_hash . '|' . $metadata_hash . '|' . $source_hash );
 			$md  = get_transient( $key );
 			if ( ! is_string( $md ) || $md === '' ) {
 				$md  = $this->post_to_markdown( $post, $override, $metadata );
@@ -283,14 +285,19 @@ final class Exporter {
 		return $blocks;
 	}
 
-	private function enhanced_html( string $html ): string {
-		if ( ! $this->enhanced ) {
-			return $html;
-		}
-		return preg_replace_callback( '~\b(href|src)\s*=\s*(["\'])(.*?)\2~is', function ( $match ) {
-			$url = Content::absolute_url( $match[3], $this->canonical );
-			return $match[1] . '=' . $match[2] . esc_attr( $url ) . $match[2];
+	private function resolved_html_references( string $html ): string {
+		// Only actual tags have attributes; encoded HTML examples are literal code/text.
+		return preg_replace_callback( '~<[a-z][a-z0-9:-]*\b[^>]*>~i', function ( $tag ) {
+			return preg_replace_callback( '~\b(href|src)\s*=\s*(["\'])(.*?)\2~is', function ( $match ) {
+				$url = $this->reference_destination( $match[3] );
+				return $match[1] . '=' . $match[2] . esc_attr( $url ) . $match[2];
+			}, $tag[0] );
 		}, $html );
+	}
+
+	/** Relative references belong to the HTML source, including fragment-only links. */
+	private function reference_destination( string $url ): string {
+		return $this->canonical !== '' ? Content::absolute_url( $url, $this->canonical ) : Markdown::url_destination( $url );
 	}
 
 	/**
@@ -354,7 +361,7 @@ final class Exporter {
 				$ordered = ! empty( $attrs['ordered'] );
 				$start   = isset( $attrs['start'] ) ? (int) $attrs['start'] : 1;
 				$lines   = $this->list_blocks_to_md( $inner, $ordered, $start, $list_depth );
-				if ( $this->enhanced && empty( $inner ) ) {
+				if ( empty( $inner ) ) {
 					$lines = $this->html_block_to_md( $innerHTML );
 				}
 				if ( $lines !== '' ) {
@@ -378,7 +385,7 @@ final class Exporter {
 
 			if ( $name === 'core/media-text' ) {
 				$chunks = array();
-				$media  = isset( $attrs['mediaUrl'] ) ? Markdown::url_destination( $attrs['mediaUrl'], array( 'http', 'https' ), true ) : '';
+				$media  = isset( $attrs['mediaUrl'] ) ? Markdown::url_destination( $this->reference_destination( (string) $attrs['mediaUrl'] ), array( 'http', 'https' ), true ) : '';
 				if ( $media !== '' ) {
 					$alt      = isset( $attrs['mediaAlt'] ) ? (string) $attrs['mediaAlt'] : '';
 					$chunks[] = $this->build_image_markdown( $media, $alt, '' );
@@ -537,13 +544,10 @@ final class Exporter {
 	 * @return string
 	 */
 	private function html_inline_to_md( $html ) {
-		$html = $this->enhanced_html( (string) $html );
 		$html = wp_kses_post( (string) $html );
-		if ( $this->enhanced ) {
-			$converted = $this->enhanced_inline_to_md( $html );
-			if ( $converted !== null ) {
-				return $converted;
-			}
+		$converted = $this->enhanced_inline_to_md( $html );
+		if ( $converted !== null ) {
+			return $converted;
 		}
 		if ( $this->enhanced ) {
 			$html = preg_replace_callback( '~<img\b[^>]*>~is', function ( $match ) {
@@ -552,48 +556,44 @@ final class Exporter {
 			}, $html );
 		}
 
+		// Protect code before replacing links or stripping HTML, also without ext-dom.
+		$protected = array();
+		$prefix = 'LLMF_CODE_' . hash( 'sha256', $html ) . '_';
+		$html = preg_replace_callback( '~<(code|kbd)\b[^>]*>(.*?)</\1>~is', function ( $match ) use ( &$protected, $prefix ) {
+			$chunks = preg_split( '~(<a\b[^>]*>.*?</a>)~is', $match[2], -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
+			$code = '';
+			foreach ( $chunks as $chunk ) {
+				if ( preg_match( '~^<a\b[^>]*href=["\']([^"\']*)["\'][^>]*>(.*?)</a>$~is', $chunk, $link ) ) {
+					$label = $this->inline_code( html_entity_decode( wp_strip_all_tags( $link[2] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+					$href = $this->reference_destination( $link[1] );
+					$code .= $href !== '' ? '[' . $label . '](' . $href . ')' : $label;
+				} else {
+					$code .= $this->inline_code( html_entity_decode( wp_strip_all_tags( $chunk ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+				}
+			}
+			$key = $prefix . count( $protected ) . '_END';
+			$protected[ $key ] = $code;
+			return $key;
+		}, $html );
+
 		$html = preg_replace_callback(
 			'~<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>~is',
 			function ( $m ) {
-				$href = Markdown::url_destination( trim( (string) $m[1] ) );
+				$href = $this->reference_destination( (string) $m[1] );
 				$text = Markdown::link_text( (string) $m[2] );
 				if ( $href === '' ) {
 					return $text;
 				}
-				if ( $text === '' ) {
-					$text = $href;
-				}
-
 				return '[' . $text . '](' . $href . ')';
 			},
 			$html
 		);
 
-		$html = preg_replace_callback(
-			'~<code[^>]*>(.*?)</code>~is',
-			function ( $m ) {
-				$t = wp_strip_all_tags( (string) $m[1], true );
-				$t = html_entity_decode( $t, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-
-				return $this->inline_code( $t );
-			},
-			$html
-		);
-
-		$html = preg_replace_callback(
-			'~<kbd[^>]*>(.*?)</kbd>~is',
-			function ( $m ) {
-				$t = wp_strip_all_tags( (string) $m[1], true );
-				$t = html_entity_decode( $t, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-
-				return $this->inline_code( $t );
-			},
-			$html
-		);
-
-		$html = preg_replace( '~<(strong|b)>(.*?)</\1>~is', '**$2**', $html );
-		$html = preg_replace( '~<(em|i)>(.*?)</\1>~is', '*$2*', $html );
-		$html = preg_replace( '~<(del|s)>(.*?)</\1>~is', '~~$2~~', $html );
+		$html = preg_replace_callback( '~<(strong|b|em|i|del|s)\b[^>]*>(.*?)</\1>~is', static function ( $match ) {
+			$marker = in_array( strtolower( $match[1] ), array( 'strong', 'b' ), true ) ? '**' : ( in_array( strtolower( $match[1] ), array( 'del', 's' ), true ) ? '~~' : '*' );
+			preg_match( '/^(\s*)(.*?)(\s*)$/s', $match[2], $space );
+			return $space[1] . ( $space[2] !== '' ? $marker . $space[2] . $marker : '' ) . $space[3];
+		}, $html );
 
 		$html = preg_replace( '~<br\s*/?>~i', "\n", $html );
 
@@ -610,7 +610,7 @@ final class Exporter {
 		$text = preg_replace( "/[ \t]+/", " ", $text );
 		$text = preg_replace( "/\n{3,}/", "\n\n", $text );
 
-		return trim( (string) $text );
+		return strtr( trim( (string) $text ), $protected );
 	}
 
 	/** DOM values are already decoded once; keep code spans out of text normalization. */
@@ -625,8 +625,18 @@ final class Exporter {
 		}
 		$protected = array();
 		$prefix = 'LLMF_INLINE_' . hash( 'sha256', $html ) . '_';
-		$walk = function ( $node ) use ( &$walk, &$protected, $prefix ): string {
+		$protect = function ( string $text ) use ( &$protected, $prefix ): string {
+			$key = $prefix . count( $protected ) . '_END';
+			$protected[ $key ] = $this->inline_code( $text );
+			return $key;
+		};
+		$walk = function ( $node, bool $code = false ) use ( &$walk, $protect ): string {
 			if ( $node instanceof \DOMText ) {
+				if ( $code ) {
+					$text = (string) $node->nodeValue;
+					preg_match( '/^(\s*)(.*?)(\s*)$/s', $text, $space );
+					return $space[1] . ( $space[2] !== '' ? $protect( $space[2] ) : '' ) . $space[3];
+				}
 				return (string) $node->nodeValue;
 			}
 			if ( ! ( $node instanceof \DOMElement ) ) {
@@ -634,17 +644,20 @@ final class Exporter {
 			}
 			$tag = strtolower( $node->tagName );
 			if ( $tag === 'code' || $tag === 'kbd' ) {
-				$key = $prefix . count( $protected ) . '_END';
-				$protected[ $key ] = $this->inline_code( (string) $node->textContent );
-				return $key;
+				if ( $node->getElementsByTagName( 'a' )->length === 0 ) {
+					return $protect( (string) $node->textContent );
+				}
+				$text = '';
+				foreach ( $node->childNodes as $child ) { $text .= $walk( $child, true ); }
+				return $text;
 			}
 			if ( $tag === 'br' ) {
 				return "\n";
 			}
-			if ( $tag === 'img' ) {
+			if ( $this->enhanced && $tag === 'img' ) {
 				return $this->build_image_markdown( (string) $node->getAttribute( 'src' ), (string) $node->getAttribute( 'alt' ), '' );
 			}
-			if ( $tag === 'audio' || $tag === 'video' ) {
+			if ( $this->enhanced && ( $tag === 'audio' || $tag === 'video' ) ) {
 				$urls = array( (string) $node->getAttribute( 'src' ) );
 				foreach ( $node->getElementsByTagName( 'source' ) as $source ) { $urls[] = (string) $source->getAttribute( 'src' ); }
 				$links = array();
@@ -659,18 +672,20 @@ final class Exporter {
 			}
 			$text = '';
 			foreach ( $node->childNodes as $child ) {
-				$text .= $walk( $child );
+				$text .= $walk( $child, $code );
 			}
 			if ( $tag === 'a' ) {
-				$href = Content::absolute_url( (string) $node->getAttribute( 'href' ), $this->canonical );
-				$label = trim( str_replace( array( '[', ']' ), array( '\\[', '\\]' ), $text ) );
-				return $href === '' ? $text : '[' . ( $label !== '' ? $label : $href ) . '](' . $href . ')';
+				$href = $this->reference_destination( (string) $node->getAttribute( 'href' ) );
+				preg_match( '/^(\s*)(.*?)(\s*)$/s', $text, $space );
+				$label = str_replace( array( '[', ']' ), array( '\\[', '\\]' ), $space[2] );
+				return $href === '' ? $text : $space[1] . '[' . $label . '](' . $href . ')' . $space[3];
 			}
 			if ( in_array( $tag, array( 'strong', 'b', 'em', 'i', 'del', 's' ), true ) ) {
 				$marker = in_array( $tag, array( 'strong', 'b' ), true ) ? '**' : ( in_array( $tag, array( 'del', 's' ), true ) ? '~~' : '*' );
-				return $marker . $text . $marker;
+				preg_match( '/^(\s*)(.*?)(\s*)$/s', $text, $space );
+				return $space[1] . ( $space[2] !== '' ? $marker . $space[2] . $marker : '' ) . $space[3];
 			}
-			return $text . ( in_array( $tag, array( 'p', 'div', 'li' ), true ) ? "\n\n" : '' );
+			return $text . ( in_array( $tag, array( 'p', 'li' ), true ) || ( $this->enhanced && $tag === 'div' ) ? "\n\n" : '' );
 		};
 		$text = '';
 		foreach ( $root->childNodes as $child ) {
@@ -775,6 +790,9 @@ final class Exporter {
 	private function inline_code( string $text ): string {
 		$text = $this->normalize_newlines( $text );
 		$text = str_replace( "\n", ' ', $text );
+		if ( $text === '' ) {
+			return '';
+		}
 
 		$max_ticks = 0;
 		if ( preg_match_all( '/`+/', $text, $matches ) ) {
@@ -784,7 +802,7 @@ final class Exporter {
 		}
 
 		$ticks = str_repeat( '`', max( 1, $max_ticks + 1 ) );
-		if ( $max_ticks > 0 || preg_match( '/^\s|\s$/', $text ) ) {
+		if ( $max_ticks > 0 || ( trim( $text, ' ' ) !== '' && preg_match( '/^\s|\s$/', $text ) ) ) {
 			return $ticks . ' ' . $text . ' ' . $ticks;
 		}
 
@@ -905,6 +923,19 @@ final class Exporter {
 	 * @return string
 	 */
 	private function list_blocks_to_md( $innerBlocks, $ordered, $start, $depth, int $indent_width = 0 ) {
+		// Use one list renderer for both Gutenberg serializations and Classic HTML.
+		$tag = $ordered ? 'ol' : 'ul';
+		$html = '<' . $tag . ' start="' . (int) $start . '">';
+		foreach ( (array) $innerBlocks as $block ) {
+			if ( is_array( $block ) ) {
+				$html .= $this->stored_list_html( $block );
+			}
+		}
+		$doc = $this->dom_from_html_fragment( $html . '</' . $tag . '>' );
+		if ( $doc ) {
+			return $this->dom_list_to_md( $doc->getElementsByTagName( $tag )->item( 0 ), $ordered, $depth, $indent_width );
+		}
+
 		$lines = array();
 		$i     = 0;
 
@@ -925,7 +956,7 @@ final class Exporter {
 					$txt = trim( $this->html_block_to_md( $innerHTML ) );
 				}
 				if ( $txt !== '' ) {
-					$indent  = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
+					$indent  = str_repeat( ' ', $indent_width );
 					$prefix  = $ordered ? ( (int) $start + $i ) . '. ' : '- ';
 					$lines[] = $indent . $prefix . $txt;
 					$i ++;
@@ -935,9 +966,9 @@ final class Exporter {
 
 			$itemText = trim( $this->html_inline_to_md( $innerHTML ) );
 
-			$indent  = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
+			$indent  = str_repeat( ' ', $indent_width );
 			$prefix  = $ordered ? ( (int) $start + $i ) . '. ' : '- ';
-			$lines[] = $indent . $prefix . $itemText;
+			$lines[] = $indent . $prefix . str_replace( "\n", "\n" . $indent . str_repeat( ' ', strlen( $prefix ) ), $itemText );
 
 			foreach ( $inner as $child ) {
 				if ( is_array( $child ) && isset( $child['blockName'] ) && $child['blockName'] === 'core/list' ) {
@@ -955,7 +986,35 @@ final class Exporter {
 			$i ++;
 		}
 
-		return $this->enhanced ? rtrim( implode( "\n", $lines ) ) : trim( implode( "\n", $lines ) );
+		return rtrim( implode( "\n", $lines ) );
+	}
+
+	/** Reassemble static list slots without running dynamic blocks or duplicating children. */
+	private function stored_list_html( array $block ): string {
+		$name = $block['blockName'] ?? '';
+		if ( ! in_array( $name, array( 'core/list', 'core/list-item' ), true ) ) {
+			return $this->block_html( $block );
+		}
+		$children = $block['innerBlocks'] ?? array();
+		$html = '';
+		$i = 0;
+		if ( ! empty( $block['innerContent'] ) ) {
+			foreach ( $block['innerContent'] as $chunk ) {
+				$html .= is_string( $chunk ) ? $chunk : ( isset( $children[ $i ] ) ? $this->stored_list_html( $children[ $i ++ ] ) : '' );
+			}
+			return $html;
+		}
+		$html = (string) ( $block['innerHTML'] ?? '' );
+		if ( empty( $children ) ) {
+			return $html;
+		}
+		$nested = '';
+		foreach ( $children as $child ) { $nested .= $this->stored_list_html( $child ); }
+		if ( $name === 'core/list-item' ) {
+			return preg_match( '~</li>\s*$~i', $html ) ? preg_replace_callback( '~</li>\s*$~i', static function () use ( $nested ) { return $nested . '</li>'; }, $html ) : '<li>' . $html . $nested . '</li>';
+		}
+		$tag = empty( $block['attrs']['ordered'] ) ? 'ul' : 'ol';
+		return '<' . $tag . ' start="' . (int) ( $block['attrs']['start'] ?? 1 ) . '">' . $nested . '</' . $tag . '>';
 	}
 
 	/**
@@ -969,7 +1028,7 @@ final class Exporter {
 	 * @return string
 	 */
 	private function html_block_to_md( $html ) {
-		$html = $this->enhanced_html( (string) $html );
+		$html = (string) $html;
 		if ( trim( $html ) === '' ) {
 			return '';
 		}
@@ -1132,22 +1191,22 @@ final class Exporter {
 		}
 
 		$paras = array();
-
+		$body = '';
 		foreach ( $bq->childNodes as $child ) {
-			if ( $child instanceof \DOMElement && strtolower( $child->tagName ) === 'p' ) {
+			if ( $child instanceof \DOMElement && strtolower( $child->tagName ) === 'cite' ) {
+				$t = trim( $this->html_inline_to_md( $body ) );
+				if ( $t !== '' ) { $paras[] = $t; }
+				$body = '';
 				$t = trim( $this->html_inline_to_md( $this->dom_inner_html( $child ) ) );
 				if ( $t !== '' ) {
 					$paras[] = $t;
 				}
+			} else {
+				$body .= $bq->ownerDocument->saveHTML( $child );
 			}
 		}
-
-		if ( empty( $paras ) ) {
-			$t = trim( $this->html_inline_to_md( $this->dom_inner_html( $bq ) ) );
-			if ( $t !== '' ) {
-				$paras[] = $t;
-			}
-		}
+		$t = trim( $this->html_inline_to_md( $body ) );
+		if ( $t !== '' ) { $paras[] = $t; }
 
 		$text = trim( implode( "\n\n", $paras ) );
 		if ( $text === '' ) {
@@ -1215,7 +1274,7 @@ final class Exporter {
 				continue;
 			}
 
-			$src = Markdown::url_destination( (string) $img->getAttribute( 'src' ), array( 'http', 'https' ), true );
+			$src = Markdown::url_destination( $this->reference_destination( (string) $img->getAttribute( 'src' ) ), array( 'http', 'https' ), true );
 			if ( $src === '' ) {
 				continue;
 			}
@@ -1249,9 +1308,7 @@ final class Exporter {
 	 * @return string Markdown fragment with the image.
 	 */
 	private function build_image_markdown( string $url, string $alt, string $caption ): string {
-		if ( $this->enhanced ) {
-			$url = Content::absolute_url( $url, $this->canonical );
-		}
+		$url = $this->reference_destination( $url );
 		$url     = Markdown::url_destination( $url, array( 'http', 'https' ), true );
 		$alt     = Markdown::plain_text_line( $alt );
 		$caption = Markdown::plain_text_line( $caption );
@@ -1590,7 +1647,7 @@ final class Exporter {
 		}
 
 		$lines = array();
-		$i     = $this->enhanced && $list->hasAttribute( 'start' ) ? (int) $list->getAttribute( 'start' ) : 1;
+		$i     = $list->hasAttribute( 'start' ) ? (int) $list->getAttribute( 'start' ) : 1;
 
 		foreach ( $list->childNodes as $child ) {
 			if ( ! ( $child instanceof \DOMElement ) ) {
@@ -1600,40 +1657,41 @@ final class Exporter {
 				continue;
 			}
 
-			$indent = $this->enhanced ? str_repeat( ' ', $indent_width ) : str_repeat( '  ', max( 0, (int) $depth ) );
+			$indent = str_repeat( ' ', $indent_width );
 			$prefix = $ordered ? ( $i . '. ' ) : '- ';
-
-			$li_text_parts = array();
-			foreach ( $child->childNodes as $li_child ) {
-				if ( $li_child instanceof \DOMElement ) {
-					$t = strtolower( $li_child->tagName );
-					if ( $t === 'ul' || $t === 'ol' ) {
-						continue;
-					}
+			$continuation = $indent . str_repeat( ' ', strlen( $prefix ) );
+			$buffer = '';
+			$first = true;
+			$flush = function () use ( &$buffer, &$first, &$lines, $indent, $prefix, $continuation ): void {
+				$txt = trim( $this->html_inline_to_md( $buffer ) );
+				$buffer = '';
+				if ( $txt !== '' ) {
+					$lines[] = ( $first ? $indent . $prefix : "\n" . $continuation ) . str_replace( "\n", "\n" . $continuation, $txt );
+					$first = false;
 				}
-				$li_text_parts[] = $child->ownerDocument->saveHTML( $li_child );
-			}
-
-			$txt     = trim( $this->html_inline_to_md( implode( '', $li_text_parts ) ) );
-			$lines[] = $indent . $prefix . $txt;
-
+			};
 			foreach ( $child->childNodes as $li_child ) {
-				if ( ! ( $li_child instanceof \DOMElement ) ) {
-					continue;
-				}
-				$t = strtolower( $li_child->tagName );
+				$t = $li_child instanceof \DOMElement ? strtolower( $li_child->tagName ) : '';
 				if ( $t === 'ul' || $t === 'ol' ) {
+					$flush();
+					if ( $first ) { $lines[] = $indent . $prefix; $first = false; }
 					$nested = $this->dom_list_to_md( $li_child, $t === 'ol', (int) $depth + 1, $indent_width + strlen( $prefix ) );
 					if ( trim( $nested ) !== '' ) {
+						// CommonMark only permits a list starting at 1 to interrupt a paragraph.
+						if ( $t === 'ol' && $li_child->hasAttribute( 'start' ) && (int) $li_child->getAttribute( 'start' ) !== 1 ) { $lines[] = ''; }
 						$lines[] = $nested;
 					}
+				} else {
+					$buffer .= $child->ownerDocument->saveHTML( $li_child );
 				}
 			}
+			$flush();
+			if ( $first ) { $lines[] = $indent . $prefix; }
 
 			$i ++;
 		}
 
-		return $this->enhanced ? rtrim( implode( "\n", $lines ) ) : trim( implode( "\n", $lines ) );
+		return rtrim( implode( "\n", $lines ) );
 	}
 
 	/**
@@ -1659,7 +1717,7 @@ final class Exporter {
 			return $this->fallback_plain_table( $html );
 		}
 
-		$table_html = $this->enhanced_html( $m[0] );
+		$table_html = $this->resolved_html_references( $m[0] );
 		if ( $this->enhanced && preg_match( '~\b(?:rowspan|colspan)\s*=\s*["\']?(?:[2-9]|[1-9][0-9]+)~i', $table_html ) ) {
 			$this->warnings[] = 'complex_table_html';
 			$result = wp_kses( $table_html, array(

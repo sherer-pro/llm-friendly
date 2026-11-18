@@ -1032,4 +1032,5 @@ unset( $GLOBALS['llmf_test_render_block'], $GLOBALS['llmf_test_parsed_blocks'] )
 
 require __DIR__ . '/mechanics.php';
 require __DIR__ . '/unavailable-markdown.php';
+$markdown_conversion_cases = require __DIR__ . '/markdown-conversion.php';
 echo 'OK: ' . (int) $GLOBALS['llmf_tests_run'] . " assertions\n";

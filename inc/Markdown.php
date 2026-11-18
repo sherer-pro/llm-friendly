@@ -149,6 +149,11 @@ final class Markdown {
 		foreach ( $lines as $line ) {
 			$raw  = (string) $line;
 			$trim = trim( $raw );
+			// Keep list paragraphs, nested blocks and their separating blank lines together.
+			if ( $cur_type === 'list' && ( $trim === '' || preg_match( '/^(?: {2,}|\t)/', $raw ) ) ) {
+				$cur_lines[] = $raw;
+				continue;
+			}
 
 			$is_fence = preg_match( '/^\s{0,3}```/', $raw ) === 1;
 			if ( $preserve ) {
@@ -190,7 +195,7 @@ final class Markdown {
 				$type = 'heading';
 			} elseif ( preg_match( '/^\s{0,3}>\s?/', $raw ) ) {
 				$type = 'quote';
-			} elseif ( preg_match( $preserve ? '/^\s*(\d+\.|[-+*])\s+/' : '/^\s{0,3}(\d+\.|[-+*])\s+/', $raw ) ) {
+			} elseif ( preg_match( '/^\s*(\d+\.|[-+*])(?:\s+|$)/', $raw ) ) {
 				$type = 'list';
 			} elseif ( strpos( $raw, '|' ) !== false && preg_match( '/^\s*\|?.*\|.*$/', $raw ) ) {
 				$type = 'table';

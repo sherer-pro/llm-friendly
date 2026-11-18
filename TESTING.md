@@ -20,6 +20,10 @@ composer run test
 
 These tests use WordPress stubs to cover Markdown helper safety, settings sanitization, `llms.txt` linked-list structure, discovery relations, Markdown canonical/noindex/Vary headers, content-negotiation decisions, export eligibility, and Gutenberg block conversion for links, files, embeds, details, nested content, and code fences.
 
+`tests/markdown-conversion.php` runs isolated fixtures in both content profiles as part of the same suite. It covers old HTML-only lists, new list-item slots, empty lists, mixed three-level nesting, non-1 ordered starts, marker-width changes, multiline items, paragraphs after child lists, quote citations, linked/code labels, entities, delimiter whitespace, canonical-relative links/images in a subdirectory installation, unsafe destinations and old warmed cache entries. The captured 0.2.1 fixtures remain unchanged.
+
+For conversion acceptance, parse the resulting Markdown with a CommonMark/GFM parser and compare list trees (item order/text, list type/start and parent), quote attribution and inline nodes with source HTML. An ordered child starting above 1 needs a blank line to prevent CommonMark treating its marker as paragraph text. Verify code samples become code nodes, links inside code remain links, and fragment-only references resolve to existing canonical HTML IDs from both HTTP responses and saved `.md` files. Keep public HTTP snapshots and temporary measurements in ignored local directories; do not run the database-writing WordPress suites without explicit authorization.
+
 ## WordPress Integration Scenarios
 
 Verify in a local WordPress 6.0+ install with PHP 7.4+:
