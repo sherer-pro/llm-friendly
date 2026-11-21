@@ -25,8 +25,5 @@ security/
 assets/public/
 upload/
 
-# Graphify
 
 # Generated graphs remain local, including nested corpus roots.
-graphify-out/
-graphify-out.next/
