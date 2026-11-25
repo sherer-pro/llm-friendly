@@ -1,16 +1,6 @@
 # AGENTS.md
 
-Этот файл - рабочая шпаргалка для автоматизации в репозитории `llm-friendly`. Обновляй его в том же PR/коммите, если меняются структура проекта, команды, зависимости, минимальные версии, CI/CD, локализация, релизный процесс или правила graphify.
-
-## Graphify
-
-В проекте есть каталог `graphify-out/`, но готовый `graphify-out/graph.json` может отсутствовать.
-
-- Для вопросов по кодовой базе сначала проверь `graphify-out/graph.json`. Если он есть, запускай `graphify query "<question>"` до широкого поиска по исходникам.
-- Для связей используй `graphify path "<A>" "<B>"`, для локального объяснения концепта - `graphify explain "<concept>"`.
-- Если есть `graphify-out/wiki/index.md`, используй его для широкой навигации.
-- Не считай dirty-файлы в `graphify-out/` проблемой: hooks и incremental update могут менять граф.
-- После изменений кода запускай `graphify update .`, если граф уже инициализирован. Если `graphify-out/graph.json` отсутствует или CLI сообщает, что обновлять нечего, зафиксируй это в итоговом сообщении и не запускай полный rebuild без отдельного запроса.
+Этот файл - рабочая шпаргалка для автоматизации в репозитории `llm-friendly`. Обновляй его в том же PR/коммите, если меняются структура проекта, команды, зависимости, минимальные версии, CI/CD, локализация, релизный процесс.
 
 ## Навигация
 
@@ -37,7 +27,7 @@
 - `languages/` - translation source and generated runtime files.
 - `assets-svn/` - WordPress.org plugin directory assets/blueprint; ignore for code changes unless the task is release/listing related.
 
-Safe to ignore during normal code navigation: `vendor/`, `graphify-out/cache/`, `graphify-out/cost.json`, `.codex/`, `.agents/`, `.idea/`, logs, `node_modules/`, `data/`, `assets/public/`, `upload/`, `security/`. Generated localization files `languages/*.mo` and `languages/*.l10n.php` are usually ignored for code reading, but must be updated when strings/locales change.
+Safe to ignore during normal code navigation: `vendor/`, `.codex/`, `.agents/`, `.idea/`, logs, `node_modules/`, `data/`, `assets/public/`, `upload/`, `security/`. Generated localization files `languages/*.mo` and `languages/*.l10n.php` are usually ignored for code reading, but must be updated when strings/locales change.
 
 ## Команды
 
@@ -102,7 +92,7 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 - Recommended POT refresh:
 
 ```bash
-wp i18n make-pot . languages/llm-friendly.pot --domain=llm-friendly --exclude=vendor,graphify-out,assets-svn,.codex,.agents,tests
+wp i18n make-pot . languages/llm-friendly.pot --domain=llm-friendly --exclude=vendor,assets-svn,.codex,.agents,tests
 ```
 
 Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tooling; do not edit generated binary/runtime files manually.
@@ -140,22 +130,9 @@ Regenerate `.mo` and `.l10n.php` from `.po` files with the same WP-CLI/i18n tool
 - [WP-CLI i18n make-pot](https://developer.wordpress.org/cli/commands/i18n/make-pot/)
 - [llms.txt proposal](https://llmstxt.org/)
 
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-
 ## Локальные результаты и графы
 
-Сгенерированные графы `graphify-out/`, отчёты, captures и результаты прогонов
+Отчёты, captures и результаты прогонов
 хранятся локально в игнорируемых каталогах. Не добавляйте их в Git, включая
 `git add -f`. Исходники, необходимые тестовые данные и эталоны остаются в Git.
 После нового клонирования создайте граф штатной командой проекта перед его
