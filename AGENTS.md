@@ -38,7 +38,7 @@ composer run test
 ```
 
 - `composer run lint` runs `php -l` on the entrypoint, every file in `inc/` and all PHP test files.
-- `composer run test` runs `php tests/run.php`; current expected result is `OK: 603 assertions`.
+- `composer run test` runs `php tests/run.php`; current expected result is `OK: 619 assertions`.
 - If Composer is unavailable, run `php tests/run.php` directly and manually lint changed PHP files with `php -l <file>`.
 - There is no migration command or custom DB table. User settings stay in `llmf_options`; internal root IDs/dependencies, catalog generation and scan progress use separate non-autoloaded options. Editor data stays in post meta.
 - There is no Docker/image build command, no frontend build, and no deploy script in the repo.
@@ -62,7 +62,7 @@ Local Composer note: in the current Windows/Codex sandbox, Composer may fail bef
 ## Окружение
 
 - Minimum runtime from code/docs: WordPress 6.0+ and PHP 7.4+.
-- `readme.txt` currently says `Tested up to: 7.1`; exact tested versions are recorded in `TESTING.md`.
+- `readme.txt` currently says `Tested up to: 7.2`; exact tested versions are recorded in `TESTING.md`.
 - No `.env` is required for tests or local syntax checks.
 - Safe local option defaults from `Options::defaults()`: Markdown exports on, `llms.txt` on, `enabled_content_negotiation=0`, `llms_index_mode=legacy`, `content_profile=legacy`, empty pins/topic overrides, `base_path=llm`, `post_types=['post']`, both noindex headers on, regeneration mode `auto`, recent limit `30`, sitemap `/sitemap.xml`.
 - Runtime rewrite changes (`enabled_markdown`, `enabled_llms_txt`, `base_path`, `post_types`) set a transient and flush rewrite rules later in admin. Manual WP testing after endpoint changes should include re-saving permalinks.

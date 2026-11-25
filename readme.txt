@@ -2,9 +2,9 @@
 Contributors: skreep
 Tags: llms.txt, markdown, ai, llm, export
 Requires at least: 6.0
-Tested up to: 7.1
+Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.4.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -161,6 +161,13 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 
 == Changelog ==
 
+= 0.4.2 =
+* Preserve Markdown list structure, quote citations, inline formatting, and canonical-relative links.
+* Render public exports with the source post as the WordPress context and support optional HTML for empty sources.
+* Preserve literal backslashes in Markdown overrides and descriptions saved through the editor or REST.
+* Validate diagnostics and comparison IDs, reject malformed Accept headers, and use consistent HEAD handling across text endpoints.
+* Load bundled translations on init and verify compatibility with WordPress 7.2 RC3.
+
 = 0.4.1 =
 * Prevent an interrupted llms.txt generation from restoring content withdrawn during that generation; recheck cached visibility in both index modes.
 * Batch cached visibility lookups to avoid a separate SQL query for every indexed item.
@@ -199,6 +206,9 @@ Not by default. Public Markdown and llms.txt exports require public, non-attachm
 * Clarify that JSON metadata is plugin-defined and that discovery, indexing, crawler access, and usage rights are separate controls.
 
 == Upgrade Notice ==
+
+= 0.4.2 =
+Improves Markdown conversion and preserves backslashes in editor overrides and descriptions. Includes request validation and WordPress 7.2 compatibility testing.
 
 = 0.4.1 =
 Privacy hardening for cached llms.txt and validated optional redirects. Works independently of themes and redirect providers; existing settings and legacy output are preserved.

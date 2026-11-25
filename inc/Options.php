@@ -570,15 +570,14 @@ final class Options {
 	/**
 	 * Sanitize per-post Markdown override while preserving Markdown structure.
 	 *
-	 * @param mixed $value Raw meta value.
+	 * @param mixed $value Unslashed meta value.
 	 * @return string Sanitized Markdown.
 	 */
 	public function sanitize_markdown_override( $value ): string {
 		$value = is_string( $value ) ? $value : '';
-		$value = wp_unslash( $value );
 		$value = $this->sanitize_markdown_block( $value );
-		$max   = $this->bounded_filter_int(
-			'llmf_markdown_override_max_length',
+		$max   = $this->bounded_int(
+			apply_filters( 'llmf_markdown_override_max_length', self::MARKDOWN_OVERRIDE_MAX_LENGTH ),
 			self::MARKDOWN_OVERRIDE_MAX_LENGTH,
 			self::MARKDOWN_OVERRIDE_ABSOLUTE_MAX_LENGTH
 		);
@@ -600,8 +599,8 @@ final class Options {
 	public function sanitize_llms_description( $value ): string {
 		$value = is_string( $value ) ? $value : '';
 		$value = $this->sanitize_textline( $value );
-		$max   = $this->bounded_filter_int(
-			'llmf_llms_description_max_length',
+		$max   = $this->bounded_int(
+			apply_filters( 'llmf_llms_description_max_length', self::LLMS_DESCRIPTION_MAX_LENGTH ),
 			self::LLMS_DESCRIPTION_MAX_LENGTH,
 			self::LLMS_DESCRIPTION_ABSOLUTE_MAX_LENGTH
 		);
@@ -984,11 +983,10 @@ final class Options {
 				continue;
 			}
 
-			$max_ids = $this->bounded_filter_int(
-				'llmf_max_excluded_posts_per_type',
+			$max_ids = $this->bounded_int(
+				apply_filters( 'llmf_max_excluded_posts_per_type', self::EXCLUDED_POSTS_MAX_PER_TYPE, $type ),
 				self::EXCLUDED_POSTS_MAX_PER_TYPE,
-				self::EXCLUDED_POSTS_ABSOLUTE_MAX_PER_TYPE,
-				$type
+				self::EXCLUDED_POSTS_ABSOLUTE_MAX_PER_TYPE
 			);
 
 			$clean_ids = array();
@@ -1132,16 +1130,15 @@ final class Options {
 	}
 
 	/**
-	 * Read a filter-controlled integer while enforcing a hard upper bound.
+	 * Normalize a filtered integer while enforcing a hard upper bound.
 	 *
-	 * @param string $hook         Filter hook name.
+	 * @param mixed  $filtered     Value returned by the filter.
 	 * @param int    $default      Default value.
 	 * @param int    $absolute_max Hard maximum value.
-	 * @param mixed  ...$args      Additional filter arguments.
 	 * @return int Bounded positive integer.
 	 */
-	private function bounded_filter_int( string $hook, int $default, int $absolute_max, ...$args ): int {
-		$value = (int) apply_filters( $hook, $default, ...$args );
+	private function bounded_int( $filtered, int $default, int $absolute_max ): int {
+		$value = (int) $filtered;
 		if ( $value < 1 ) {
 			$value = $default;
 		}

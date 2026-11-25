@@ -177,11 +177,33 @@ foreach ( array( 'ajax_compare_modes', 'ajax_search_pins', 'ajax_diagnostics', '
 	list( $json, $status ) = capture_json_response( function () use ( $admin, $method ) { $admin->$method(); } );
 	assert_true( $status === 403, 'Invalid nonce cannot call ' . $method . '.' );
 }
+$post_id_cases = array(
+	array( '42', 42 ),
+	array( '00042', 42 ),
+	array( 42, 42 ),
+	array( '0', 0 ),
+	array( '42x', 0 ),
+	array( '4.2', 0 ),
+	array( '-42', 0 ),
+	array( PHP_INT_MAX . '0', 0 ),
+	array( array( '42' ), 0 ),
+	array( null, 0 ),
+);
+foreach ( $post_id_cases as $case ) {
+	$_POST = array( 'post_id' => $case[0] );
+	assert_true( call_private( $admin, 'mechanics_post_id' ) === $case[1], 'Mechanics post ID accepts only an in-range decimal integer: ' . json_encode( $case[0] ) );
+}
 $_REQUEST = $_POST = array( 'nonce' => 'test-nonce', 'post_id' => 1, Options::OPTION_KEY => array( 'llms_index_mode' => 'structured', 'content_profile' => 'enhanced' ) );
 $before = $GLOBALS['llmf_test_options'];
 list( $json, $status ) = capture_json_response( function () use ( $admin ) { $admin->ajax_compare_modes(); } );
 assert_true( $status === 200 && isset( $json['data']['legacy']['root'], $json['data']['selected']['markdown'] ), 'Comparison returns both requested representations.' );
 assert_true( $GLOBALS['llmf_test_options'] === $before, 'Comparison cannot mutate plugin settings, root cache, jobs or rewrite rules.' );
+$_REQUEST = $_POST = array( 'nonce' => 'test-nonce', 'post_id' => '3' );
+list( $json, $status ) = capture_json_response( function () use ( $admin ) { $admin->ajax_diagnostics(); } );
+assert_true( $status === 200 && ( $json['data']['post']['id'] ?? null ) === 3, 'Diagnostics checks the explicitly selected decimal ID.' );
+$_REQUEST = $_POST = array( 'nonce' => 'test-nonce', 'post_id' => '3x' );
+list( $json, $status ) = capture_json_response( function () use ( $admin ) { $admin->ajax_diagnostics(); } );
+assert_true( $status === 200 && ( $json['data']['post']['id'] ?? null ) === 1, 'Diagnostics uses the default post instead of the numeric prefix of an invalid ID.' );
 $GLOBALS['llmf_test_http'] = array();
 $report = $diagnostics->check( 1 );
 assert_true( count( $GLOBALS['llmf_test_http'] ) === 6, 'Diagnostics performs no more than six fixed HTTP probes.' );

@@ -3,7 +3,7 @@
  *  Plugin Name:    LLM Friendly
  *  Plugin URI:     https://github.com/sherer-pro/llm-friendly
  *  Description:    Publishes llms.txt, structured catalogs and Markdown for public WordPress content, with optional unavailable-URL integrations.
- *  Version:        0.4.1
+ *  Version:        0.4.2
  *  Requires at least: 6.0
  *  Requires PHP:   7.4
  *  Author:         Pavel Sherer
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Current plugin version, used for caches and asset URLs.
  * Update this value and the plugin header together so WordPress detects updates correctly.
  */
-define( 'LLMF_VERSION', '0.4.1' );
+define( 'LLMF_VERSION', '0.4.2' );
 define( 'LLMF_FILE', __FILE__ );
 define( 'LLMF_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLMF_URL', plugin_dir_url( __FILE__ ) );
@@ -115,7 +115,7 @@ function llmf_deactivate() {
 }
 
 /**
- * Load plugin translations as early as possible.
+ * Load plugin translations after WordPress initializes the locale.
  *
  * @return void
  */
@@ -134,7 +134,7 @@ function llmf_load_textdomain() {
 	);
 }
 
-add_action( 'plugins_loaded', 'llmf_load_textdomain', 0 );
+add_action( 'init', 'llmf_load_textdomain', 0 );
 
 require_once LLMF_DIR . 'inc/Options.php';
 require_once LLMF_DIR . 'inc/Markdown.php';

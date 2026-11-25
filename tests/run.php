@@ -859,6 +859,11 @@ assert_true( ! call_private( $plugin, 'request_accepts_markdown' ), 'A zero-qual
 $_SERVER['HTTP_ACCEPT'] = 'text/markdown; q=invalid, text/markdown; q=0.5';
 assert_true( call_private( $plugin, 'request_accepts_markdown' ), 'A later valid Markdown range survives an earlier invalid quality value.' );
 
+foreach ( array( "text/mark\rdown", "text/mark\ndown", "text/html,\r\ntext/markdown", array( 'text/markdown' ) ) as $invalid_accept ) {
+	$_SERVER['HTTP_ACCEPT'] = $invalid_accept;
+	assert_true( ! call_private( $plugin, 'request_accepts_markdown' ), 'Accept rejects line breaks and non-string values.' );
+}
+
 $_SERVER['HTTP_ACCEPT'] = 'text/markdown';
 $_SERVER['REQUEST_METHOD'] = 'HEAD';
 assert_true( call_private( $plugin, 'should_negotiate_markdown_request' ), 'HEAD requests can negotiate the same Markdown headers without a body.' );
@@ -896,7 +901,10 @@ ob_start();
 $plugin->output_discovery_links();
 $discovery_html = (string) ob_get_clean();
 assert_contains_text( 'rel="describedby" type="text/markdown" href="https://example.test/llms.txt"', $discovery_html, 'Frontend discovery links point to llms.txt.' );
-assert_contains_text( 'rel="alternate" type="text/markdown" href="https://example.test/llm/post/example-post.md"', $discovery_html, 'Eligible singular pages advertise their stable Markdown endpoint.' );
+assert_true(
+	$discovery_html === "\n<link rel=\"describedby\" type=\"text/markdown\" href=\"https://example.test/llms.txt\" />\n<link rel=\"alternate\" type=\"text/markdown\" href=\"https://example.test/llm/post/example-post.md\" />\n",
+	'Eligible singular pages advertise both discovery links in order with stable markup.'
+);
 
 $GLOBALS['llmf_test_query_state']['singular'] = false;
 ob_start();

@@ -10,6 +10,17 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Shared HTTP response helpers for text endpoints.
  */
 final class Response {
+	/** Return the request method as an uppercase token, defaulting to GET in CLI contexts. */
+	public static function request_method(): string {
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) ) {
+			return 'GET';
+		}
+		$method = is_string( $_SERVER['REQUEST_METHOD'] )
+			? filter_var( wp_unslash( $_SERVER['REQUEST_METHOD'] ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/^[ \t]*[A-Za-z]+[ \t]*$/D' ) ) )
+			: false;
+		return is_string( $method ) ? strtoupper( trim( $method ) ) : '';
+	}
+
 	/**
 	 * Send headers and handle ETag/Last-Modified conditional requests.
 	 *

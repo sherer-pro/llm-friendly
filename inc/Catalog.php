@@ -328,7 +328,7 @@ final class Catalog {
 			$headers[] = 'X-Robots-Tag: noindex';
 		}
 		Response::send_conditional_headers( $headers, Response::etag_from_string( $body, self::FORMAT ), time(), false );
-		if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'HEAD' ) {
+		if ( Response::request_method() !== 'HEAD' ) {
 			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markdown links are formatted above.
 		}
 		exit;

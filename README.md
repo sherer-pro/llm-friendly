@@ -5,9 +5,9 @@ LLM Friendly is a WordPress plugin that exposes:
 - `/llms.txt` -- an LLM-friendly index of your site
 - Markdown exports for selected post types under `/{base}/{post_type}/{path}.md`
 
-Current version: **0.4.1**
+Current version: **0.4.2**
 
-Version 0.4.1 hardens optional integrations for unavailable Markdown URLs and cached publication after privacy changes. Optional structured catalogs, enhanced content processing and diagnostics remain available. Existing and new installations keep legacy output by default; enable either content/index mode independently after comparing its output.
+Version 0.4.2 improves Markdown conversion and preserves literal backslashes in editor metadata. Public exports use the source post as the WordPress rendering context. The release is tested with WordPress 7.2 RC3.
 
 The goal is to make your site easier to navigate and consume for LLMs, indexing bots, and power users who prefer plain text.
 

@@ -478,7 +478,7 @@ final class Llms {
 			$etag,
 			$ts > 0 ? $ts : time()
 		);
-		if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'HEAD' ) {
+		if ( Response::request_method() !== 'HEAD' ) {
 			echo $md; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text/markdown body is sanitized while being built.
 		}
 		exit;

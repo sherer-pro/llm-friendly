@@ -14,6 +14,7 @@ if ( ! class_exists( 'LLMFriendly\Catalog' ) ) {
 	exit( 2 );
 }
 
+use LLMFriendly\Admin;
 use LLMFriendly\Options;
 use LLMFriendly\Catalog;
 use LLMFriendly\Content;
@@ -157,6 +158,10 @@ try {
 	$root = runtime_http( home_url( '/llms.txt' ) );
 	runtime_assert( $root['status'] === 200 && strpos( $root['body'], $catalog->url() ) !== false, 'Structured root is served over verified HTTPS.' );
 	$index = runtime_http( $catalog->url( 'post', '', 0, $reuse ) );
+	foreach ( array( home_url( '/llms.txt' ) => $root, $catalog->url( 'post', '', 0, $reuse ) => $index ) as $url => $get ) {
+		$head = runtime_http( $url, 'HEAD' );
+		runtime_assert( $head['status'] === 200 && $head['body'] === '' && $head['headers']['etag'] === $get['headers']['etag'], 'Index HEAD matches GET validators without a body.' );
+	}
 	runtime_assert( $index['status'] === 200 && strpos( $index['body'], $run ) !== false, 'Type catalog is reachable over HTTPS.' );
 	foreach ( $questions as $id => $case ) {
 		$post = get_post( $id );
@@ -212,6 +217,57 @@ try {
 	runtime_assert( strpos( $topics['body'], $run . ' topic' ) !== false && strpos( $topics['body'], $run . ' empty' ) === false, 'Topic projection lists only nonempty topics.' );
 	$topic = runtime_http( $catalog->url( 'post', 'category', $terms[0] ) );
 	runtime_assert( $topic['status'] === 200 && strpos( $topic['body'], 'question 2' ) !== false, 'Term ID route returns its sources.' );
+
+	$metadata_post = runtime_post( array( 'post_author' => $users['editor'] ) );
+	$admin = new Admin( $options, new Llms( $options, false ) );
+	$markdown = "# Manual Markdown\n\n~~~text\nC:\\work\\notes.md\n~~~\n\n\\*Literal asterisk\\*";
+	$description = 'Notes at C:\work\notes.md';
+	wp_set_current_user( $users['editor'] );
+	$previous_post = $_POST;
+	$nonce = wp_create_nonce( 'llmf_md_override_save' );
+	try {
+		$_POST = wp_slash( array(
+			'llmf_md_override_nonce'   => $nonce,
+			'llmf_md_content_override' => $markdown,
+			'llmf_llms_description'    => $description,
+		) );
+		$admin->save_md_override_metabox( $metadata_post, get_post( $metadata_post ) );
+		runtime_assert( get_post_meta( $metadata_post, Exporter::META_MD_OVERRIDE, true ) === $markdown, 'Metabox preserves backslashes and line breaks in Markdown.' );
+		runtime_assert( get_post_meta( $metadata_post, Options::META_LLMS_DESCRIPTION, true ) === $description, 'Metabox preserves backslashes in the description.' );
+
+		$_POST = array( 'llmf_md_override_nonce' => $nonce, 'llmf_llms_description' => array( 'invalid' ) );
+		$admin->save_md_override_metabox( $metadata_post, get_post( $metadata_post ) );
+		runtime_assert( get_post_meta( $metadata_post, Exporter::META_MD_OVERRIDE, true ) === $markdown && get_post_meta( $metadata_post, Options::META_LLMS_DESCRIPTION, true ) === $description, 'Omitted Markdown and malformed description preserve stored values.' );
+
+		$_POST = array( 'llmf_md_override_nonce' => $nonce, 'llmf_md_content_override' => array( 'invalid' ) );
+		$admin->save_md_override_metabox( $metadata_post, get_post( $metadata_post ) );
+		runtime_assert( get_post_meta( $metadata_post, Exporter::META_MD_OVERRIDE, true ) === $markdown && get_post_meta( $metadata_post, Options::META_LLMS_DESCRIPTION, true ) === $description, 'Malformed Markdown and omitted description preserve stored values.' );
+
+		$route = '/wp/v2/posts/' . $metadata_post;
+		$rest_write = new WP_REST_Request( 'POST', $route );
+		$rest_write->set_query_params( array( 'context' => 'edit' ) );
+		$rest_write->set_body_params( array( 'meta' => array( Exporter::META_MD_OVERRIDE => $markdown . "\n\nUpdated via REST.", Options::META_LLMS_DESCRIPTION => $description . ' via REST' ) ) );
+		$written = rest_do_request( $rest_write );
+		runtime_assert( $written->get_status() === 200, 'An editor can update the metadata via REST.' );
+
+		$rest_read = new WP_REST_Request( 'GET', $route );
+		$rest_read->set_query_params( array( 'context' => 'edit' ) );
+		$read = rest_do_request( $rest_read )->get_data();
+		runtime_assert( ( $read['meta'][ Exporter::META_MD_OVERRIDE ] ?? null ) === $markdown . "\n\nUpdated via REST." && ( $read['meta'][ Options::META_LLMS_DESCRIPTION ] ?? null ) === $description . ' via REST', 'REST round trip preserves Markdown and description backslashes.' );
+
+		wp_set_current_user( 0 );
+		$public = rest_do_request( new WP_REST_Request( 'GET', $route ) )->get_data();
+		$public_meta = $public['meta'] ?? array();
+		runtime_assert( isset( $public['id'] ) && ! array_key_exists( Exporter::META_MD_OVERRIDE, $public_meta ) && ! array_key_exists( Options::META_LLMS_DESCRIPTION, $public_meta ), 'Metadata stays out of the anonymous REST response.' );
+
+		wp_set_current_user( $users['editor'] );
+		$_POST = array( 'llmf_md_override_nonce' => $nonce, 'llmf_md_content_override' => '', 'llmf_llms_description' => '' );
+		$admin->save_md_override_metabox( $metadata_post, get_post( $metadata_post ) );
+		runtime_assert( ! metadata_exists( 'post', $metadata_post, Exporter::META_MD_OVERRIDE ) && ! metadata_exists( 'post', $metadata_post, Options::META_LLMS_DESCRIPTION ) && ! metadata_exists( 'post', $metadata_post, Content::META_SOURCE_HASH ), 'Explicitly empty fields clear both metadata values and the override fingerprint.' );
+	} finally {
+		$_POST = $previous_post;
+	}
+
 	foreach ( $users as $role => $id ) {
 		$cookies = runtime_auth( $id );
 		$nonce = wp_create_nonce( 'llmf_mechanics' );
@@ -221,6 +277,25 @@ try {
 		$invalid = runtime_http( admin_url( 'admin-ajax.php' ), 'POST', array(), array( 'action' => 'llmf_diagnostics', 'nonce' => 'invalid' ), $cookies );
 		runtime_assert( $invalid['status'] === 403, 'Invalid nonce denied for ' . $role . '.' );
 	}
+
+	$mechanics_ajax = static function ( string $action, array $fields = array() ) use ( $cookies, $nonce ): array {
+		$response = runtime_http( admin_url( 'admin-ajax.php' ), 'POST', array(), $fields + array( 'action' => $action, 'nonce' => $nonce ), $cookies );
+		$data = json_decode( $response['body'], true );
+		runtime_assert( $response['status'] === 200 && ! empty( $data['success'] ), 'Administrator can call ' . $action . ' with a valid nonce.' );
+		return $data['data'] ?? array();
+	};
+	$selected_id = $ids[8];
+	$compare_id = $mechanics_ajax( 'llmf_compare_modes', array( 'post_id' => '000' . $selected_id ) );
+	$compare_bad = $mechanics_ajax( 'llmf_compare_modes', array( 'post_id' => $selected_id . 'x' ) );
+	runtime_assert( strpos( $compare_id['selected']['markdown'] ?? '', 'LLMF_FACT_9' ) !== false && strpos( $compare_bad['selected']['markdown'] ?? '', 'LLMF_FACT_9' ) === false, 'Comparison uses the whole decimal ID or falls back without selecting its numeric prefix.' );
+
+	$coverage_status = $mechanics_ajax( 'llmf_coverage', array( 'operation' => 'status' ) );
+	$coverage_unknown = $mechanics_ajax( 'llmf_coverage', array( 'operation' => 'start!' ) );
+	$coverage_array = $mechanics_ajax( 'llmf_coverage', array( 'operation' => array( 'start' ) ) );
+	runtime_assert( $coverage_unknown === $coverage_status && $coverage_array === $coverage_status, 'Unknown and non-string operations return status without starting another scan.' );
+	$coverage_start = $mechanics_ajax( 'llmf_coverage', array( 'operation' => 'start' ) );
+	$coverage_continue = $mechanics_ajax( 'llmf_coverage', array( 'operation' => 'continue' ) );
+	runtime_assert( in_array( $coverage_start['status'] ?? '', array( 'running', 'complete' ), true ) && ( $coverage_continue['status'] ?? '' ) === 'complete', 'Exact start and continue operations run coverage.' );
 	wp_set_current_user( 0 );
 	$_COOKIE = array();
 	$anonymous = runtime_http( admin_url( 'admin-ajax.php' ), 'POST', array(), array( 'action' => 'llmf_compare_modes', 'nonce' => 'invalid' ) );

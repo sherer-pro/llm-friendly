@@ -268,7 +268,7 @@ final class Plugin {
 				return;
 			}
 
-			$this->exporter->output_markdown( $post, $this->request_method() !== 'HEAD' );
+			$this->exporter->output_markdown( $post, Response::request_method() !== 'HEAD' );
 			exit;
 		}
 
@@ -280,7 +280,7 @@ final class Plugin {
 		if ( $this->should_negotiate_markdown_request() ) {
 			global $post;
 
-			$method    = $this->request_method();
+			$method    = Response::request_method();
 			$send_body = $method !== 'HEAD';
 			$this->exporter->output_markdown( $post, $send_body );
 		}
@@ -288,7 +288,7 @@ final class Plugin {
 
 	/** Serve only validated provider results; leave ordinary 404 handling untouched. */
 	private function serve_unavailable_markdown( string $post_type = '', string $path = '', int $source_id = 0 ): void {
-		if ( ! in_array( $this->request_method(), array( 'GET', 'HEAD' ), true ) || is_admin() || is_preview() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		if ( ! in_array( Response::request_method(), array( 'GET', 'HEAD' ), true ) || is_admin() || is_preview() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return;
 		}
 		$uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
@@ -312,7 +312,7 @@ final class Plugin {
 		header( 'Content-Type: text/markdown; charset=UTF-8', true );
 		header( 'X-Content-Type-Options: nosniff', true );
 		header( 'X-Robots-Tag: noindex', true );
-		if ( 'HEAD' !== $this->request_method() ) {
+		if ( 'HEAD' !== Response::request_method() ) {
 			echo esc_html__( 'Gone', 'llm-friendly' ) . "\n";
 		}
 		exit;
@@ -371,7 +371,7 @@ final class Plugin {
 			return false;
 		}
 
-		if ( ! in_array( $this->request_method(), array( 'GET', 'HEAD' ), true ) ) {
+		if ( ! in_array( Response::request_method(), array( 'GET', 'HEAD' ), true ) ) {
 			return false;
 		}
 
@@ -393,17 +393,6 @@ final class Plugin {
 	}
 
 	/**
-	 * Return the normalized HTTP request method.
-	 *
-	 * @return string
-	 */
-	private function request_method(): string {
-		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? (string) wp_unslash( $_SERVER['REQUEST_METHOD'] ) : 'GET';
-
-		return strtoupper( trim( $method ) );
-	}
-
-	/**
 	 * Check for an explicit acceptable text/markdown media range.
 	 *
 	 * Wildcards do not opt a request into Markdown. Invalid quality values make
@@ -412,9 +401,8 @@ final class Plugin {
 	 * @return bool
 	 */
 	private function request_accepts_markdown(): bool {
-		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) ? (string) wp_unslash( $_SERVER['HTTP_ACCEPT'] ) : '';
-		$accept = str_replace( array( "\r", "\n" ), '', $accept );
-		if ( trim( $accept ) === '' ) {
+		$accept = isset( $_SERVER['HTTP_ACCEPT'] ) && is_string( $_SERVER['HTTP_ACCEPT'] ) ? wp_unslash( $_SERVER['HTTP_ACCEPT'] ) : '';
+		if ( strpbrk( $accept, "\r\n" ) !== false || trim( $accept ) === '' ) {
 			return false;
 		}
 
@@ -517,13 +505,11 @@ final class Plugin {
 		}
 
 		$opt = $this->options->get();
-		$links = array();
+		$llms_url = '';
+		$markdown_url = '';
 
 		if ( ! empty( $opt['enabled_llms_txt'] ) ) {
 			$llms_url = Markdown::url_destination( home_url( '/llms.txt' ), array( 'http', 'https' ), false );
-			if ( $llms_url !== '' ) {
-				$links[] = '<link rel="describedby" type="text/markdown" href="' . esc_url( $llms_url ) . '" />';
-			}
 		}
 
 		if ( is_singular() && ! empty( $opt['enabled_markdown'] ) ) {
@@ -532,18 +518,21 @@ final class Plugin {
 				&& $this->options->is_selected_post_type( (string) $post->post_type, $opt )
 				&& $this->options->can_export_post( $post, 'markdown' )
 			) {
-				$url = $this->options->markdown_url_for_post( $post );
-				if ( $url !== '' ) {
-					$links[] = '<link rel="alternate" type="text/markdown" href="' . esc_url( $url ) . '" />';
-				}
+				$markdown_url = $this->options->markdown_url_for_post( $post );
 			}
 		}
 
-		if ( empty( $links ) ) {
+		if ( $llms_url === '' && $markdown_url === '' ) {
 			return;
 		}
 
-		echo "\n" . implode( "\n", $links ) . "\n";
+		echo "\n";
+		if ( $llms_url !== '' ) {
+			echo '<link rel="describedby" type="text/markdown" href="' . esc_url( $llms_url ) . '" />' . "\n";
+		}
+		if ( $markdown_url !== '' ) {
+			echo '<link rel="alternate" type="text/markdown" href="' . esc_url( $markdown_url ) . '" />' . "\n";
+		}
 	}
 
 	/**

@@ -854,7 +854,11 @@ final class Admin {
 		echo '<ol data-llmf-pin-list>';
 		foreach ( $opt['llms_pinned_ids'] as $id ) {
 			$post = get_post( $id );
-			$title = $post ? get_the_title( $post ) : sprintf( __( 'Item #%d', 'llm-friendly' ), $id );
+			$title = $post ? get_the_title( $post ) : sprintf(
+				/* translators: %d: Post ID. */
+				__( 'Item #%d', 'llm-friendly' ),
+				$id
+			);
 			echo '<li data-pin-id="' . esc_attr( $id ) . '"><span>' . esc_html( $title ) . '</span> <button type="button" class="button" data-pin-up aria-label="' . esc_attr__( 'Move up', 'llm-friendly' ) . '">↑</button> <button type="button" class="button" data-pin-down aria-label="' . esc_attr__( 'Move down', 'llm-friendly' ) . '">↓</button> <button type="button" class="button" data-pin-remove>' . esc_html__( 'Remove', 'llm-friendly' ) . '</button></li>';
 		}
 		echo '</ol><label for="llmf-pin-type">' . esc_html__( 'Content type', 'llm-friendly' ) . '</label> <select id="llmf-pin-type">';
@@ -1371,11 +1375,20 @@ final class Admin {
 		return $this->options->candidate( $input );
 	}
 
+	/** Read an optional decimal ID after the caller checks permissions and nonce. */
+	private function mechanics_post_id(): int {
+		if ( ! isset( $_POST['post_id'] ) || ( ! is_string( $_POST['post_id'] ) && ! is_int( $_POST['post_id'] ) ) ) {
+			return 0;
+		}
+		$digits = filter_var( wp_unslash( $_POST['post_id'] ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/^[0-9]+$/D' ) ) );
+		return is_string( $digits ) ? (int) filter_var( ltrim( $digits, '0' ), FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) ) : 0;
+	}
+
 	public function ajax_compare_modes(): void {
 		$this->mechanics_access();
 		$options = $this->mechanics_candidate();
 		$legacy = $options->candidate( array( 'llms_index_mode' => 'legacy', 'content_profile' => 'legacy' ) );
-		$id = isset( $_POST['post_id'] ) && is_scalar( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+		$id = $this->mechanics_post_id();
 		$post = $id > 0 ? get_post( $id ) : null;
 		if ( ! $post ) {
 			$posts = ( new Catalog( $options, false ) )->scan()['posts'];
@@ -1424,13 +1437,14 @@ final class Admin {
 
 	public function ajax_diagnostics(): void {
 		$this->mechanics_access();
-		$id = isset( $_POST['post_id'] ) && is_scalar( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
-		wp_send_json_success( $this->diagnostics_service()->check( max( 0, $id ) ) );
+		wp_send_json_success( $this->diagnostics_service()->check( $this->mechanics_post_id() ) );
 	}
 
 	public function ajax_coverage(): void {
 		$this->mechanics_access();
-		$operation = $_POST['operation'] ?? 'status';
+		$operation = isset( $_POST['operation'] ) && is_string( $_POST['operation'] )
+			? filter_var( wp_unslash( $_POST['operation'] ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/^(?:start|continue|status)$/D' ) ) )
+			: 'status';
 		$service = $this->diagnostics_service();
 		if ( $operation === 'start' ) {
 			$service->start();
@@ -2092,34 +2106,28 @@ final class Admin {
 			return;
 		}
 
-		// Extract user input, keep Markdown intact, and sanitize to avoid unsafe tags.
-		$raw_value = isset( $_POST['llmf_md_content_override'] )
-			? $_POST['llmf_md_content_override']
-			: '';
-		$value     = $this->options->sanitize_markdown_override( $raw_value );
-
-		if ( $value === '' ) {
-			delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
-			delete_post_meta( $post_id, Content::META_SOURCE_HASH );
-		} else {
-			$old_value = get_post_meta( $post_id, Exporter::META_MD_OVERRIDE, true );
-			update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, $value );
-			if ( $old_value !== $value || ! empty( $_POST['llmf_confirm_override'] ) ) {
-				update_post_meta( $post_id, Content::META_SOURCE_HASH, Content::fingerprint( $post ) );
+		if ( isset( $_POST['llmf_md_content_override'] ) && is_string( $_POST['llmf_md_content_override'] ) ) {
+			$value = $this->options->sanitize_markdown_override( wp_unslash( $_POST['llmf_md_content_override'] ) );
+			if ( $value === '' ) {
+				delete_post_meta( $post_id, Exporter::META_MD_OVERRIDE );
+				delete_post_meta( $post_id, Content::META_SOURCE_HASH );
+			} else {
+				$old_value = get_post_meta( $post_id, Exporter::META_MD_OVERRIDE, true );
+				update_post_meta( $post_id, Exporter::META_MD_OVERRIDE, wp_slash( $value ) );
+				if ( $old_value !== $value || ! empty( $_POST['llmf_confirm_override'] ) ) {
+					update_post_meta( $post_id, Content::META_SOURCE_HASH, Content::fingerprint( $post ) );
+				}
 			}
 		}
 
-		$raw_description = isset( $_POST['llmf_llms_description'] )
-			? wp_unslash( $_POST['llmf_llms_description'] )
-			: '';
-		$description = $this->options->sanitize_llms_description( $raw_description );
-
-		if ( $description === '' ) {
-			delete_post_meta( $post_id, Options::META_LLMS_DESCRIPTION );
-			return;
+		if ( isset( $_POST['llmf_llms_description'] ) && is_string( $_POST['llmf_llms_description'] ) ) {
+			$description = $this->options->sanitize_llms_description( wp_unslash( $_POST['llmf_llms_description'] ) );
+			if ( $description === '' ) {
+				delete_post_meta( $post_id, Options::META_LLMS_DESCRIPTION );
+			} else {
+				update_post_meta( $post_id, Options::META_LLMS_DESCRIPTION, wp_slash( $description ) );
+			}
 		}
-
-		update_post_meta( $post_id, Options::META_LLMS_DESCRIPTION, $description );
 	}
 
 
